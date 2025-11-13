@@ -1,0 +1,840 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.7.0
+2 info using node@v20.15.0
+3 silly config:load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config:load:file:/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/.npmrc
+5 silly config:load:file:/Users/artemsaraiev/.npmrc
+6 silly config:load:file:/usr/local/etc/npmrc
+7 verbose title npm i pdfjs-dist@3.11.174
+8 verbose argv "i" "pdfjs-dist@3.11.174" "--cache" ".npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/.npm-cache/_logs/2025-11-09T00_48_47_221Z-
+10 verbose logfile /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/.npm-cache/_logs/2025-11-09T00_48_47_221Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly idealTree buildDeps
+13 silly fetch manifest pdfjs-dist@3.11.174
+14 http fetch GET 200 https://registry.npmjs.org/pdfjs-dist 146ms (cache revalidated)
+15 silly placeDep ROOT pdfjs-dist@3.11.174 REPLACE for: pubdiscuss@0.0.0 want: 3.11.174
+16 silly fetch manifest canvas@^2.11.2
+17 silly fetch manifest path2d-polyfill@^2.0.1
+18 http fetch GET 200 https://registry.npmjs.org/canvas 51ms (cache miss)
+19 http fetch GET 200 https://registry.npmjs.org/path2d-polyfill 64ms (cache miss)
+20 silly placeDep ROOT canvas@2.11.2 OK for: pdfjs-dist@3.11.174 want: ^2.11.2
+21 silly placeDep ROOT path2d-polyfill@2.0.1 OK for: pdfjs-dist@3.11.174 want: ^2.0.1
+22 silly fetch manifest nan@^2.17.0
+23 silly fetch manifest simple-get@^3.0.3
+24 silly fetch manifest @mapbox/node-pre-gyp@^1.0.0
+25 http fetch GET 200 https://registry.npmjs.org/simple-get 70ms (cache miss)
+26 http fetch GET 200 https://registry.npmjs.org/nan 71ms (cache miss)
+27 http fetch GET 200 https://registry.npmjs.org/@mapbox%2fnode-pre-gyp 90ms (cache miss)
+28 silly placeDep ROOT @mapbox/node-pre-gyp@1.0.11 OK for: canvas@2.11.2 want: ^1.0.0
+29 silly placeDep ROOT nan@2.23.1 OK for: canvas@2.11.2 want: ^2.17.0
+30 silly placeDep ROOT simple-get@3.1.1 OK for: canvas@2.11.2 want: ^3.0.3
+31 silly fetch manifest tar@^6.1.11
+32 silly fetch manifest nopt@^5.0.0
+33 silly fetch manifest npmlog@^5.0.1
+34 silly fetch manifest rimraf@^3.0.2
+35 silly fetch manifest semver@^7.3.5
+36 silly fetch manifest make-dir@^3.1.0
+37 silly fetch manifest node-fetch@^2.6.7
+38 silly fetch manifest detect-libc@^2.0.0
+39 silly fetch manifest https-proxy-agent@^5.0.0
+40 silly fetch manifest decompress-response@^4.2.0
+41 silly fetch manifest once@^1.3.1
+42 http fetch GET 200 https://registry.npmjs.org/tar 46ms (cache miss)
+43 silly fetch manifest simple-concat@^1.0.0
+44 http fetch GET 200 https://registry.npmjs.org/npmlog 49ms (cache miss)
+45 http fetch GET 200 https://registry.npmjs.org/nopt 55ms (cache miss)
+46 http fetch GET 200 https://registry.npmjs.org/make-dir 68ms (cache miss)
+47 http fetch GET 200 https://registry.npmjs.org/semver 74ms (cache miss)
+48 http fetch GET 200 https://registry.npmjs.org/detect-libc 76ms (cache miss)
+49 http fetch GET 200 https://registry.npmjs.org/rimraf 80ms (cache miss)
+50 http fetch GET 200 https://registry.npmjs.org/once 85ms (cache miss)
+51 http fetch GET 200 https://registry.npmjs.org/node-fetch 96ms (cache miss)
+52 http fetch GET 200 https://registry.npmjs.org/https-proxy-agent 101ms (cache miss)
+53 http fetch GET 200 https://registry.npmjs.org/decompress-response 102ms (cache miss)
+54 http fetch GET 200 https://registry.npmjs.org/simple-concat 71ms (cache miss)
+55 silly fetch manifest encoding@^0.1.0
+56 http fetch GET 200 https://registry.npmjs.org/encoding 29ms (cache miss)
+57 silly placeDep ROOT detect-libc@2.1.2 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^2.0.0
+58 silly placeDep ROOT https-proxy-agent@5.0.1 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^5.0.0
+59 silly placeDep ROOT make-dir@3.1.0 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^3.1.0
+60 silly placeDep ROOT node-fetch@2.7.0 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^2.6.7
+61 silly placeDep ROOT nopt@5.0.0 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^5.0.0
+62 silly placeDep ROOT npmlog@5.0.1 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^5.0.1
+63 silly placeDep ROOT rimraf@3.0.2 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^3.0.2
+64 silly placeDep ROOT semver@7.7.3 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^7.3.5
+65 silly placeDep ROOT tar@6.2.1 OK for: @mapbox/node-pre-gyp@1.0.11 want: ^6.1.11
+66 silly fetch manifest debug@4
+67 silly fetch manifest agent-base@6
+68 silly fetch manifest semver@^6.0.0
+69 silly fetch manifest whatwg-url@^5.0.0
+70 silly fetch manifest abbrev@1
+71 silly fetch manifest gauge@^3.0.0
+72 silly fetch manifest set-blocking@^2.0.0
+73 silly fetch manifest are-we-there-yet@^2.0.0
+74 silly fetch manifest console-control-strings@^1.1.0
+75 silly fetch manifest glob@^7.1.3
+76 silly fetch manifest chownr@^2.0.0
+77 silly fetch manifest mkdirp@^1.0.3
+78 http fetch GET 200 https://registry.npmjs.org/agent-base 38ms (cache miss)
+79 silly fetch manifest yallist@^4.0.0
+80 http fetch GET 200 https://registry.npmjs.org/abbrev 46ms (cache miss)
+81 silly fetch manifest minipass@^5.0.0
+82 http fetch GET 200 https://registry.npmjs.org/debug 50ms (cache miss)
+83 silly fetch manifest minizlib@^2.1.1
+84 http fetch GET 200 https://registry.npmjs.org/chownr 52ms (cache miss)
+85 silly fetch manifest fs-minipass@^2.0.0
+86 http fetch GET 200 https://registry.npmjs.org/mkdirp 57ms (cache miss)
+87 http fetch GET 200 https://registry.npmjs.org/are-we-there-yet 62ms (cache miss)
+88 http fetch GET 200 https://registry.npmjs.org/gauge 64ms (cache miss)
+89 http fetch GET 200 https://registry.npmjs.org/console-control-strings 64ms (cache miss)
+90 http fetch GET 200 https://registry.npmjs.org/set-blocking 64ms (cache miss)
+91 http fetch GET 200 https://registry.npmjs.org/whatwg-url 66ms (cache miss)
+92 http fetch GET 200 https://registry.npmjs.org/glob 67ms (cache miss)
+93 http fetch GET 200 https://registry.npmjs.org/yallist 34ms (cache miss)
+94 http fetch GET 200 https://registry.npmjs.org/minipass 39ms (cache miss)
+95 http fetch GET 200 https://registry.npmjs.org/fs-minipass 36ms (cache miss)
+96 http fetch GET 200 https://registry.npmjs.org/minizlib 46ms (cache miss)
+97 silly placeDep ROOT agent-base@6.0.2 OK for: https-proxy-agent@5.0.1 want: 6
+98 silly placeDep ROOT debug@4.4.3 OK for: https-proxy-agent@5.0.1 want: 4
+99 silly fetch manifest ms@^2.1.3
+100 http fetch GET 200 https://registry.npmjs.org/ms 34ms (cache miss)
+101 silly placeDep ROOT ms@2.1.3 OK for: debug@4.4.3 want: ^2.1.3
+102 silly placeDep node_modules/make-dir semver@6.3.1 OK for: make-dir@3.1.0 want: ^6.0.0
+103 silly placeDep ROOT whatwg-url@5.0.0 OK for: node-fetch@2.7.0 want: ^5.0.0
+104 silly fetch manifest tr46@~0.0.3
+105 silly fetch manifest webidl-conversions@^3.0.0
+106 http fetch GET 200 https://registry.npmjs.org/webidl-conversions 45ms (cache miss)
+107 http fetch GET 200 https://registry.npmjs.org/tr46 57ms (cache miss)
+108 silly placeDep ROOT abbrev@1.1.1 OK for: nopt@5.0.0 want: 1
+109 silly placeDep ROOT are-we-there-yet@2.0.0 OK for: npmlog@5.0.1 want: ^2.0.0
+110 silly placeDep ROOT console-control-strings@1.1.0 OK for: npmlog@5.0.1 want: ^1.1.0
+111 silly placeDep ROOT gauge@3.0.2 OK for: npmlog@5.0.1 want: ^3.0.0
+112 silly placeDep ROOT set-blocking@2.0.0 OK for: npmlog@5.0.1 want: ^2.0.0
+113 silly fetch manifest delegates@^1.0.0
+114 silly fetch manifest readable-stream@^3.6.0
+115 silly fetch manifest aproba@^1.0.3 || ^2.0.0
+116 silly fetch manifest strip-ansi@^6.0.1
+117 silly fetch manifest wide-align@^1.1.2
+118 silly fetch manifest has-unicode@^2.0.1
+119 silly fetch manifest signal-exit@^3.0.0
+120 silly fetch manifest string-width@^4.2.3
+121 silly fetch manifest color-support@^1.1.2
+122 silly fetch manifest object-assign@^4.1.1
+123 http fetch GET 200 https://registry.npmjs.org/wide-align 32ms (cache miss)
+124 http fetch GET 200 https://registry.npmjs.org/delegates 42ms (cache miss)
+125 http fetch GET 200 https://registry.npmjs.org/strip-ansi 41ms (cache miss)
+126 http fetch GET 200 https://registry.npmjs.org/string-width 42ms (cache miss)
+127 http fetch GET 200 https://registry.npmjs.org/color-support 44ms (cache miss)
+128 http fetch GET 200 https://registry.npmjs.org/aproba 53ms (cache miss)
+129 http fetch GET 200 https://registry.npmjs.org/object-assign 50ms (cache miss)
+130 http fetch GET 200 https://registry.npmjs.org/has-unicode 53ms (cache miss)
+131 http fetch GET 200 https://registry.npmjs.org/signal-exit 54ms (cache miss)
+132 http fetch GET 200 https://registry.npmjs.org/readable-stream 56ms (cache miss)
+133 silly placeDep ROOT delegates@1.0.0 OK for: are-we-there-yet@2.0.0 want: ^1.0.0
+134 silly placeDep ROOT readable-stream@3.6.2 OK for: are-we-there-yet@2.0.0 want: ^3.6.0
+135 silly fetch manifest inherits@^2.0.3
+136 silly fetch manifest string_decoder@^1.1.1
+137 silly fetch manifest util-deprecate@^1.0.1
+138 http fetch GET 200 https://registry.npmjs.org/util-deprecate 32ms (cache miss)
+139 http fetch GET 200 https://registry.npmjs.org/inherits 33ms (cache miss)
+140 http fetch GET 200 https://registry.npmjs.org/string_decoder 33ms (cache miss)
+141 silly placeDep ROOT aproba@2.1.0 OK for: gauge@3.0.2 want: ^1.0.3 || ^2.0.0
+142 silly placeDep ROOT color-support@1.1.3 OK for: gauge@3.0.2 want: ^1.1.2
+143 silly placeDep ROOT has-unicode@2.0.1 OK for: gauge@3.0.2 want: ^2.0.1
+144 silly placeDep ROOT object-assign@4.1.1 OK for: gauge@3.0.2 want: ^4.1.1
+145 silly placeDep ROOT signal-exit@3.0.7 OK for: gauge@3.0.2 want: ^3.0.0
+146 silly placeDep ROOT string-width@4.2.3 OK for: gauge@3.0.2 want: ^4.2.3
+147 silly placeDep ROOT strip-ansi@6.0.1 OK for: gauge@3.0.2 want: ^6.0.1
+148 silly placeDep ROOT wide-align@1.1.5 OK for: gauge@3.0.2 want: ^1.1.2
+149 silly fetch manifest emoji-regex@^8.0.0
+150 silly fetch manifest is-fullwidth-code-point@^3.0.0
+151 silly fetch manifest ansi-regex@^5.0.1
+152 http fetch GET 200 https://registry.npmjs.org/emoji-regex 33ms (cache miss)
+153 http fetch GET 200 https://registry.npmjs.org/ansi-regex 38ms (cache miss)
+154 http fetch GET 200 https://registry.npmjs.org/is-fullwidth-code-point 83ms (cache miss)
+155 silly placeDep ROOT inherits@2.0.4 OK for: readable-stream@3.6.2 want: ^2.0.3
+156 silly placeDep ROOT string_decoder@1.3.0 OK for: readable-stream@3.6.2 want: ^1.1.1
+157 silly placeDep ROOT util-deprecate@1.0.2 OK for: readable-stream@3.6.2 want: ^1.0.1
+158 silly fetch manifest safe-buffer@~5.2.0
+159 http fetch GET 200 https://registry.npmjs.org/safe-buffer 52ms (cache miss)
+160 silly placeDep ROOT glob@7.2.3 OK for: rimraf@3.0.2 want: ^7.1.3
+161 silly fetch manifest once@^1.3.0
+162 silly fetch manifest inflight@^1.0.4
+163 silly fetch manifest minimatch@^3.1.1
+164 silly fetch manifest fs.realpath@^1.0.0
+165 silly fetch manifest path-is-absolute@^1.0.0
+166 http fetch GET 200 https://registry.npmjs.org/inflight 34ms (cache miss)
+167 http fetch GET 200 https://registry.npmjs.org/minimatch 42ms (cache miss)
+168 http fetch GET 200 https://registry.npmjs.org/fs.realpath 53ms (cache miss)
+169 http fetch GET 200 https://registry.npmjs.org/path-is-absolute 60ms (cache miss)
+170 silly placeDep ROOT fs.realpath@1.0.0 OK for: glob@7.2.3 want: ^1.0.0
+171 silly placeDep ROOT inflight@1.0.6 OK for: glob@7.2.3 want: ^1.0.4
+172 silly placeDep ROOT minimatch@3.1.2 OK for: glob@7.2.3 want: ^3.1.1
+173 silly placeDep ROOT once@1.4.0 OK for: glob@7.2.3 want: ^1.3.0
+174 silly placeDep ROOT path-is-absolute@1.0.1 OK for: glob@7.2.3 want: ^1.0.0
+175 silly fetch manifest wrappy@1
+176 silly fetch manifest brace-expansion@^1.1.7
+177 http fetch GET 200 https://registry.npmjs.org/brace-expansion 33ms (cache miss)
+178 http fetch GET 200 https://registry.npmjs.org/wrappy 72ms (cache miss)
+179 silly placeDep ROOT wrappy@1.0.2 OK for: inflight@1.0.6 want: 1
+180 silly placeDep ROOT brace-expansion@1.1.12 OK for: minimatch@3.1.2 want: ^1.1.7
+181 silly fetch manifest balanced-match@^1.0.0
+182 silly fetch manifest concat-map@0.0.1
+183 http fetch GET 200 https://registry.npmjs.org/concat-map 32ms (cache miss)
+184 http fetch GET 200 https://registry.npmjs.org/balanced-match 38ms (cache miss)
+185 silly placeDep ROOT balanced-match@1.0.2 OK for: brace-expansion@1.1.12 want: ^1.0.0
+186 silly placeDep ROOT concat-map@0.0.1 OK for: brace-expansion@1.1.12 want: 0.0.1
+187 silly placeDep ROOT decompress-response@4.2.1 OK for: simple-get@3.1.1 want: ^4.2.0
+188 silly placeDep ROOT simple-concat@1.0.1 OK for: simple-get@3.1.1 want: ^1.0.0
+189 silly fetch manifest mimic-response@^2.0.0
+190 http fetch GET 200 https://registry.npmjs.org/mimic-response 38ms (cache miss)
+191 silly placeDep ROOT mimic-response@2.1.0 OK for: decompress-response@4.2.1 want: ^2.0.0
+192 silly placeDep ROOT safe-buffer@5.2.1 OK for: string_decoder@1.3.0 want: ~5.2.0
+193 silly placeDep ROOT emoji-regex@8.0.0 OK for: string-width@4.2.3 want: ^8.0.0
+194 silly placeDep ROOT is-fullwidth-code-point@3.0.0 OK for: string-width@4.2.3 want: ^3.0.0
+195 silly placeDep ROOT ansi-regex@5.0.1 OK for: strip-ansi@6.0.1 want: ^5.0.1
+196 silly placeDep ROOT chownr@2.0.0 OK for: tar@6.2.1 want: ^2.0.0
+197 silly placeDep ROOT fs-minipass@2.1.0 OK for: tar@6.2.1 want: ^2.0.0
+198 silly placeDep ROOT minipass@5.0.0 OK for: tar@6.2.1 want: ^5.0.0
+199 silly placeDep ROOT minizlib@2.1.2 OK for: tar@6.2.1 want: ^2.1.1
+200 silly placeDep ROOT mkdirp@1.0.4 OK for: tar@6.2.1 want: ^1.0.3
+201 silly placeDep ROOT yallist@4.0.0 OK for: tar@6.2.1 want: ^4.0.0
+202 silly fetch manifest minipass@^3.0.0
+203 silly placeDep node_modules/fs-minipass minipass@3.3.6 OK for: fs-minipass@2.1.0 want: ^3.0.0
+204 silly placeDep node_modules/minizlib minipass@3.3.6 OK for: minizlib@2.1.2 want: ^3.0.0
+205 silly placeDep ROOT tr46@0.0.3 OK for: whatwg-url@5.0.0 want: ~0.0.3
+206 silly placeDep ROOT webidl-conversions@3.0.1 OK for: whatwg-url@5.0.0 want: ^3.0.0
+207 silly reify mark retired [
+207 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas'
+207 silly reify ]
+208 silly reify mark retired [
+208 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-darwin-arm64'
+208 silly reify ]
+209 silly reify mark retired [
+209 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist'
+209 silly reify ]
+210 silly reify moves {
+210 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas': '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/.canvas-chmTmou3',
+210 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-darwin-arm64': '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/.canvas-darwin-arm64-Ah0oGycY',
+210 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist': '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/.pdfjs-dist-nVWpDTiU'
+210 silly reify }
+211 silly audit bulk request {
+211 silly audit   '@babel/helper-string-parser': [ '7.27.1' ],
+211 silly audit   '@babel/helper-validator-identifier': [ '7.28.5' ],
+211 silly audit   '@babel/parser': [ '7.28.5' ],
+211 silly audit   '@babel/types': [ '7.28.5' ],
+211 silly audit   '@esbuild/aix-ppc64': [ '0.21.5' ],
+211 silly audit   '@esbuild/android-arm': [ '0.21.5' ],
+211 silly audit   '@esbuild/android-arm64': [ '0.21.5' ],
+211 silly audit   '@esbuild/android-x64': [ '0.21.5' ],
+211 silly audit   '@esbuild/darwin-arm64': [ '0.21.5' ],
+211 silly audit   '@esbuild/darwin-x64': [ '0.21.5' ],
+211 silly audit   '@esbuild/freebsd-arm64': [ '0.21.5' ],
+211 silly audit   '@esbuild/freebsd-x64': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-arm': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-arm64': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-ia32': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-loong64': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-mips64el': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-ppc64': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-riscv64': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-s390x': [ '0.21.5' ],
+211 silly audit   '@esbuild/linux-x64': [ '0.21.5' ],
+211 silly audit   '@esbuild/netbsd-x64': [ '0.21.5' ],
+211 silly audit   '@esbuild/openbsd-x64': [ '0.21.5' ],
+211 silly audit   '@esbuild/sunos-x64': [ '0.21.5' ],
+211 silly audit   '@esbuild/win32-arm64': [ '0.21.5' ],
+211 silly audit   '@esbuild/win32-ia32': [ '0.21.5' ],
+211 silly audit   '@esbuild/win32-x64': [ '0.21.5' ],
+211 silly audit   '@jridgewell/sourcemap-codec': [ '1.5.5' ],
+211 silly audit   '@rollup/rollup-android-arm-eabi': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-android-arm64': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-darwin-arm64': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-darwin-x64': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-freebsd-arm64': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-freebsd-x64': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-arm-gnueabihf': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-arm-musleabihf': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-arm64-gnu': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-arm64-musl': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-loong64-gnu': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-ppc64-gnu': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-riscv64-gnu': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-riscv64-musl': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-s390x-gnu': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-x64-gnu': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-linux-x64-musl': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-openharmony-arm64': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-win32-arm64-msvc': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-win32-ia32-msvc': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-win32-x64-gnu': [ '4.52.5' ],
+211 silly audit   '@rollup/rollup-win32-x64-msvc': [ '4.52.5' ],
+211 silly audit   '@tsconfig/node20': [ '20.1.6' ],
+211 silly audit   '@types/estree': [ '1.0.8' ],
+211 silly audit   '@types/node': [ '22.18.12' ],
+211 silly audit   '@vitejs/plugin-vue': [ '5.2.4' ],
+211 silly audit   '@vue/compiler-core': [ '3.5.22' ],
+211 silly audit   '@vue/compiler-dom': [ '3.5.22' ],
+211 silly audit   '@vue/compiler-sfc': [ '3.5.22' ],
+211 silly audit   '@vue/compiler-ssr': [ '3.5.22' ],
+211 silly audit   '@vue/devtools-api': [ '6.6.4' ],
+211 silly audit   '@vue/reactivity': [ '3.5.22' ],
+211 silly audit   '@vue/runtime-core': [ '3.5.22' ],
+211 silly audit   '@vue/runtime-dom': [ '3.5.22' ],
+211 silly audit   '@vue/server-renderer': [ '3.5.22' ],
+211 silly audit   '@vue/shared': [ '3.5.22' ],
+211 silly audit   asynckit: [ '0.4.0' ],
+211 silly audit   axios: [ '1.12.2' ],
+211 silly audit   'call-bind-apply-helpers': [ '1.0.2' ],
+211 silly audit   'combined-stream': [ '1.0.8' ],
+211 silly audit   csstype: [ '3.1.3' ],
+211 silly audit   'delayed-stream': [ '1.0.0' ],
+211 silly audit   'dunder-proto': [ '1.0.1' ],
+211 silly audit   entities: [ '4.5.0' ],
+211 silly audit   'es-define-property': [ '1.0.1' ],
+211 silly audit   'es-errors': [ '1.3.0' ],
+211 silly audit   'es-object-atoms': [ '1.1.1' ],
+211 silly audit   'es-set-tostringtag': [ '2.1.0' ],
+211 silly audit   esbuild: [ '0.21.5' ],
+211 silly audit   'estree-walker': [ '2.0.2' ],
+211 silly audit   'follow-redirects': [ '1.15.11' ],
+211 silly audit   'form-data': [ '4.0.4' ],
+211 silly audit   fsevents: [ '2.3.3' ],
+211 silly audit   'function-bind': [ '1.1.2' ],
+211 silly audit   'get-intrinsic': [ '1.3.0' ],
+211 silly audit   'get-proto': [ '1.0.1' ],
+211 silly audit   gopd: [ '1.2.0' ],
+211 silly audit   'has-symbols': [ '1.1.0' ],
+211 silly audit   'has-tostringtag': [ '1.0.2' ],
+211 silly audit   hasown: [ '2.0.2' ],
+211 silly audit   'magic-string': [ '0.30.21' ],
+211 silly audit   'math-intrinsics': [ '1.1.0' ],
+211 silly audit   'mime-db': [ '1.52.0' ],
+211 silly audit   'mime-types': [ '2.1.35' ],
+211 silly audit   nanoid: [ '3.3.11' ],
+211 silly audit   picocolors: [ '1.1.1' ],
+211 silly audit   pinia: [ '2.3.1' ],
+211 silly audit   postcss: [ '8.5.6' ],
+211 silly audit   'proxy-from-env': [ '1.1.0' ],
+211 silly audit   rollup: [ '4.52.5' ],
+211 silly audit   'source-map-js': [ '1.2.1' ],
+211 silly audit   typescript: [ '5.9.3' ],
+211 silly audit   'undici-types': [ '6.21.0' ],
+211 silly audit   vite: [ '5.4.21' ],
+211 silly audit   vue: [ '3.5.22' ],
+211 silly audit   'vue-demi': [ '0.14.10' ],
+211 silly audit   'vue-router': [ '4.6.3' ],
+211 silly audit   'pdfjs-dist': [ '3.11.174' ],
+211 silly audit   canvas: [ '2.11.2' ],
+211 silly audit   'path2d-polyfill': [ '2.0.1' ],
+211 silly audit   '@mapbox/node-pre-gyp': [ '1.0.11' ],
+211 silly audit   nan: [ '2.23.1' ],
+211 silly audit   'simple-get': [ '3.1.1' ],
+211 silly audit   'detect-libc': [ '2.1.2' ],
+211 silly audit   'https-proxy-agent': [ '5.0.1' ],
+211 silly audit   'make-dir': [ '3.1.0' ],
+211 silly audit   'node-fetch': [ '2.7.0' ],
+211 silly audit   nopt: [ '5.0.0' ],
+211 silly audit   npmlog: [ '5.0.1' ],
+211 silly audit   rimraf: [ '3.0.2' ],
+211 silly audit   semver: [ '7.7.3', '6.3.1' ],
+211 silly audit   tar: [ '6.2.1' ],
+211 silly audit   'agent-base': [ '6.0.2' ],
+211 silly audit   debug: [ '4.4.3' ],
+211 silly audit   ms: [ '2.1.3' ],
+211 silly audit   'whatwg-url': [ '5.0.0' ],
+211 silly audit   abbrev: [ '1.1.1' ],
+211 silly audit   'are-we-there-yet': [ '2.0.0' ],
+211 silly audit   'console-control-strings': [ '1.1.0' ],
+211 silly audit   gauge: [ '3.0.2' ],
+211 silly audit   'set-blocking': [ '2.0.0' ],
+211 silly audit   delegates: [ '1.0.0' ],
+211 silly audit   'readable-stream': [ '3.6.2' ],
+211 silly audit   aproba: [ '2.1.0' ],
+211 silly audit   'color-support': [ '1.1.3' ],
+211 silly audit   'has-unicode': [ '2.0.1' ],
+211 silly audit   'object-assign': [ '4.1.1' ],
+211 silly audit   'signal-exit': [ '3.0.7' ],
+211 silly audit   'string-width': [ '4.2.3' ],
+211 silly audit   'strip-ansi': [ '6.0.1' ],
+211 silly audit   'wide-align': [ '1.1.5' ],
+211 silly audit   inherits: [ '2.0.4' ],
+211 silly audit   string_decoder: [ '1.3.0' ],
+211 silly audit   'util-deprecate': [ '1.0.2' ],
+211 silly audit   glob: [ '7.2.3' ],
+211 silly audit   'fs.realpath': [ '1.0.0' ],
+211 silly audit   inflight: [ '1.0.6' ],
+211 silly audit   minimatch: [ '3.1.2' ],
+211 silly audit   once: [ '1.4.0' ],
+211 silly audit   'path-is-absolute': [ '1.0.1' ],
+211 silly audit   wrappy: [ '1.0.2' ],
+211 silly audit   'brace-expansion': [ '1.1.12' ],
+211 silly audit   'balanced-match': [ '1.0.2' ],
+211 silly audit   'concat-map': [ '0.0.1' ],
+211 silly audit   'decompress-response': [ '4.2.1' ],
+211 silly audit   'simple-concat': [ '1.0.1' ],
+211 silly audit   'mimic-response': [ '2.1.0' ],
+211 silly audit   'safe-buffer': [ '5.2.1' ],
+211 silly audit   'emoji-regex': [ '8.0.0' ],
+211 silly audit   'is-fullwidth-code-point': [ '3.0.0' ],
+211 silly audit   'ansi-regex': [ '5.0.1' ],
+211 silly audit   chownr: [ '2.0.0' ],
+211 silly audit   'fs-minipass': [ '2.1.0' ],
+211 silly audit   minipass: [ '5.0.0', '3.3.6' ],
+211 silly audit   minizlib: [ '2.1.2' ],
+211 silly audit   mkdirp: [ '1.0.4' ],
+211 silly audit   yallist: [ '4.0.0' ],
+211 silly audit   tr46: [ '0.0.3' ],
+211 silly audit   'webidl-conversions': [ '3.0.1' ]
+211 silly audit }
+212 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-msvc
+213 silly reify mark deleted [
+213 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-msvc'
+213 silly reify ]
+214 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-gnu
+215 silly reify mark deleted [
+215 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-gnu'
+215 silly reify ]
+216 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-ia32-msvc
+217 silly reify mark deleted [
+217 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-ia32-msvc'
+217 silly reify ]
+218 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-arm64-msvc
+219 silly reify mark deleted [
+219 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-arm64-msvc'
+219 silly reify ]
+220 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-openharmony-arm64
+221 silly reify mark deleted [
+221 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-openharmony-arm64'
+221 silly reify ]
+222 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-musl
+223 silly reify mark deleted [
+223 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-musl'
+223 silly reify ]
+224 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-gnu
+225 silly reify mark deleted [
+225 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-gnu'
+225 silly reify ]
+226 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-s390x-gnu
+227 silly reify mark deleted [
+227 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-s390x-gnu'
+227 silly reify ]
+228 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-musl
+229 silly reify mark deleted [
+229 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-musl'
+229 silly reify ]
+230 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-gnu
+231 silly reify mark deleted [
+231 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-gnu'
+231 silly reify ]
+232 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-ppc64-gnu
+233 silly reify mark deleted [
+233 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-ppc64-gnu'
+233 silly reify ]
+234 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-loong64-gnu
+235 silly reify mark deleted [
+235 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-loong64-gnu'
+235 silly reify ]
+236 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-musl
+237 silly reify mark deleted [
+237 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-musl'
+237 silly reify ]
+238 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-gnu
+239 silly reify mark deleted [
+239 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-gnu'
+239 silly reify ]
+240 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-musleabihf
+241 silly reify mark deleted [
+241 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-musleabihf'
+241 silly reify ]
+242 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-gnueabihf
+243 silly reify mark deleted [
+243 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-gnueabihf'
+243 silly reify ]
+244 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-x64
+245 silly reify mark deleted [
+245 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-x64'
+245 silly reify ]
+246 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-arm64
+247 silly reify mark deleted [
+247 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-arm64'
+247 silly reify ]
+248 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-darwin-x64
+249 silly reify mark deleted [
+249 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-darwin-x64'
+249 silly reify ]
+250 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm64
+251 silly reify mark deleted [
+251 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm64'
+251 silly reify ]
+252 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm-eabi
+253 silly reify mark deleted [
+253 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm-eabi'
+253 silly reify ]
+254 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-x64
+255 silly reify mark deleted [
+255 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-x64'
+255 silly reify ]
+256 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-ia32
+257 silly reify mark deleted [
+257 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-ia32'
+257 silly reify ]
+258 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-arm64
+259 silly reify mark deleted [
+259 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-arm64'
+259 silly reify ]
+260 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/sunos-x64
+261 silly reify mark deleted [
+261 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/sunos-x64'
+261 silly reify ]
+262 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/openbsd-x64
+263 silly reify mark deleted [
+263 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/openbsd-x64'
+263 silly reify ]
+264 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/netbsd-x64
+265 silly reify mark deleted [
+265 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/netbsd-x64'
+265 silly reify ]
+266 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-x64
+267 silly reify mark deleted [
+267 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-x64'
+267 silly reify ]
+268 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-s390x
+269 silly reify mark deleted [
+269 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-s390x'
+269 silly reify ]
+270 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-riscv64
+271 silly reify mark deleted [
+271 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-riscv64'
+271 silly reify ]
+272 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ppc64
+273 silly reify mark deleted [
+273 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ppc64'
+273 silly reify ]
+274 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-mips64el
+275 silly reify mark deleted [
+275 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-mips64el'
+275 silly reify ]
+276 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-loong64
+277 silly reify mark deleted [
+277 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-loong64'
+277 silly reify ]
+278 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ia32
+279 silly reify mark deleted [
+279 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ia32'
+279 silly reify ]
+280 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm64
+281 silly reify mark deleted [
+281 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm64'
+281 silly reify ]
+282 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm
+283 silly reify mark deleted [
+283 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm'
+283 silly reify ]
+284 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-x64
+285 silly reify mark deleted [
+285 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-x64'
+285 silly reify ]
+286 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-arm64
+287 silly reify mark deleted [
+287 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-arm64'
+287 silly reify ]
+288 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/darwin-x64
+289 silly reify mark deleted [
+289 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/darwin-x64'
+289 silly reify ]
+290 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-x64
+291 silly reify mark deleted [
+291 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-x64'
+291 silly reify ]
+292 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm64
+293 silly reify mark deleted [
+293 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm64'
+293 silly reify ]
+294 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm
+295 silly reify mark deleted [
+295 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm'
+295 silly reify ]
+296 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/aix-ppc64
+297 silly reify mark deleted [
+297 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/aix-ppc64'
+297 silly reify ]
+298 silly tarball no local data for webidl-conversions@https://registry.npmjs.org/webidl-conversions/-/webidl-conversions-3.0.1.tgz. Extracting by manifest.
+299 silly tarball no local data for tr46@https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz. Extracting by manifest.
+300 silly tarball no local data for yallist@https://registry.npmjs.org/yallist/-/yallist-4.0.0.tgz. Extracting by manifest.
+301 silly tarball no local data for minipass@https://registry.npmjs.org/minipass/-/minipass-5.0.0.tgz. Extracting by manifest.
+302 silly tarball no local data for fs-minipass@https://registry.npmjs.org/fs-minipass/-/fs-minipass-2.1.0.tgz. Extracting by manifest.
+303 silly tarball no local data for chownr@https://registry.npmjs.org/chownr/-/chownr-2.0.0.tgz. Extracting by manifest.
+304 silly tarball no local data for minizlib@https://registry.npmjs.org/minizlib/-/minizlib-2.1.2.tgz. Extracting by manifest.
+305 silly tarball no local data for mkdirp@https://registry.npmjs.org/mkdirp/-/mkdirp-1.0.4.tgz. Extracting by manifest.
+306 silly tarball no local data for ansi-regex@https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz. Extracting by manifest.
+307 silly tarball no local data for is-fullwidth-code-point@https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz. Extracting by manifest.
+308 silly tarball no local data for mimic-response@https://registry.npmjs.org/mimic-response/-/mimic-response-2.1.0.tgz. Extracting by manifest.
+309 silly tarball no local data for simple-concat@https://registry.npmjs.org/simple-concat/-/simple-concat-1.0.1.tgz. Extracting by manifest.
+310 silly tarball no local data for safe-buffer@https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz. Extracting by manifest.
+311 silly tarball no local data for decompress-response@https://registry.npmjs.org/decompress-response/-/decompress-response-4.2.1.tgz. Extracting by manifest.
+312 silly tarball no local data for concat-map@https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz. Extracting by manifest.
+313 silly tarball no local data for emoji-regex@https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz. Extracting by manifest.
+314 silly tarball no local data for balanced-match@https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz. Extracting by manifest.
+315 silly tarball no local data for wrappy@https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz. Extracting by manifest.
+316 silly tarball no local data for once@https://registry.npmjs.org/once/-/once-1.4.0.tgz. Extracting by manifest.
+317 silly tarball no local data for brace-expansion@https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz. Extracting by manifest.
+318 silly tarball no local data for path-is-absolute@https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz. Extracting by manifest.
+319 silly tarball no local data for minimatch@https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz. Extracting by manifest.
+320 silly tarball no local data for fs.realpath@https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz. Extracting by manifest.
+321 silly tarball no local data for inflight@https://registry.npmjs.org/inflight/-/inflight-1.0.6.tgz. Extracting by manifest.
+322 silly tarball no local data for glob@https://registry.npmjs.org/glob/-/glob-7.2.3.tgz. Extracting by manifest.
+323 silly tarball no local data for string_decoder@https://registry.npmjs.org/string_decoder/-/string_decoder-1.3.0.tgz. Extracting by manifest.
+324 silly tarball no local data for inherits@https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz. Extracting by manifest.
+325 silly tarball no local data for util-deprecate@https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz. Extracting by manifest.
+326 silly tarball no local data for wide-align@https://registry.npmjs.org/wide-align/-/wide-align-1.1.5.tgz. Extracting by manifest.
+327 silly tarball no local data for signal-exit@https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.7.tgz. Extracting by manifest.
+328 silly tarball no local data for string-width@https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz. Extracting by manifest.
+329 silly tarball no local data for strip-ansi@https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz. Extracting by manifest.
+330 silly tarball no local data for has-unicode@https://registry.npmjs.org/has-unicode/-/has-unicode-2.0.1.tgz. Extracting by manifest.
+331 silly tarball no local data for color-support@https://registry.npmjs.org/color-support/-/color-support-1.1.3.tgz. Extracting by manifest.
+332 silly tarball no local data for aproba@https://registry.npmjs.org/aproba/-/aproba-2.1.0.tgz. Extracting by manifest.
+333 silly tarball no local data for gauge@https://registry.npmjs.org/gauge/-/gauge-3.0.2.tgz. Extracting by manifest.
+334 silly tarball no local data for object-assign@https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz. Extracting by manifest.
+335 silly tarball no local data for set-blocking@https://registry.npmjs.org/set-blocking/-/set-blocking-2.0.0.tgz. Extracting by manifest.
+336 silly tarball no local data for delegates@https://registry.npmjs.org/delegates/-/delegates-1.0.0.tgz. Extracting by manifest.
+337 silly tarball no local data for readable-stream@https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz. Extracting by manifest.
+338 silly tarball no local data for abbrev@https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz. Extracting by manifest.
+339 silly tarball no local data for console-control-strings@https://registry.npmjs.org/console-control-strings/-/console-control-strings-1.1.0.tgz. Extracting by manifest.
+340 silly tarball no local data for debug@https://registry.npmjs.org/debug/-/debug-4.4.3.tgz. Extracting by manifest.
+341 silly tarball no local data for are-we-there-yet@https://registry.npmjs.org/are-we-there-yet/-/are-we-there-yet-2.0.0.tgz. Extracting by manifest.
+342 silly tarball no local data for tar@https://registry.npmjs.org/tar/-/tar-6.2.1.tgz. Extracting by manifest.
+343 silly tarball no local data for whatwg-url@https://registry.npmjs.org/whatwg-url/-/whatwg-url-5.0.0.tgz. Extracting by manifest.
+344 silly tarball no local data for ms@https://registry.npmjs.org/ms/-/ms-2.1.3.tgz. Extracting by manifest.
+345 silly tarball no local data for rimraf@https://registry.npmjs.org/rimraf/-/rimraf-3.0.2.tgz. Extracting by manifest.
+346 silly tarball no local data for semver@https://registry.npmjs.org/semver/-/semver-7.7.3.tgz. Extracting by manifest.
+347 silly tarball no local data for npmlog@https://registry.npmjs.org/npmlog/-/npmlog-5.0.1.tgz. Extracting by manifest.
+348 silly tarball no local data for nopt@https://registry.npmjs.org/nopt/-/nopt-5.0.0.tgz. Extracting by manifest.
+349 silly tarball no local data for node-fetch@https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz. Extracting by manifest.
+350 silly tarball no local data for agent-base@https://registry.npmjs.org/agent-base/-/agent-base-6.0.2.tgz. Extracting by manifest.
+351 silly tarball no local data for https-proxy-agent@https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-5.0.1.tgz. Extracting by manifest.
+352 silly tarball no local data for make-dir@https://registry.npmjs.org/make-dir/-/make-dir-3.1.0.tgz. Extracting by manifest.
+353 silly tarball no local data for detect-libc@https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz. Extracting by manifest.
+354 silly tarball no local data for simple-get@https://registry.npmjs.org/simple-get/-/simple-get-3.1.1.tgz. Extracting by manifest.
+355 silly tarball no local data for @mapbox/node-pre-gyp@https://registry.npmjs.org/@mapbox/node-pre-gyp/-/node-pre-gyp-1.0.11.tgz. Extracting by manifest.
+356 silly tarball no local data for path2d-polyfill@https://registry.npmjs.org/path2d-polyfill/-/path2d-polyfill-2.0.1.tgz. Extracting by manifest.
+357 silly tarball no local data for canvas@https://registry.npmjs.org/canvas/-/canvas-2.11.2.tgz. Extracting by manifest.
+358 silly tarball no local data for pdfjs-dist@https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-3.11.174.tgz. Extracting by manifest.
+359 silly tarball no local data for nan@https://registry.npmjs.org/nan/-/nan-2.23.1.tgz. Extracting by manifest.
+360 silly tarball no local data for minipass@https://registry.npmjs.org/minipass/-/minipass-3.3.6.tgz. Extracting by manifest.
+361 silly tarball no local data for minipass@https://registry.npmjs.org/minipass/-/minipass-3.3.6.tgz. Extracting by manifest.
+362 silly tarball no local data for semver@https://registry.npmjs.org/semver/-/semver-6.3.1.tgz. Extracting by manifest.
+363 http fetch GET 200 https://registry.npmjs.org/yallist/-/yallist-4.0.0.tgz 73ms (cache miss)
+364 http fetch GET 200 https://registry.npmjs.org/mkdirp/-/mkdirp-1.0.4.tgz 72ms (cache miss)
+365 http fetch GET 200 https://registry.npmjs.org/chownr/-/chownr-2.0.0.tgz 73ms (cache miss)
+366 http fetch GET 200 https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz 73ms (cache miss)
+367 http fetch GET 200 https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz 73ms (cache miss)
+368 http fetch GET 200 https://registry.npmjs.org/fs-minipass/-/fs-minipass-2.1.0.tgz 74ms (cache miss)
+369 http fetch GET 200 https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz 75ms (cache miss)
+370 http fetch GET 200 https://registry.npmjs.org/minizlib/-/minizlib-2.1.2.tgz 73ms (cache miss)
+371 http fetch GET 200 https://registry.npmjs.org/webidl-conversions/-/webidl-conversions-3.0.1.tgz 76ms (cache miss)
+372 http fetch GET 200 https://registry.npmjs.org/minipass/-/minipass-5.0.0.tgz 75ms (cache miss)
+373 http fetch GET 200 https://registry.npmjs.org/decompress-response/-/decompress-response-4.2.1.tgz 79ms (cache miss)
+374 http fetch GET 200 https://registry.npmjs.org/mimic-response/-/mimic-response-2.1.0.tgz 82ms (cache miss)
+375 http fetch GET 200 https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz 88ms (cache miss)
+376 http fetch GET 200 https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.12.tgz 86ms (cache miss)
+377 http fetch GET 200 https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz 90ms (cache miss)
+378 http fetch GET 200 https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz 91ms (cache miss)
+379 http fetch GET 200 https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz 98ms (cache miss)
+380 http fetch GET 200 https://registry.npmjs.org/once/-/once-1.4.0.tgz 98ms (cache miss)
+381 http fetch GET 200 https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz 109ms (cache miss)
+382 http fetch GET 200 https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz 106ms (cache miss)
+383 http fetch GET 200 https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz 108ms (cache miss)
+384 http fetch GET 200 https://registry.npmjs.org/minimatch/-/minimatch-3.1.2.tgz 106ms (cache miss)
+385 http fetch GET 200 https://registry.npmjs.org/string_decoder/-/string_decoder-1.3.0.tgz 105ms (cache miss)
+386 http fetch GET 200 https://registry.npmjs.org/glob/-/glob-7.2.3.tgz 106ms (cache miss)
+387 warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+388 http fetch GET 200 https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz 105ms (cache miss)
+389 http fetch GET 200 https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz 109ms (cache miss)
+390 http fetch GET 200 https://registry.npmjs.org/wide-align/-/wide-align-1.1.5.tgz 114ms (cache miss)
+391 http fetch GET 200 https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.7.tgz 115ms (cache miss)
+392 http fetch GET 200 https://registry.npmjs.org/inflight/-/inflight-1.0.6.tgz 128ms (cache miss)
+393 warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+394 http fetch GET 200 https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz 126ms (cache miss)
+395 http fetch GET 200 https://registry.npmjs.org/aproba/-/aproba-2.1.0.tgz 126ms (cache miss)
+396 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 154ms
+397 silly audit report {
+397 silly audit report   esbuild: [
+397 silly audit report     {
+397 silly audit report       id: 1102341,
+397 silly audit report       url: 'https://github.com/advisories/GHSA-67mh-4wv8-2f99',
+397 silly audit report       title: 'esbuild enables any website to send any requests to the development server and read the response',
+397 silly audit report       severity: 'moderate',
+397 silly audit report       vulnerable_versions: '<=0.24.2',
+397 silly audit report       cwe: [Array],
+397 silly audit report       cvss: [Object]
+397 silly audit report     }
+397 silly audit report   ],
+397 silly audit report   'pdfjs-dist': [
+397 silly audit report     {
+397 silly audit report       id: 1104044,
+397 silly audit report       url: 'https://github.com/advisories/GHSA-wgrm-67xf-hhpq',
+397 silly audit report       title: 'PDF.js vulnerable to arbitrary JavaScript execution upon opening a malicious PDF',
+397 silly audit report       severity: 'high',
+397 silly audit report       vulnerable_versions: '<=4.1.392',
+397 silly audit report       cwe: [Array],
+397 silly audit report       cvss: [Object]
+397 silly audit report     }
+397 silly audit report   ]
+397 silly audit report }
+398 http fetch GET 200 https://registry.npmjs.org/color-support/-/color-support-1.1.3.tgz 152ms (cache miss)
+399 http fetch GET 200 https://registry.npmjs.org/simple-concat/-/simple-concat-1.0.1.tgz 160ms (cache miss)
+400 http fetch GET 200 https://registry.npmjs.org/has-unicode/-/has-unicode-2.0.1.tgz 154ms (cache miss)
+401 http fetch GET 200 https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz 154ms (cache miss)
+402 http fetch GET 200 https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz 154ms (cache miss)
+403 http fetch GET 200 https://registry.npmjs.org/set-blocking/-/set-blocking-2.0.0.tgz 154ms (cache miss)
+404 http fetch GET 200 https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz 156ms (cache miss)
+405 http fetch GET 200 https://registry.npmjs.org/delegates/-/delegates-1.0.0.tgz 155ms (cache miss)
+406 http fetch GET 200 https://registry.npmjs.org/debug/-/debug-4.4.3.tgz 160ms (cache miss)
+407 http fetch GET 200 https://registry.npmjs.org/gauge/-/gauge-3.0.2.tgz 164ms (cache miss)
+408 warn deprecated gauge@3.0.2: This package is no longer supported.
+409 http fetch GET 200 https://registry.npmjs.org/ms/-/ms-2.1.3.tgz 164ms (cache miss)
+410 http fetch GET 200 https://registry.npmjs.org/are-we-there-yet/-/are-we-there-yet-2.0.0.tgz 165ms (cache miss)
+411 warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+412 http fetch GET 200 https://registry.npmjs.org/rimraf/-/rimraf-3.0.2.tgz 164ms (cache miss)
+413 warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+414 http fetch GET 200 https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz 167ms (cache miss)
+415 http fetch GET 200 https://registry.npmjs.org/console-control-strings/-/console-control-strings-1.1.0.tgz 167ms (cache miss)
+416 http fetch GET 200 https://registry.npmjs.org/semver/-/semver-7.7.3.tgz 168ms (cache miss)
+417 http fetch GET 200 https://registry.npmjs.org/nopt/-/nopt-5.0.0.tgz 172ms (cache miss)
+418 http fetch GET 200 https://registry.npmjs.org/make-dir/-/make-dir-3.1.0.tgz 173ms (cache miss)
+419 http fetch GET 200 https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-5.0.1.tgz 177ms (cache miss)
+420 http fetch GET 200 https://registry.npmjs.org/whatwg-url/-/whatwg-url-5.0.0.tgz 181ms (cache miss)
+421 http fetch GET 200 https://registry.npmjs.org/npmlog/-/npmlog-5.0.1.tgz 181ms (cache miss)
+422 warn deprecated npmlog@5.0.1: This package is no longer supported.
+423 http fetch GET 200 https://registry.npmjs.org/node-fetch/-/node-fetch-2.7.0.tgz 183ms (cache miss)
+424 http fetch GET 200 https://registry.npmjs.org/tar/-/tar-6.2.1.tgz 186ms (cache miss)
+425 http fetch GET 200 https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz 184ms (cache miss)
+426 http fetch GET 200 https://registry.npmjs.org/agent-base/-/agent-base-6.0.2.tgz 202ms (cache miss)
+427 http fetch GET 200 https://registry.npmjs.org/path2d-polyfill/-/path2d-polyfill-2.0.1.tgz 202ms (cache miss)
+428 http fetch GET 200 https://registry.npmjs.org/simple-get/-/simple-get-3.1.1.tgz 202ms (cache miss)
+429 http fetch GET 200 https://registry.npmjs.org/minipass/-/minipass-3.3.6.tgz 202ms (cache miss)
+430 http fetch GET 200 https://registry.npmjs.org/esbuild 94ms (cache revalidated)
+431 http fetch GET 200 https://registry.npmjs.org/canvas/-/canvas-2.11.2.tgz 222ms (cache miss)
+432 http fetch GET 200 https://registry.npmjs.org/minipass/-/minipass-3.3.6.tgz 222ms (cache miss)
+433 http fetch GET 200 https://registry.npmjs.org/@mapbox/node-pre-gyp/-/node-pre-gyp-1.0.11.tgz 253ms (cache miss)
+434 http fetch GET 200 https://registry.npmjs.org/vite 46ms (cache revalidated)
+435 http fetch GET 200 https://registry.npmjs.org/nan/-/nan-2.23.1.tgz 293ms (cache miss)
+436 http fetch GET 200 https://registry.npmjs.org/semver/-/semver-6.3.1.tgz 469ms (cache miss)
+437 http fetch GET 200 https://registry.npmjs.org/@vitejs%2fplugin-vue 316ms (cache revalidated)
+438 http fetch GET 200 https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-3.11.174.tgz 633ms (cache miss)
+439 info run canvas@2.11.2 install node_modules/canvas node-pre-gyp install --fallback-to-build --update-binary
+440 info run canvas@2.11.2 install { code: 0, signal: null }
+441 silly ADD node_modules/webidl-conversions
+442 silly ADD node_modules/tr46
+443 silly ADD node_modules/yallist
+444 silly ADD node_modules/mkdirp
+445 silly ADD node_modules/minizlib
+446 silly ADD node_modules/minizlib/node_modules/minipass
+447 silly ADD node_modules/minipass
+448 silly ADD node_modules/fs-minipass
+449 silly ADD node_modules/fs-minipass/node_modules/minipass
+450 silly ADD node_modules/chownr
+451 silly ADD node_modules/ansi-regex
+452 silly ADD node_modules/is-fullwidth-code-point
+453 silly ADD node_modules/emoji-regex
+454 silly ADD node_modules/safe-buffer
+455 silly ADD node_modules/mimic-response
+456 silly ADD node_modules/simple-concat
+457 silly ADD node_modules/decompress-response
+458 silly ADD node_modules/concat-map
+459 silly ADD node_modules/balanced-match
+460 silly ADD node_modules/brace-expansion
+461 silly ADD node_modules/wrappy
+462 silly ADD node_modules/path-is-absolute
+463 silly ADD node_modules/once
+464 silly ADD node_modules/minimatch
+465 silly ADD node_modules/inflight
+466 silly ADD node_modules/fs.realpath
+467 silly ADD node_modules/glob
+468 silly ADD node_modules/util-deprecate
+469 silly ADD node_modules/string_decoder
+470 silly ADD node_modules/inherits
+471 silly ADD node_modules/wide-align
+472 silly ADD node_modules/strip-ansi
+473 silly ADD node_modules/string-width
+474 silly ADD node_modules/signal-exit
+475 silly ADD node_modules/object-assign
+476 silly ADD node_modules/has-unicode
+477 silly ADD node_modules/color-support
+478 silly ADD node_modules/aproba
+479 silly ADD node_modules/readable-stream
+480 silly ADD node_modules/delegates
+481 silly ADD node_modules/set-blocking
+482 silly ADD node_modules/gauge
+483 silly ADD node_modules/console-control-strings
+484 silly ADD node_modules/are-we-there-yet
+485 silly ADD node_modules/abbrev
+486 silly ADD node_modules/whatwg-url
+487 silly ADD node_modules/ms
+488 silly ADD node_modules/debug
+489 silly ADD node_modules/agent-base
+490 silly ADD node_modules/tar
+491 silly ADD node_modules/semver
+492 silly ADD node_modules/rimraf
+493 silly ADD node_modules/npmlog
+494 silly ADD node_modules/nopt
+495 silly ADD node_modules/node-fetch
+496 silly ADD node_modules/make-dir
+497 silly ADD node_modules/make-dir/node_modules/semver
+498 silly ADD node_modules/https-proxy-agent
+499 silly ADD node_modules/detect-libc
+500 silly ADD node_modules/simple-get
+501 silly ADD node_modules/nan
+502 silly ADD node_modules/@mapbox/node-pre-gyp
+503 silly ADD node_modules/path2d-polyfill
+504 silly ADD node_modules/canvas
+505 silly ADD
+506 silly ADD
+507 silly ADD
+508 silly ADD
+509 silly ADD
+510 silly ADD
+511 silly ADD
+512 silly ADD
+513 silly ADD
+514 silly ADD
+515 silly ADD
+516 silly ADD
+517 silly ADD
+518 silly ADD
+519 silly ADD
+520 silly ADD
+521 silly ADD
+522 silly ADD
+523 silly ADD
+524 silly ADD
+525 silly ADD
+526 silly ADD
+527 silly ADD
+528 silly ADD
+529 silly ADD
+530 silly ADD
+531 silly ADD
+532 silly ADD
+533 silly ADD
+534 silly ADD
+535 silly ADD
+536 silly ADD
+537 silly ADD
+538 silly ADD
+539 silly ADD
+540 silly ADD
+541 silly ADD
+542 silly ADD
+543 silly ADD
+544 silly ADD
+545 silly ADD
+546 silly ADD
+547 silly ADD
+548 silly CHANGE node_modules/pdfjs-dist
+549 silly REMOVE node_modules/@napi-rs/canvas-darwin-arm64
+550 silly REMOVE node_modules/@napi-rs/canvas
+551 verbose exit 0
+552 info ok

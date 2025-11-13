@@ -1,0 +1,1601 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.7.0
+2 info using node@v20.15.0
+3 silly config:load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config:load:file:/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/.npmrc
+5 silly config:load:file:/Users/artemsaraiev/.npmrc
+6 silly config:load:file:/usr/local/etc/npmrc
+7 verbose title npm i pdfjs-dist@^4
+8 verbose argv "i" "pdfjs-dist@^4" "--cache" ".npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/.npm-cache/_logs/2025-11-08T23_35_34_140Z-
+10 verbose logfile /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/.npm-cache/_logs/2025-11-08T23_35_34_140Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly idealTree buildDeps
+13 silly fetch manifest pdfjs-dist@^4
+14 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+15 http fetch GET 200 https://registry.npmjs.org/pdfjs-dist 117ms (cache miss)
+16 silly placeDep ROOT pdfjs-dist@4.10.38 OK for: pubdiscuss@0.0.0 want: ^4
+17 silly fetch manifest @napi-rs/canvas@^0.1.65
+18 http fetch GET 200 https://registry.npmjs.org/npm 239ms
+19 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas 201ms (cache miss)
+20 silly placeDep ROOT @napi-rs/canvas@0.1.81 OK for: pdfjs-dist@4.10.38 want: ^0.1.65
+21 silly fetch manifest @napi-rs/canvas-linux-x64-gnu@0.1.81
+22 silly fetch manifest @napi-rs/canvas-darwin-x64@0.1.81
+23 silly fetch manifest @napi-rs/canvas-win32-x64-msvc@0.1.81
+24 silly fetch manifest @napi-rs/canvas-linux-arm-gnueabihf@0.1.81
+25 silly fetch manifest @napi-rs/canvas-linux-x64-musl@0.1.81
+26 silly fetch manifest @napi-rs/canvas-linux-arm64-gnu@0.1.81
+27 silly fetch manifest @napi-rs/canvas-linux-arm64-musl@0.1.81
+28 silly fetch manifest @napi-rs/canvas-darwin-arm64@0.1.81
+29 silly fetch manifest @napi-rs/canvas-android-arm64@0.1.81
+30 silly fetch manifest @napi-rs/canvas-linux-riscv64-gnu@0.1.81
+31 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-linux-x64-gnu 90ms (cache miss)
+32 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-android-arm64 102ms (cache miss)
+33 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-linux-arm64-gnu 128ms (cache miss)
+34 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-linux-arm64-musl 128ms (cache miss)
+35 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-linux-x64-musl 138ms (cache miss)
+36 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-darwin-x64 139ms (cache miss)
+37 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-darwin-arm64 145ms (cache miss)
+38 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-linux-riscv64-gnu 150ms (cache miss)
+39 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-win32-x64-msvc 169ms (cache miss)
+40 http fetch GET 200 https://registry.npmjs.org/@napi-rs%2fcanvas-linux-arm-gnueabihf 192ms (cache miss)
+41 silly placeDep ROOT @napi-rs/canvas-android-arm64@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+42 silly placeDep ROOT @napi-rs/canvas-darwin-arm64@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+43 silly placeDep ROOT @napi-rs/canvas-darwin-x64@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+44 silly placeDep ROOT @napi-rs/canvas-linux-arm-gnueabihf@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+45 silly placeDep ROOT @napi-rs/canvas-linux-arm64-gnu@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+46 silly placeDep ROOT @napi-rs/canvas-linux-arm64-musl@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+47 silly placeDep ROOT @napi-rs/canvas-linux-riscv64-gnu@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+48 silly placeDep ROOT @napi-rs/canvas-linux-x64-gnu@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+49 silly placeDep ROOT @napi-rs/canvas-linux-x64-musl@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+50 silly placeDep ROOT @napi-rs/canvas-win32-x64-msvc@0.1.81 OK for: @napi-rs/canvas@0.1.81 want: 0.1.81
+51 silly reify moves {}
+52 silly audit bulk request {
+52 silly audit   '@babel/helper-string-parser': [ '7.27.1' ],
+52 silly audit   '@babel/helper-validator-identifier': [ '7.28.5' ],
+52 silly audit   '@babel/parser': [ '7.28.5' ],
+52 silly audit   '@babel/types': [ '7.28.5' ],
+52 silly audit   '@esbuild/aix-ppc64': [ '0.21.5' ],
+52 silly audit   '@esbuild/android-arm': [ '0.21.5' ],
+52 silly audit   '@esbuild/android-arm64': [ '0.21.5' ],
+52 silly audit   '@esbuild/android-x64': [ '0.21.5' ],
+52 silly audit   '@esbuild/darwin-arm64': [ '0.21.5' ],
+52 silly audit   '@esbuild/darwin-x64': [ '0.21.5' ],
+52 silly audit   '@esbuild/freebsd-arm64': [ '0.21.5' ],
+52 silly audit   '@esbuild/freebsd-x64': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-arm': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-arm64': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-ia32': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-loong64': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-mips64el': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-ppc64': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-riscv64': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-s390x': [ '0.21.5' ],
+52 silly audit   '@esbuild/linux-x64': [ '0.21.5' ],
+52 silly audit   '@esbuild/netbsd-x64': [ '0.21.5' ],
+52 silly audit   '@esbuild/openbsd-x64': [ '0.21.5' ],
+52 silly audit   '@esbuild/sunos-x64': [ '0.21.5' ],
+52 silly audit   '@esbuild/win32-arm64': [ '0.21.5' ],
+52 silly audit   '@esbuild/win32-ia32': [ '0.21.5' ],
+52 silly audit   '@esbuild/win32-x64': [ '0.21.5' ],
+52 silly audit   '@jridgewell/sourcemap-codec': [ '1.5.5' ],
+52 silly audit   '@rollup/rollup-android-arm-eabi': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-android-arm64': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-darwin-arm64': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-darwin-x64': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-freebsd-arm64': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-freebsd-x64': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-arm-gnueabihf': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-arm-musleabihf': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-arm64-gnu': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-arm64-musl': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-loong64-gnu': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-ppc64-gnu': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-riscv64-gnu': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-riscv64-musl': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-s390x-gnu': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-x64-gnu': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-linux-x64-musl': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-openharmony-arm64': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-win32-arm64-msvc': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-win32-ia32-msvc': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-win32-x64-gnu': [ '4.52.5' ],
+52 silly audit   '@rollup/rollup-win32-x64-msvc': [ '4.52.5' ],
+52 silly audit   '@tsconfig/node20': [ '20.1.6' ],
+52 silly audit   '@types/estree': [ '1.0.8' ],
+52 silly audit   '@types/node': [ '22.18.12' ],
+52 silly audit   '@vitejs/plugin-vue': [ '5.2.4' ],
+52 silly audit   '@vue/compiler-core': [ '3.5.22' ],
+52 silly audit   '@vue/compiler-dom': [ '3.5.22' ],
+52 silly audit   '@vue/compiler-sfc': [ '3.5.22' ],
+52 silly audit   '@vue/compiler-ssr': [ '3.5.22' ],
+52 silly audit   '@vue/devtools-api': [ '6.6.4' ],
+52 silly audit   '@vue/reactivity': [ '3.5.22' ],
+52 silly audit   '@vue/runtime-core': [ '3.5.22' ],
+52 silly audit   '@vue/runtime-dom': [ '3.5.22' ],
+52 silly audit   '@vue/server-renderer': [ '3.5.22' ],
+52 silly audit   '@vue/shared': [ '3.5.22' ],
+52 silly audit   asynckit: [ '0.4.0' ],
+52 silly audit   axios: [ '1.12.2' ],
+52 silly audit   'call-bind-apply-helpers': [ '1.0.2' ],
+52 silly audit   'combined-stream': [ '1.0.8' ],
+52 silly audit   csstype: [ '3.1.3' ],
+52 silly audit   'delayed-stream': [ '1.0.0' ],
+52 silly audit   'dunder-proto': [ '1.0.1' ],
+52 silly audit   entities: [ '4.5.0' ],
+52 silly audit   'es-define-property': [ '1.0.1' ],
+52 silly audit   'es-errors': [ '1.3.0' ],
+52 silly audit   'es-object-atoms': [ '1.1.1' ],
+52 silly audit   'es-set-tostringtag': [ '2.1.0' ],
+52 silly audit   esbuild: [ '0.21.5' ],
+52 silly audit   'estree-walker': [ '2.0.2' ],
+52 silly audit   'follow-redirects': [ '1.15.11' ],
+52 silly audit   'form-data': [ '4.0.4' ],
+52 silly audit   fsevents: [ '2.3.3' ],
+52 silly audit   'function-bind': [ '1.1.2' ],
+52 silly audit   'get-intrinsic': [ '1.3.0' ],
+52 silly audit   'get-proto': [ '1.0.1' ],
+52 silly audit   gopd: [ '1.2.0' ],
+52 silly audit   'has-symbols': [ '1.1.0' ],
+52 silly audit   'has-tostringtag': [ '1.0.2' ],
+52 silly audit   hasown: [ '2.0.2' ],
+52 silly audit   'magic-string': [ '0.30.21' ],
+52 silly audit   'math-intrinsics': [ '1.1.0' ],
+52 silly audit   'mime-db': [ '1.52.0' ],
+52 silly audit   'mime-types': [ '2.1.35' ],
+52 silly audit   nanoid: [ '3.3.11' ],
+52 silly audit   picocolors: [ '1.1.1' ],
+52 silly audit   pinia: [ '2.3.1' ],
+52 silly audit   postcss: [ '8.5.6' ],
+52 silly audit   'proxy-from-env': [ '1.1.0' ],
+52 silly audit   rollup: [ '4.52.5' ],
+52 silly audit   'source-map-js': [ '1.2.1' ],
+52 silly audit   typescript: [ '5.9.3' ],
+52 silly audit   'undici-types': [ '6.21.0' ],
+52 silly audit   vite: [ '5.4.21' ],
+52 silly audit   vue: [ '3.5.22' ],
+52 silly audit   'vue-demi': [ '0.14.10' ],
+52 silly audit   'vue-router': [ '4.6.3' ],
+52 silly audit   'pdfjs-dist': [ '4.10.38' ],
+52 silly audit   '@napi-rs/canvas': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-android-arm64': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-darwin-arm64': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-darwin-x64': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-linux-arm-gnueabihf': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-linux-arm64-gnu': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-linux-arm64-musl': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-linux-riscv64-gnu': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-linux-x64-gnu': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-linux-x64-musl': [ '0.1.81' ],
+52 silly audit   '@napi-rs/canvas-win32-x64-msvc': [ '0.1.81' ]
+52 silly audit }
+53 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-win32-x64-msvc
+54 silly reify mark deleted [
+54 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-win32-x64-msvc'
+54 silly reify ]
+55 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-x64-musl
+56 silly reify mark deleted [
+56 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-x64-musl'
+56 silly reify ]
+57 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-x64-gnu
+58 silly reify mark deleted [
+58 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-x64-gnu'
+58 silly reify ]
+59 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-riscv64-gnu
+60 silly reify mark deleted [
+60 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-riscv64-gnu'
+60 silly reify ]
+61 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-arm64-musl
+62 silly reify mark deleted [
+62 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-arm64-musl'
+62 silly reify ]
+63 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-arm64-gnu
+64 silly reify mark deleted [
+64 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-arm64-gnu'
+64 silly reify ]
+65 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-arm-gnueabihf
+66 silly reify mark deleted [
+66 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-linux-arm-gnueabihf'
+66 silly reify ]
+67 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-darwin-x64
+68 silly reify mark deleted [
+68 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-darwin-x64'
+68 silly reify ]
+69 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-android-arm64
+70 silly reify mark deleted [
+70 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@napi-rs/canvas-android-arm64'
+70 silly reify ]
+71 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-msvc
+72 silly reify mark deleted [
+72 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-msvc'
+72 silly reify ]
+73 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-gnu
+74 silly reify mark deleted [
+74 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-x64-gnu'
+74 silly reify ]
+75 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-ia32-msvc
+76 silly reify mark deleted [
+76 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-ia32-msvc'
+76 silly reify ]
+77 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-arm64-msvc
+78 silly reify mark deleted [
+78 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-win32-arm64-msvc'
+78 silly reify ]
+79 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-openharmony-arm64
+80 silly reify mark deleted [
+80 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-openharmony-arm64'
+80 silly reify ]
+81 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-musl
+82 silly reify mark deleted [
+82 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-musl'
+82 silly reify ]
+83 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-gnu
+84 silly reify mark deleted [
+84 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-x64-gnu'
+84 silly reify ]
+85 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-s390x-gnu
+86 silly reify mark deleted [
+86 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-s390x-gnu'
+86 silly reify ]
+87 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-musl
+88 silly reify mark deleted [
+88 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-musl'
+88 silly reify ]
+89 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-gnu
+90 silly reify mark deleted [
+90 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-riscv64-gnu'
+90 silly reify ]
+91 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-ppc64-gnu
+92 silly reify mark deleted [
+92 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-ppc64-gnu'
+92 silly reify ]
+93 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-loong64-gnu
+94 silly reify mark deleted [
+94 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-loong64-gnu'
+94 silly reify ]
+95 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-musl
+96 silly reify mark deleted [
+96 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-musl'
+96 silly reify ]
+97 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-gnu
+98 silly reify mark deleted [
+98 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm64-gnu'
+98 silly reify ]
+99 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-musleabihf
+100 silly reify mark deleted [
+100 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-musleabihf'
+100 silly reify ]
+101 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-gnueabihf
+102 silly reify mark deleted [
+102 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-linux-arm-gnueabihf'
+102 silly reify ]
+103 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-x64
+104 silly reify mark deleted [
+104 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-x64'
+104 silly reify ]
+105 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-arm64
+106 silly reify mark deleted [
+106 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-freebsd-arm64'
+106 silly reify ]
+107 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-darwin-x64
+108 silly reify mark deleted [
+108 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-darwin-x64'
+108 silly reify ]
+109 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm64
+110 silly reify mark deleted [
+110 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm64'
+110 silly reify ]
+111 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm-eabi
+112 silly reify mark deleted [
+112 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@rollup/rollup-android-arm-eabi'
+112 silly reify ]
+113 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-x64
+114 silly reify mark deleted [
+114 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-x64'
+114 silly reify ]
+115 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-ia32
+116 silly reify mark deleted [
+116 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-ia32'
+116 silly reify ]
+117 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-arm64
+118 silly reify mark deleted [
+118 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/win32-arm64'
+118 silly reify ]
+119 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/sunos-x64
+120 silly reify mark deleted [
+120 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/sunos-x64'
+120 silly reify ]
+121 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/openbsd-x64
+122 silly reify mark deleted [
+122 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/openbsd-x64'
+122 silly reify ]
+123 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/netbsd-x64
+124 silly reify mark deleted [
+124 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/netbsd-x64'
+124 silly reify ]
+125 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-x64
+126 silly reify mark deleted [
+126 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-x64'
+126 silly reify ]
+127 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-s390x
+128 silly reify mark deleted [
+128 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-s390x'
+128 silly reify ]
+129 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-riscv64
+130 silly reify mark deleted [
+130 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-riscv64'
+130 silly reify ]
+131 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ppc64
+132 silly reify mark deleted [
+132 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ppc64'
+132 silly reify ]
+133 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-mips64el
+134 silly reify mark deleted [
+134 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-mips64el'
+134 silly reify ]
+135 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-loong64
+136 silly reify mark deleted [
+136 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-loong64'
+136 silly reify ]
+137 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ia32
+138 silly reify mark deleted [
+138 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-ia32'
+138 silly reify ]
+139 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm64
+140 silly reify mark deleted [
+140 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm64'
+140 silly reify ]
+141 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm
+142 silly reify mark deleted [
+142 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/linux-arm'
+142 silly reify ]
+143 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-x64
+144 silly reify mark deleted [
+144 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-x64'
+144 silly reify ]
+145 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-arm64
+146 silly reify mark deleted [
+146 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/freebsd-arm64'
+146 silly reify ]
+147 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/darwin-x64
+148 silly reify mark deleted [
+148 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/darwin-x64'
+148 silly reify ]
+149 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-x64
+150 silly reify mark deleted [
+150 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-x64'
+150 silly reify ]
+151 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm64
+152 silly reify mark deleted [
+152 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm64'
+152 silly reify ]
+153 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm
+154 silly reify mark deleted [
+154 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/android-arm'
+154 silly reify ]
+155 verbose reify failed optional dependency /Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/aix-ppc64
+156 silly reify mark deleted [
+156 silly reify   '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/@esbuild/aix-ppc64'
+156 silly reify ]
+157 silly tarball no local data for pdfjs-dist@https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-4.10.38.tgz. Extracting by manifest.
+158 silly tarball no local data for @napi-rs/canvas-darwin-arm64@https://registry.npmjs.org/@napi-rs/canvas-darwin-arm64/-/canvas-darwin-arm64-0.1.81.tgz. Extracting by manifest.
+159 silly tarball no local data for @napi-rs/canvas@https://registry.npmjs.org/@napi-rs/canvas/-/canvas-0.1.81.tgz. Extracting by manifest.
+160 http fetch GET 200 https://registry.npmjs.org/@napi-rs/canvas/-/canvas-0.1.81.tgz 102ms (cache miss)
+161 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 163ms
+162 silly audit report {
+162 silly audit report   esbuild: [
+162 silly audit report     {
+162 silly audit report       id: 1102341,
+162 silly audit report       url: 'https://github.com/advisories/GHSA-67mh-4wv8-2f99',
+162 silly audit report       title: 'esbuild enables any website to send any requests to the development server and read the response',
+162 silly audit report       severity: 'moderate',
+162 silly audit report       vulnerable_versions: '<=0.24.2',
+162 silly audit report       cwe: [Array],
+162 silly audit report       cvss: [Object]
+162 silly audit report     }
+162 silly audit report   ]
+162 silly audit report }
+163 http fetch GET 200 https://registry.npmjs.org/esbuild 432ms (cache miss)
+164 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitDingbats.pfb'
+165 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitDingbats.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitDingbats.pfb'] {
+165 silly tar   errno: -2,
+165 silly tar   code: 'ENOENT',
+165 silly tar   syscall: 'open',
+165 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitDingbats.pfb',
+165 silly tar   entry: ReadEntry {
+165 silly tar     _events: [Object: null prototype] {
+165 silly tar       end: [Function (anonymous)],
+165 silly tar       drain: [Function]
+165 silly tar     },
+165 silly tar     _eventsCount: 2,
+165 silly tar     _maxListeners: undefined,
+165 silly tar     writable: true,
+165 silly tar     readable: true,
+165 silly tar     extended: null,
+165 silly tar     globalExtended: null,
+165 silly tar     header: Header {
+165 silly tar       cksumValid: true,
+165 silly tar       needPax: false,
+165 silly tar       nullBlock: false,
+165 silly tar       block: null,
+165 silly tar       path: 'package/standard_fonts/FoxitDingbats.pfb',
+165 silly tar       mode: 420,
+165 silly tar       uid: null,
+165 silly tar       gid: null,
+165 silly tar       size: 29513,
+165 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+165 silly tar       cksum: 7004,
+165 silly tar       linkpath: '',
+165 silly tar       uname: '',
+165 silly tar       gname: '',
+165 silly tar       devmaj: 0,
+165 silly tar       devmin: 0,
+165 silly tar       atime: null,
+165 silly tar       ctime: null,
+165 silly tar       [Symbol(type)]: '0'
+165 silly tar     },
+165 silly tar     startBlockSize: 29696,
+165 silly tar     blockRemain: 22455,
+165 silly tar     remain: 22272,
+165 silly tar     type: 'File',
+165 silly tar     meta: false,
+165 silly tar     ignore: false,
+165 silly tar     path: 'standard_fonts/FoxitDingbats.pfb',
+165 silly tar     mode: 438,
+165 silly tar     uid: null,
+165 silly tar     gid: null,
+165 silly tar     uname: '',
+165 silly tar     gname: '',
+165 silly tar     size: 29513,
+165 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+165 silly tar     atime: null,
+165 silly tar     ctime: null,
+165 silly tar     linkpath: '',
+165 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitDingbats.pfb',
+165 silly tar     [Symbol(shapeMode)]: false,
+165 silly tar     [Symbol(kCapture)]: false,
+165 silly tar     [Symbol(flowing)]: false,
+165 silly tar     [Symbol(paused)]: true,
+165 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+165 silly tar     [Symbol(buffer)]: [
+165 silly tar       <Buffer a3 90 a4 8f 77 12 9f a4 13 ed c2 f7 57 15 f7 1f 98 f1 5c de 84 da 74 ad 9b 9e a4 b6 96 ab c5 c8 93 b2 c6 05 b3 07 5d c0 f7 07 8f f7 05 91 05 a4 8c 9f ... 2198 more bytes>
+165 silly tar     ],
+165 silly tar     [Symbol(objectMode)]: false,
+165 silly tar     [Symbol(encoding)]: null,
+165 silly tar     [Symbol(async)]: false,
+165 silly tar     [Symbol(decoder)]: null,
+165 silly tar     [Symbol(EOF)]: false,
+165 silly tar     [Symbol(emittedEnd)]: false,
+165 silly tar     [Symbol(emittingEnd)]: false,
+165 silly tar     [Symbol(closed)]: false,
+165 silly tar     [Symbol(emittedError)]: null,
+165 silly tar     [Symbol(bufferLength)]: 2248,
+165 silly tar     [Symbol(destroyed)]: false,
+165 silly tar     [Symbol(signal)]: undefined,
+165 silly tar     [Symbol(aborted)]: false
+165 silly tar   },
+165 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+165 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+165 silly tar }
+166 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixed.pfb'
+167 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixed.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixed.pfb'] {
+167 silly tar   errno: -2,
+167 silly tar   code: 'ENOENT',
+167 silly tar   syscall: 'open',
+167 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixed.pfb',
+167 silly tar   entry: ReadEntry {
+167 silly tar     _events: [Object: null prototype] {
+167 silly tar       end: [Function (anonymous)],
+167 silly tar       drain: [Function]
+167 silly tar     },
+167 silly tar     _eventsCount: 2,
+167 silly tar     _maxListeners: undefined,
+167 silly tar     writable: true,
+167 silly tar     readable: true,
+167 silly tar     extended: null,
+167 silly tar     globalExtended: null,
+167 silly tar     header: Header {
+167 silly tar       cksumValid: true,
+167 silly tar       needPax: false,
+167 silly tar       nullBlock: false,
+167 silly tar       block: null,
+167 silly tar       path: 'package/standard_fonts/FoxitFixed.pfb',
+167 silly tar       mode: 420,
+167 silly tar       uid: null,
+167 silly tar       gid: null,
+167 silly tar       size: 17597,
+167 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+167 silly tar       cksum: 6693,
+167 silly tar       linkpath: '',
+167 silly tar       uname: '',
+167 silly tar       gname: '',
+167 silly tar       devmaj: 0,
+167 silly tar       devmin: 0,
+167 silly tar       atime: null,
+167 silly tar       ctime: null,
+167 silly tar       [Symbol(type)]: '0'
+167 silly tar     },
+167 silly tar     startBlockSize: 17920,
+167 silly tar     blockRemain: 4275,
+167 silly tar     remain: 3952,
+167 silly tar     type: 'File',
+167 silly tar     meta: false,
+167 silly tar     ignore: false,
+167 silly tar     path: 'standard_fonts/FoxitFixed.pfb',
+167 silly tar     mode: 438,
+167 silly tar     uid: null,
+167 silly tar     gid: null,
+167 silly tar     uname: '',
+167 silly tar     gname: '',
+167 silly tar     size: 17597,
+167 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+167 silly tar     atime: null,
+167 silly tar     ctime: null,
+167 silly tar     linkpath: '',
+167 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixed.pfb',
+167 silly tar     [Symbol(shapeMode)]: false,
+167 silly tar     [Symbol(kCapture)]: false,
+167 silly tar     [Symbol(flowing)]: false,
+167 silly tar     [Symbol(paused)]: true,
+167 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+167 silly tar     [Symbol(buffer)]: [
+167 silly tar       <Buffer 43 53 fb 03 22 3d c5 f7 07 1e 0e 63 0a 58 0a f7 4c f8 95 15 f7 a6 de 6b d7 fb 92 fb 13 05 fb 02 fb dd 21 0a 63 0a f7 62 77 58 0a f7 32 f8 7d 15 f7 22 ... 2415 more bytes>
+167 silly tar     ],
+167 silly tar     [Symbol(objectMode)]: false,
+167 silly tar     [Symbol(encoding)]: null,
+167 silly tar     [Symbol(async)]: false,
+167 silly tar     [Symbol(decoder)]: null,
+167 silly tar     [Symbol(EOF)]: false,
+167 silly tar     [Symbol(emittedEnd)]: false,
+167 silly tar     [Symbol(emittingEnd)]: false,
+167 silly tar     [Symbol(closed)]: false,
+167 silly tar     [Symbol(emittedError)]: null,
+167 silly tar     [Symbol(bufferLength)]: 2465,
+167 silly tar     [Symbol(destroyed)]: false,
+167 silly tar     [Symbol(signal)]: undefined,
+167 silly tar     [Symbol(aborted)]: false
+167 silly tar   },
+167 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+167 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+167 silly tar }
+168 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBold.pfb'
+169 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBold.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBold.pfb'] {
+169 silly tar   errno: -2,
+169 silly tar   code: 'ENOENT',
+169 silly tar   syscall: 'open',
+169 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBold.pfb',
+169 silly tar   entry: ReadEntry {
+169 silly tar     _events: [Object: null prototype] {
+169 silly tar       end: [Function (anonymous)],
+169 silly tar       drain: [Function]
+169 silly tar     },
+169 silly tar     _eventsCount: 2,
+169 silly tar     _maxListeners: undefined,
+169 silly tar     writable: true,
+169 silly tar     readable: true,
+169 silly tar     extended: null,
+169 silly tar     globalExtended: null,
+169 silly tar     header: Header {
+169 silly tar       cksumValid: true,
+169 silly tar       needPax: false,
+169 silly tar       nullBlock: false,
+169 silly tar       block: null,
+169 silly tar       path: 'package/standard_fonts/FoxitFixedBold.pfb',
+169 silly tar       mode: 420,
+169 silly tar       uid: null,
+169 silly tar       gid: null,
+169 silly tar       size: 18055,
+169 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+169 silly tar       cksum: 7074,
+169 silly tar       linkpath: '',
+169 silly tar       uname: '',
+169 silly tar       gname: '',
+169 silly tar       devmaj: 0,
+169 silly tar       devmin: 0,
+169 silly tar       atime: null,
+169 silly tar       ctime: null,
+169 silly tar       [Symbol(type)]: '0'
+169 silly tar     },
+169 silly tar     startBlockSize: 18432,
+169 silly tar     blockRemain: 4055,
+169 silly tar     remain: 3678,
+169 silly tar     type: 'File',
+169 silly tar     meta: false,
+169 silly tar     ignore: false,
+169 silly tar     path: 'standard_fonts/FoxitFixedBold.pfb',
+169 silly tar     mode: 438,
+169 silly tar     uid: null,
+169 silly tar     gid: null,
+169 silly tar     uname: '',
+169 silly tar     gname: '',
+169 silly tar     size: 18055,
+169 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+169 silly tar     atime: null,
+169 silly tar     ctime: null,
+169 silly tar     linkpath: '',
+169 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBold.pfb',
+169 silly tar     [Symbol(shapeMode)]: false,
+169 silly tar     [Symbol(kCapture)]: false,
+169 silly tar     [Symbol(flowing)]: false,
+169 silly tar     [Symbol(paused)]: true,
+169 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+169 silly tar     [Symbol(buffer)]: [
+169 silly tar       <Buffer a4 9e 81 76 75 78 7e 72 73 76 98 a1 1e fb 27 fb af 51 0a a6 70 5b 8e 21 0a 7c ed 3f 76 f7 53 e8 40 e6 d5 e9 12 89 ec f7 29 ee 13 ae f7 b9 c5 15 52 a6 ... 2730 more bytes>
+169 silly tar     ],
+169 silly tar     [Symbol(objectMode)]: false,
+169 silly tar     [Symbol(encoding)]: null,
+169 silly tar     [Symbol(async)]: false,
+169 silly tar     [Symbol(decoder)]: null,
+169 silly tar     [Symbol(EOF)]: false,
+169 silly tar     [Symbol(emittedEnd)]: false,
+169 silly tar     [Symbol(emittingEnd)]: false,
+169 silly tar     [Symbol(closed)]: false,
+169 silly tar     [Symbol(emittedError)]: null,
+169 silly tar     [Symbol(bufferLength)]: 2780,
+169 silly tar     [Symbol(destroyed)]: false,
+169 silly tar     [Symbol(signal)]: undefined,
+169 silly tar     [Symbol(aborted)]: false
+169 silly tar   },
+169 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+169 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+169 silly tar }
+170 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBoldItalic.pfb'
+171 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBoldItalic.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBoldItalic.pfb'] {
+171 silly tar   errno: -2,
+171 silly tar   code: 'ENOENT',
+171 silly tar   syscall: 'open',
+171 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBoldItalic.pfb',
+171 silly tar   entry: ReadEntry {
+171 silly tar     _events: [Object: null prototype] {
+171 silly tar       end: [Function (anonymous)],
+171 silly tar       drain: [Function]
+171 silly tar     },
+171 silly tar     _eventsCount: 2,
+171 silly tar     _maxListeners: undefined,
+171 silly tar     writable: true,
+171 silly tar     readable: true,
+171 silly tar     extended: null,
+171 silly tar     globalExtended: null,
+171 silly tar     header: Header {
+171 silly tar       cksumValid: true,
+171 silly tar       needPax: false,
+171 silly tar       nullBlock: false,
+171 silly tar       block: null,
+171 silly tar       path: 'package/standard_fonts/FoxitFixedBoldItalic.pfb',
+171 silly tar       mode: 420,
+171 silly tar       uid: null,
+171 silly tar       gid: null,
+171 silly tar       size: 19151,
+171 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+171 silly tar       cksum: 7676,
+171 silly tar       linkpath: '',
+171 silly tar       uname: '',
+171 silly tar       gname: '',
+171 silly tar       devmaj: 0,
+171 silly tar       devmin: 0,
+171 silly tar       atime: null,
+171 silly tar       ctime: null,
+171 silly tar       [Symbol(type)]: '0'
+171 silly tar     },
+171 silly tar     startBlockSize: 19456,
+171 silly tar     blockRemain: 4485,
+171 silly tar     remain: 4180,
+171 silly tar     type: 'File',
+171 silly tar     meta: false,
+171 silly tar     ignore: false,
+171 silly tar     path: 'standard_fonts/FoxitFixedBoldItalic.pfb',
+171 silly tar     mode: 438,
+171 silly tar     uid: null,
+171 silly tar     gid: null,
+171 silly tar     uname: '',
+171 silly tar     gname: '',
+171 silly tar     size: 19151,
+171 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+171 silly tar     atime: null,
+171 silly tar     ctime: null,
+171 silly tar     linkpath: '',
+171 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedBoldItalic.pfb',
+171 silly tar     [Symbol(shapeMode)]: false,
+171 silly tar     [Symbol(kCapture)]: false,
+171 silly tar     [Symbol(flowing)]: false,
+171 silly tar     [Symbol(paused)]: true,
+171 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+171 silly tar     [Symbol(buffer)]: [
+171 silly tar       <Buffer bc f8 4e 03 bc ef 15 bc 4e f7 52 f7 35 f7 15 fb 35 d5 c8 fb 15 f7 33 f7 50 f7 30 5b c7 fb 53 fb 31 fb 13 f7 34 41 4f f7 16 fb 33 05 0e 8b e9 f7 90 ea ... 3104 more bytes>
+171 silly tar     ],
+171 silly tar     [Symbol(objectMode)]: false,
+171 silly tar     [Symbol(encoding)]: null,
+171 silly tar     [Symbol(async)]: false,
+171 silly tar     [Symbol(decoder)]: null,
+171 silly tar     [Symbol(EOF)]: false,
+171 silly tar     [Symbol(emittedEnd)]: false,
+171 silly tar     [Symbol(emittingEnd)]: false,
+171 silly tar     [Symbol(closed)]: false,
+171 silly tar     [Symbol(emittedError)]: null,
+171 silly tar     [Symbol(bufferLength)]: 3154,
+171 silly tar     [Symbol(destroyed)]: false,
+171 silly tar     [Symbol(signal)]: undefined,
+171 silly tar     [Symbol(aborted)]: false
+171 silly tar   },
+171 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+171 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+171 silly tar }
+172 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedItalic.pfb'
+173 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedItalic.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedItalic.pfb'] {
+173 silly tar   errno: -2,
+173 silly tar   code: 'ENOENT',
+173 silly tar   syscall: 'open',
+173 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedItalic.pfb',
+173 silly tar   entry: ReadEntry {
+173 silly tar     _events: [Object: null prototype] {
+173 silly tar       end: [Function (anonymous)],
+173 silly tar       drain: [Function]
+173 silly tar     },
+173 silly tar     _eventsCount: 2,
+173 silly tar     _maxListeners: undefined,
+173 silly tar     writable: true,
+173 silly tar     readable: true,
+173 silly tar     extended: null,
+173 silly tar     globalExtended: null,
+173 silly tar     header: Header {
+173 silly tar       cksumValid: true,
+173 silly tar       needPax: false,
+173 silly tar       nullBlock: false,
+173 silly tar       block: null,
+173 silly tar       path: 'package/standard_fonts/FoxitFixedItalic.pfb',
+173 silly tar       mode: 420,
+173 silly tar       uid: null,
+173 silly tar       gid: null,
+173 silly tar       size: 18746,
+173 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+173 silly tar       cksum: 7292,
+173 silly tar       linkpath: '',
+173 silly tar       uname: '',
+173 silly tar       gname: '',
+173 silly tar       devmaj: 0,
+173 silly tar       devmin: 0,
+173 silly tar       atime: null,
+173 silly tar       ctime: null,
+173 silly tar       [Symbol(type)]: '0'
+173 silly tar     },
+173 silly tar     startBlockSize: 18944,
+173 silly tar     blockRemain: 4500,
+173 silly tar     remain: 4302,
+173 silly tar     type: 'File',
+173 silly tar     meta: false,
+173 silly tar     ignore: false,
+173 silly tar     path: 'standard_fonts/FoxitFixedItalic.pfb',
+173 silly tar     mode: 438,
+173 silly tar     uid: null,
+173 silly tar     gid: null,
+173 silly tar     uname: '',
+173 silly tar     gname: '',
+173 silly tar     size: 18746,
+173 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+173 silly tar     atime: null,
+173 silly tar     ctime: null,
+173 silly tar     linkpath: '',
+173 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitFixedItalic.pfb',
+173 silly tar     [Symbol(shapeMode)]: false,
+173 silly tar     [Symbol(kCapture)]: false,
+173 silly tar     [Symbol(flowing)]: false,
+173 silly tar     [Symbol(paused)]: true,
+173 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+173 silly tar     [Symbol(buffer)]: [
+173 silly tar       <Buffer 0a f7 4d c2 50 0a f7 42 f9 0e 15 f7 3d f7 08 f7 0a fb 08 b5 9c fb 04 f7 2e 05 3c 06 fb 43 fb 2e 05 fb 12 fb 22 26 0a 0e 70 0a 50 0a f7 f8 f9 21 15 dc ... 3007 more bytes>
+173 silly tar     ],
+173 silly tar     [Symbol(objectMode)]: false,
+173 silly tar     [Symbol(encoding)]: null,
+173 silly tar     [Symbol(async)]: false,
+173 silly tar     [Symbol(decoder)]: null,
+173 silly tar     [Symbol(EOF)]: false,
+173 silly tar     [Symbol(emittedEnd)]: false,
+173 silly tar     [Symbol(emittingEnd)]: false,
+173 silly tar     [Symbol(closed)]: false,
+173 silly tar     [Symbol(emittedError)]: null,
+173 silly tar     [Symbol(bufferLength)]: 3057,
+173 silly tar     [Symbol(destroyed)]: false,
+173 silly tar     [Symbol(signal)]: undefined,
+173 silly tar     [Symbol(aborted)]: false
+173 silly tar   },
+173 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+173 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+173 silly tar }
+174 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerif.pfb'
+175 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerif.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerif.pfb'] {
+175 silly tar   errno: -2,
+175 silly tar   code: 'ENOENT',
+175 silly tar   syscall: 'open',
+175 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerif.pfb',
+175 silly tar   entry: ReadEntry {
+175 silly tar     _events: [Object: null prototype] {
+175 silly tar       end: [Function (anonymous)],
+175 silly tar       drain: [Function]
+175 silly tar     },
+175 silly tar     _eventsCount: 2,
+175 silly tar     _maxListeners: undefined,
+175 silly tar     writable: true,
+175 silly tar     readable: true,
+175 silly tar     extended: null,
+175 silly tar     globalExtended: null,
+175 silly tar     header: Header {
+175 silly tar       cksumValid: true,
+175 silly tar       needPax: false,
+175 silly tar       nullBlock: false,
+175 silly tar       block: null,
+175 silly tar       path: 'package/standard_fonts/FoxitSerif.pfb',
+175 silly tar       mode: 420,
+175 silly tar       uid: null,
+175 silly tar       gid: null,
+175 silly tar       size: 19469,
+175 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+175 silly tar       cksum: 6698,
+175 silly tar       linkpath: '',
+175 silly tar       uname: '',
+175 silly tar       gname: '',
+175 silly tar       devmaj: 0,
+175 silly tar       devmin: 0,
+175 silly tar       atime: null,
+175 silly tar       ctime: null,
+175 silly tar       [Symbol(type)]: '0'
+175 silly tar     },
+175 silly tar     startBlockSize: 19968,
+175 silly tar     blockRemain: 5897,
+175 silly tar     remain: 5398,
+175 silly tar     type: 'File',
+175 silly tar     meta: false,
+175 silly tar     ignore: false,
+175 silly tar     path: 'standard_fonts/FoxitSerif.pfb',
+175 silly tar     mode: 438,
+175 silly tar     uid: null,
+175 silly tar     gid: null,
+175 silly tar     uname: '',
+175 silly tar     gname: '',
+175 silly tar     size: 19469,
+175 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+175 silly tar     atime: null,
+175 silly tar     ctime: null,
+175 silly tar     linkpath: '',
+175 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerif.pfb',
+175 silly tar     [Symbol(shapeMode)]: false,
+175 silly tar     [Symbol(kCapture)]: false,
+175 silly tar     [Symbol(flowing)]: false,
+175 silly tar     [Symbol(paused)]: true,
+175 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+175 silly tar     [Symbol(buffer)]: [
+175 silly tar       <Buffer a4 60 80 7f 8a 89 80 1f a4 cc 05 68 06 0e 52 f7 a2 a3 f8 12 77 01 f7 02 dc 03 c4 f7 a2 35 0a fb 86 07 69 73 80 6e 89 1e 0e 5c f8 1e ac f7 6c ac 01 91 ... 2649 more bytes>
+175 silly tar     ],
+175 silly tar     [Symbol(objectMode)]: false,
+175 silly tar     [Symbol(encoding)]: null,
+175 silly tar     [Symbol(async)]: false,
+175 silly tar     [Symbol(decoder)]: null,
+175 silly tar     [Symbol(EOF)]: false,
+175 silly tar     [Symbol(emittedEnd)]: false,
+175 silly tar     [Symbol(emittingEnd)]: false,
+175 silly tar     [Symbol(closed)]: false,
+175 silly tar     [Symbol(emittedError)]: null,
+175 silly tar     [Symbol(bufferLength)]: 2699,
+175 silly tar     [Symbol(destroyed)]: false,
+175 silly tar     [Symbol(signal)]: undefined,
+175 silly tar     [Symbol(aborted)]: false
+175 silly tar   },
+175 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+175 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+175 silly tar }
+176 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBold.pfb'
+177 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBold.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBold.pfb'] {
+177 silly tar   errno: -2,
+177 silly tar   code: 'ENOENT',
+177 silly tar   syscall: 'open',
+177 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBold.pfb',
+177 silly tar   entry: ReadEntry {
+177 silly tar     _events: [Object: null prototype] {
+177 silly tar       end: [Function (anonymous)],
+177 silly tar       drain: [Function]
+177 silly tar     },
+177 silly tar     _eventsCount: 2,
+177 silly tar     _maxListeners: undefined,
+177 silly tar     writable: true,
+177 silly tar     readable: true,
+177 silly tar     extended: null,
+177 silly tar     globalExtended: null,
+177 silly tar     header: Header {
+177 silly tar       cksumValid: true,
+177 silly tar       needPax: false,
+177 silly tar       nullBlock: false,
+177 silly tar       block: null,
+177 silly tar       path: 'package/standard_fonts/FoxitSerifBold.pfb',
+177 silly tar       mode: 420,
+177 silly tar       uid: null,
+177 silly tar       gid: null,
+177 silly tar       size: 19395,
+177 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+177 silly tar       cksum: 7086,
+177 silly tar       linkpath: '',
+177 silly tar       uname: '',
+177 silly tar       gname: '',
+177 silly tar       devmaj: 0,
+177 silly tar       devmin: 0,
+177 silly tar       atime: null,
+177 silly tar       ctime: null,
+177 silly tar       [Symbol(type)]: '0'
+177 silly tar     },
+177 silly tar     startBlockSize: 19456,
+177 silly tar     blockRemain: 6259,
+177 silly tar     remain: 6198,
+177 silly tar     type: 'File',
+177 silly tar     meta: false,
+177 silly tar     ignore: false,
+177 silly tar     path: 'standard_fonts/FoxitSerifBold.pfb',
+177 silly tar     mode: 438,
+177 silly tar     uid: null,
+177 silly tar     gid: null,
+177 silly tar     uname: '',
+177 silly tar     gname: '',
+177 silly tar     size: 19395,
+177 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+177 silly tar     atime: null,
+177 silly tar     ctime: null,
+177 silly tar     linkpath: '',
+177 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBold.pfb',
+177 silly tar     [Symbol(shapeMode)]: false,
+177 silly tar     [Symbol(kCapture)]: false,
+177 silly tar     [Symbol(flowing)]: false,
+177 silly tar     [Symbol(paused)]: true,
+177 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+177 silly tar     [Symbol(buffer)]: [
+177 silly tar       <Buffer 65 92 65 92 65 1f 3b 4a 06 13 39 00 ed 06 9b 5d a3 51 8c 5c 08 8f 7c 80 8e 71 1b 26 87 46 70 43 cc 82 9d d2 a9 b4 a0 9b 1f 63 b0 15 13 9d 80 71 84 7e ... 3172 more bytes>
+177 silly tar     ],
+177 silly tar     [Symbol(objectMode)]: false,
+177 silly tar     [Symbol(encoding)]: null,
+177 silly tar     [Symbol(async)]: false,
+177 silly tar     [Symbol(decoder)]: null,
+177 silly tar     [Symbol(EOF)]: false,
+177 silly tar     [Symbol(emittedEnd)]: false,
+177 silly tar     [Symbol(emittingEnd)]: false,
+177 silly tar     [Symbol(closed)]: false,
+177 silly tar     [Symbol(emittedError)]: null,
+177 silly tar     [Symbol(bufferLength)]: 3222,
+177 silly tar     [Symbol(destroyed)]: false,
+177 silly tar     [Symbol(signal)]: undefined,
+177 silly tar     [Symbol(aborted)]: false
+177 silly tar   },
+177 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+177 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+177 silly tar }
+178 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBoldItalic.pfb'
+179 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBoldItalic.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBoldItalic.pfb'] {
+179 silly tar   errno: -2,
+179 silly tar   code: 'ENOENT',
+179 silly tar   syscall: 'open',
+179 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBoldItalic.pfb',
+179 silly tar   entry: ReadEntry {
+179 silly tar     _events: [Object: null prototype] {
+179 silly tar       end: [Function (anonymous)],
+179 silly tar       drain: [Function]
+179 silly tar     },
+179 silly tar     _eventsCount: 2,
+179 silly tar     _maxListeners: undefined,
+179 silly tar     writable: true,
+179 silly tar     readable: true,
+179 silly tar     extended: null,
+179 silly tar     globalExtended: null,
+179 silly tar     header: Header {
+179 silly tar       cksumValid: true,
+179 silly tar       needPax: false,
+179 silly tar       nullBlock: false,
+179 silly tar       block: null,
+179 silly tar       path: 'package/standard_fonts/FoxitSerifBoldItalic.pfb',
+179 silly tar       mode: 420,
+179 silly tar       uid: null,
+179 silly tar       gid: null,
+179 silly tar       size: 20733,
+179 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+179 silly tar       cksum: 7685,
+179 silly tar       linkpath: '',
+179 silly tar       uname: '',
+179 silly tar       gname: '',
+179 silly tar       devmaj: 0,
+179 silly tar       devmin: 0,
+179 silly tar       atime: null,
+179 silly tar       ctime: null,
+179 silly tar       [Symbol(type)]: '0'
+179 silly tar     },
+179 silly tar     startBlockSize: 20992,
+179 silly tar     blockRemain: 8511,
+179 silly tar     remain: 8252,
+179 silly tar     type: 'File',
+179 silly tar     meta: false,
+179 silly tar     ignore: false,
+179 silly tar     path: 'standard_fonts/FoxitSerifBoldItalic.pfb',
+179 silly tar     mode: 438,
+179 silly tar     uid: null,
+179 silly tar     gid: null,
+179 silly tar     uname: '',
+179 silly tar     gname: '',
+179 silly tar     size: 20733,
+179 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+179 silly tar     atime: null,
+179 silly tar     ctime: null,
+179 silly tar     linkpath: '',
+179 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifBoldItalic.pfb',
+179 silly tar     [Symbol(shapeMode)]: false,
+179 silly tar     [Symbol(kCapture)]: false,
+179 silly tar     [Symbol(flowing)]: false,
+179 silly tar     [Symbol(paused)]: true,
+179 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+179 silly tar     [Symbol(buffer)]: [
+179 silly tar       <Buffer 7d 96 7d 79 1a 62 37 2a 68 62 1e 6b f7 e0 05 70 06 52 30 5d 31 58 30 08 89 06 f7 12 7e d3 77 d5 1e 5e 82 5d 81 4b 82 08 70 07 ab a5 8b 69 1f 85 8c 84 ... 2818 more bytes>
+179 silly tar     ],
+179 silly tar     [Symbol(objectMode)]: false,
+179 silly tar     [Symbol(encoding)]: null,
+179 silly tar     [Symbol(async)]: false,
+179 silly tar     [Symbol(decoder)]: null,
+179 silly tar     [Symbol(EOF)]: false,
+179 silly tar     [Symbol(emittedEnd)]: false,
+179 silly tar     [Symbol(emittingEnd)]: false,
+179 silly tar     [Symbol(closed)]: false,
+179 silly tar     [Symbol(emittedError)]: null,
+179 silly tar     [Symbol(bufferLength)]: 2868,
+179 silly tar     [Symbol(destroyed)]: false,
+179 silly tar     [Symbol(signal)]: undefined,
+179 silly tar     [Symbol(aborted)]: false
+179 silly tar   },
+179 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+179 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+179 silly tar }
+180 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifItalic.pfb'
+181 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifItalic.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifItalic.pfb'] {
+181 silly tar   errno: -2,
+181 silly tar   code: 'ENOENT',
+181 silly tar   syscall: 'open',
+181 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifItalic.pfb',
+181 silly tar   entry: ReadEntry {
+181 silly tar     _events: [Object: null prototype] {
+181 silly tar       end: [Function (anonymous)],
+181 silly tar       drain: [Function]
+181 silly tar     },
+181 silly tar     _eventsCount: 2,
+181 silly tar     _maxListeners: undefined,
+181 silly tar     writable: true,
+181 silly tar     readable: true,
+181 silly tar     extended: null,
+181 silly tar     globalExtended: null,
+181 silly tar     header: Header {
+181 silly tar       cksumValid: true,
+181 silly tar       needPax: false,
+181 silly tar       nullBlock: false,
+181 silly tar       block: null,
+181 silly tar       path: 'package/standard_fonts/FoxitSerifItalic.pfb',
+181 silly tar       mode: 420,
+181 silly tar       uid: null,
+181 silly tar       gid: null,
+181 silly tar       size: 21227,
+181 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+181 silly tar       cksum: 7297,
+181 silly tar       linkpath: '',
+181 silly tar       uname: '',
+181 silly tar       gname: '',
+181 silly tar       devmaj: 0,
+181 silly tar       devmin: 0,
+181 silly tar       atime: null,
+181 silly tar       ctime: null,
+181 silly tar       [Symbol(type)]: '0'
+181 silly tar     },
+181 silly tar     startBlockSize: 21504,
+181 silly tar     blockRemain: 11184,
+181 silly tar     remain: 10907,
+181 silly tar     type: 'File',
+181 silly tar     meta: false,
+181 silly tar     ignore: false,
+181 silly tar     path: 'standard_fonts/FoxitSerifItalic.pfb',
+181 silly tar     mode: 438,
+181 silly tar     uid: null,
+181 silly tar     gid: null,
+181 silly tar     uname: '',
+181 silly tar     gname: '',
+181 silly tar     size: 21227,
+181 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+181 silly tar     atime: null,
+181 silly tar     ctime: null,
+181 silly tar     linkpath: '',
+181 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSerifItalic.pfb',
+181 silly tar     [Symbol(shapeMode)]: false,
+181 silly tar     [Symbol(kCapture)]: false,
+181 silly tar     [Symbol(flowing)]: false,
+181 silly tar     [Symbol(paused)]: true,
+181 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+181 silly tar     [Symbol(buffer)]: [
+181 silly tar       <Buffer f7 0e 9f cd b3 c7 08 b3 a6 d7 f0 b8 1b 94 98 8b 70 78 46 fb 8a 71 2a 1f d6 06 a8 f7 05 9c ca bb d7 08 bc aa d3 e3 b4 1b 97 94 83 7c 1f 77 3d fb ab 70 ... 2909 more bytes>
+181 silly tar     ],
+181 silly tar     [Symbol(objectMode)]: false,
+181 silly tar     [Symbol(encoding)]: null,
+181 silly tar     [Symbol(async)]: false,
+181 silly tar     [Symbol(decoder)]: null,
+181 silly tar     [Symbol(EOF)]: false,
+181 silly tar     [Symbol(emittedEnd)]: false,
+181 silly tar     [Symbol(emittingEnd)]: false,
+181 silly tar     [Symbol(closed)]: false,
+181 silly tar     [Symbol(emittedError)]: null,
+181 silly tar     [Symbol(bufferLength)]: 2959,
+181 silly tar     [Symbol(destroyed)]: false,
+181 silly tar     [Symbol(signal)]: undefined,
+181 silly tar     [Symbol(aborted)]: false
+181 silly tar   },
+181 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+181 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+181 silly tar }
+182 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSymbol.pfb'
+183 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSymbol.pfb' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSymbol.pfb'] {
+183 silly tar   errno: -2,
+183 silly tar   code: 'ENOENT',
+183 silly tar   syscall: 'open',
+183 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSymbol.pfb',
+183 silly tar   entry: ReadEntry {
+183 silly tar     _events: [Object: null prototype] {
+183 silly tar       end: [Function (anonymous)],
+183 silly tar       drain: [Function]
+183 silly tar     },
+183 silly tar     _eventsCount: 2,
+183 silly tar     _maxListeners: undefined,
+183 silly tar     writable: true,
+183 silly tar     readable: true,
+183 silly tar     extended: null,
+183 silly tar     globalExtended: null,
+183 silly tar     header: Header {
+183 silly tar       cksumValid: true,
+183 silly tar       needPax: false,
+183 silly tar       nullBlock: false,
+183 silly tar       block: null,
+183 silly tar       path: 'package/standard_fonts/FoxitSymbol.pfb',
+183 silly tar       mode: 420,
+183 silly tar       uid: null,
+183 silly tar       gid: null,
+183 silly tar       size: 16729,
+183 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+183 silly tar       cksum: 6820,
+183 silly tar       linkpath: '',
+183 silly tar       uname: '',
+183 silly tar       gname: '',
+183 silly tar       devmaj: 0,
+183 silly tar       devmin: 0,
+183 silly tar       atime: null,
+183 silly tar       ctime: null,
+183 silly tar       [Symbol(type)]: '0'
+183 silly tar     },
+183 silly tar     startBlockSize: 16896,
+183 silly tar     blockRemain: 9250,
+183 silly tar     remain: 9083,
+183 silly tar     type: 'File',
+183 silly tar     meta: false,
+183 silly tar     ignore: false,
+183 silly tar     path: 'standard_fonts/FoxitSymbol.pfb',
+183 silly tar     mode: 438,
+183 silly tar     uid: null,
+183 silly tar     gid: null,
+183 silly tar     uname: '',
+183 silly tar     gname: '',
+183 silly tar     size: 16729,
+183 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+183 silly tar     atime: null,
+183 silly tar     ctime: null,
+183 silly tar     linkpath: '',
+183 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/FoxitSymbol.pfb',
+183 silly tar     [Symbol(shapeMode)]: false,
+183 silly tar     [Symbol(kCapture)]: false,
+183 silly tar     [Symbol(flowing)]: false,
+183 silly tar     [Symbol(paused)]: true,
+183 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+183 silly tar     [Symbol(buffer)]: [
+183 silly tar       <Buffer 01 8f f7 13 f8 04 f7 4d 03 8f 16 f7 54 9d 06 7c 59 90 b5 94 8d 95 8f 97 1f bb f7 0e 05 f7 97 06 bc fb 0e 05 8f 7f 8d 81 82 1a 61 59 86 7c 1e 79 f7 8e ... 2908 more bytes>
+183 silly tar     ],
+183 silly tar     [Symbol(objectMode)]: false,
+183 silly tar     [Symbol(encoding)]: null,
+183 silly tar     [Symbol(async)]: false,
+183 silly tar     [Symbol(decoder)]: null,
+183 silly tar     [Symbol(EOF)]: false,
+183 silly tar     [Symbol(emittedEnd)]: false,
+183 silly tar     [Symbol(emittingEnd)]: false,
+183 silly tar     [Symbol(closed)]: false,
+183 silly tar     [Symbol(emittedError)]: null,
+183 silly tar     [Symbol(bufferLength)]: 2958,
+183 silly tar     [Symbol(destroyed)]: false,
+183 silly tar     [Symbol(signal)]: undefined,
+183 silly tar     [Symbol(aborted)]: false
+183 silly tar   },
+183 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+183 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+183 silly tar }
+184 http fetch GET 200 https://registry.npmjs.org/vite 195ms (cache miss)
+185 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf'
+186 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf'] {
+186 silly tar   errno: -2,
+186 silly tar   code: 'ENOENT',
+186 silly tar   syscall: 'open',
+186 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf',
+186 silly tar   entry: ReadEntry {
+186 silly tar     _events: [Object: null prototype] {
+186 silly tar       end: [Function (anonymous)],
+186 silly tar       drain: [Function]
+186 silly tar     },
+186 silly tar     _eventsCount: 2,
+186 silly tar     _maxListeners: undefined,
+186 silly tar     writable: true,
+186 silly tar     readable: true,
+186 silly tar     extended: null,
+186 silly tar     globalExtended: null,
+186 silly tar     header: Header {
+186 silly tar       cksumValid: true,
+186 silly tar       needPax: false,
+186 silly tar       nullBlock: false,
+186 silly tar       block: null,
+186 silly tar       path: 'package/standard_fonts/LiberationSans-Bold.ttf',
+186 silly tar       mode: 420,
+186 silly tar       uid: null,
+186 silly tar       gid: null,
+186 silly tar       size: 137052,
+186 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+186 silly tar       cksum: 7565,
+186 silly tar       linkpath: '',
+186 silly tar       uname: '',
+186 silly tar       gname: '',
+186 silly tar       devmaj: 0,
+186 silly tar       devmin: 0,
+186 silly tar       atime: null,
+186 silly tar       ctime: null,
+186 silly tar       [Symbol(type)]: '0'
+186 silly tar     },
+186 silly tar     startBlockSize: 137216,
+186 silly tar     blockRemain: 120592,
+186 silly tar     remain: 120428,
+186 silly tar     type: 'File',
+186 silly tar     meta: false,
+186 silly tar     ignore: false,
+186 silly tar     path: 'standard_fonts/LiberationSans-Bold.ttf',
+186 silly tar     mode: 438,
+186 silly tar     uid: null,
+186 silly tar     gid: null,
+186 silly tar     uname: '',
+186 silly tar     gname: '',
+186 silly tar     size: 137052,
+186 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+186 silly tar     atime: null,
+186 silly tar     ctime: null,
+186 silly tar     linkpath: '',
+186 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf',
+186 silly tar     [Symbol(shapeMode)]: false,
+186 silly tar     [Symbol(kCapture)]: false,
+186 silly tar     [Symbol(flowing)]: false,
+186 silly tar     [Symbol(paused)]: true,
+186 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+186 silly tar     [Symbol(buffer)]: [
+186 silly tar       <Buffer 00 01 00 56 00 a1 04 59 04 b1 00 0b 00 51 40 2c 0b 0e 01 04 02 0e 0f 04 1f 04 02 12 03 04 09 01 aa 40 06 02 02 0c 0d 02 0e 04 07 05 0e 30 07 01 90 07 ... 3018 more bytes>
+186 silly tar     ],
+186 silly tar     [Symbol(objectMode)]: false,
+186 silly tar     [Symbol(encoding)]: null,
+186 silly tar     [Symbol(async)]: false,
+186 silly tar     [Symbol(decoder)]: null,
+186 silly tar     [Symbol(EOF)]: false,
+186 silly tar     [Symbol(emittedEnd)]: false,
+186 silly tar     [Symbol(emittingEnd)]: false,
+186 silly tar     [Symbol(closed)]: false,
+186 silly tar     [Symbol(emittedError)]: null,
+186 silly tar     [Symbol(bufferLength)]: 3068,
+186 silly tar     [Symbol(destroyed)]: false,
+186 silly tar     [Symbol(signal)]: undefined,
+186 silly tar     [Symbol(aborted)]: false
+186 silly tar   },
+186 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+186 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+186 silly tar }
+187 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf'
+188 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf'] {
+188 silly tar   errno: -2,
+188 silly tar   code: 'ENOENT',
+188 silly tar   syscall: 'open',
+188 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf',
+188 silly tar   entry: ReadEntry {
+188 silly tar     _events: [Object: null prototype] {
+188 silly tar       end: [Function (anonymous)],
+188 silly tar       drain: [Function]
+188 silly tar     },
+188 silly tar     _eventsCount: 2,
+188 silly tar     _maxListeners: undefined,
+188 silly tar     writable: true,
+188 silly tar     readable: true,
+188 silly tar     extended: null,
+188 silly tar     globalExtended: null,
+188 silly tar     header: Header {
+188 silly tar       cksumValid: true,
+188 silly tar       needPax: false,
+188 silly tar       nullBlock: false,
+188 silly tar       block: null,
+188 silly tar       path: 'package/standard_fonts/LiberationSans-BoldItalic.ttf',
+188 silly tar       mode: 420,
+188 silly tar       uid: null,
+188 silly tar       gid: null,
+188 silly tar       size: 135124,
+188 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+188 silly tar       cksum: 8167,
+188 silly tar       linkpath: '',
+188 silly tar       uname: '',
+188 silly tar       gname: '',
+188 silly tar       devmaj: 0,
+188 silly tar       devmin: 0,
+188 silly tar       atime: null,
+188 silly tar       ctime: null,
+188 silly tar       [Symbol(type)]: '0'
+188 silly tar     },
+188 silly tar     startBlockSize: 135168,
+188 silly tar     blockRemain: 99265,
+188 silly tar     remain: 99221,
+188 silly tar     type: 'File',
+188 silly tar     meta: false,
+188 silly tar     ignore: false,
+188 silly tar     path: 'standard_fonts/LiberationSans-BoldItalic.ttf',
+188 silly tar     mode: 438,
+188 silly tar     uid: null,
+188 silly tar     gid: null,
+188 silly tar     uname: '',
+188 silly tar     gname: '',
+188 silly tar     size: 135124,
+188 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+188 silly tar     atime: null,
+188 silly tar     ctime: null,
+188 silly tar     linkpath: '',
+188 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-BoldItalic.ttf',
+188 silly tar     [Symbol(shapeMode)]: false,
+188 silly tar     [Symbol(kCapture)]: false,
+188 silly tar     [Symbol(flowing)]: false,
+188 silly tar     [Symbol(paused)]: true,
+188 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+188 silly tar     [Symbol(buffer)]: [
+188 silly tar       <Buffer 01 1e 34 41 03 27 27 22 00 2a 46 01 46 19 05 53 53 58 50 49 50 0a 01 0a 0a 00 58 49 14 21 22 2d 61 20 61 01 4b 4a 2f 00 3f 00 4f 00 af 00 04 00 66 53 ... 16334 more bytes>,
+188 silly tar       <Buffer fe 57 04 c0 04 4d 00 3a 00 52 00 ba 40 6a 0d 40 1d 40 02 0b 1c 1b 1c 02 0a 2a 1a 2a 02 2a 3e 14 0e 30 36 36 4b 0e 2f 14 0e 0e 2f 0e 0e 2f df 0e 01 00 ... 7489 more bytes>
+188 silly tar     ],
+188 silly tar     [Symbol(objectMode)]: false,
+188 silly tar     [Symbol(encoding)]: null,
+188 silly tar     [Symbol(async)]: false,
+188 silly tar     [Symbol(decoder)]: null,
+188 silly tar     [Symbol(EOF)]: false,
+188 silly tar     [Symbol(emittedEnd)]: false,
+188 silly tar     [Symbol(emittingEnd)]: false,
+188 silly tar     [Symbol(closed)]: false,
+188 silly tar     [Symbol(emittedError)]: null,
+188 silly tar     [Symbol(bufferLength)]: 23923,
+188 silly tar     [Symbol(destroyed)]: false,
+188 silly tar     [Symbol(signal)]: undefined,
+188 silly tar     [Symbol(aborted)]: false
+188 silly tar   },
+188 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+188 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+188 silly tar }
+189 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf'
+190 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf'] {
+190 silly tar   errno: -2,
+190 silly tar   code: 'ENOENT',
+190 silly tar   syscall: 'open',
+190 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf',
+190 silly tar   entry: ReadEntry {
+190 silly tar     _events: [Object: null prototype] {
+190 silly tar       end: [Function (anonymous)],
+190 silly tar       drain: [Function]
+190 silly tar     },
+190 silly tar     _eventsCount: 2,
+190 silly tar     _maxListeners: undefined,
+190 silly tar     writable: true,
+190 silly tar     readable: true,
+190 silly tar     extended: null,
+190 silly tar     globalExtended: null,
+190 silly tar     header: Header {
+190 silly tar       cksumValid: true,
+190 silly tar       needPax: false,
+190 silly tar       nullBlock: false,
+190 silly tar       block: null,
+190 silly tar       path: 'package/standard_fonts/LiberationSans-Italic.ttf',
+190 silly tar       mode: 420,
+190 silly tar       uid: null,
+190 silly tar       gid: null,
+190 silly tar       size: 162036,
+190 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+190 silly tar       cksum: 7786,
+190 silly tar       linkpath: '',
+190 silly tar       uname: '',
+190 silly tar       gname: '',
+190 silly tar       devmaj: 0,
+190 silly tar       devmin: 0,
+190 silly tar       atime: null,
+190 silly tar       ctime: null,
+190 silly tar       [Symbol(type)]: '0'
+190 silly tar     },
+190 silly tar     startBlockSize: 162304,
+190 silly tar     blockRemain: 129804,
+190 silly tar     remain: 129536,
+190 silly tar     type: 'File',
+190 silly tar     meta: false,
+190 silly tar     ignore: false,
+190 silly tar     path: 'standard_fonts/LiberationSans-Italic.ttf',
+190 silly tar     mode: 438,
+190 silly tar     uid: null,
+190 silly tar     gid: null,
+190 silly tar     uname: '',
+190 silly tar     gname: '',
+190 silly tar     size: 162036,
+190 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+190 silly tar     atime: null,
+190 silly tar     ctime: null,
+190 silly tar     linkpath: '',
+190 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Italic.ttf',
+190 silly tar     [Symbol(shapeMode)]: false,
+190 silly tar     [Symbol(kCapture)]: false,
+190 silly tar     [Symbol(flowing)]: false,
+190 silly tar     [Symbol(paused)]: true,
+190 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+190 silly tar     [Symbol(buffer)]: [
+190 silly tar       <Buffer 01 35 2c 00 01 36 f0 00 01 37 20 00 01 38 84 00 01 38 94 00 01 38 a4 00 01 38 d4 00 01 38 e4 00 01 3a ac 00 01 3c 04 00 01 3d 3c 00 01 3d 6c 00 01 3d ... 16334 more bytes>,
+190 silly tar       <Buffer 07 01 23 03 33 13 1e 01 17 16 17 36 37 3e 03 37 01 33 13 1e 03 17 16 17 32 3e 02 37 01 33 05 7e df 47 01 03 03 03 01 03 02 18 19 15 2f 12 fe 5d df 8e ... 5957 more bytes>
+190 silly tar     ],
+190 silly tar     [Symbol(objectMode)]: false,
+190 silly tar     [Symbol(encoding)]: null,
+190 silly tar     [Symbol(async)]: false,
+190 silly tar     [Symbol(decoder)]: null,
+190 silly tar     [Symbol(EOF)]: false,
+190 silly tar     [Symbol(emittedEnd)]: false,
+190 silly tar     [Symbol(emittingEnd)]: false,
+190 silly tar     [Symbol(closed)]: false,
+190 silly tar     [Symbol(emittedError)]: null,
+190 silly tar     [Symbol(bufferLength)]: 22391,
+190 silly tar     [Symbol(destroyed)]: false,
+190 silly tar     [Symbol(signal)]: undefined,
+190 silly tar     [Symbol(aborted)]: false
+190 silly tar   },
+190 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+190 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+190 silly tar }
+191 warn tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'
+192 silly tar TAR_ENTRY_ERROR ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf' [Error: ENOENT: no such file or directory, open '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'] {
+192 silly tar   errno: -2,
+192 silly tar   code: 'ENOENT',
+192 silly tar   syscall: 'open',
+192 silly tar   path: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf',
+192 silly tar   entry: ReadEntry {
+192 silly tar     _events: [Object: null prototype] {
+192 silly tar       end: [Function (anonymous)],
+192 silly tar       drain: [Function]
+192 silly tar     },
+192 silly tar     _eventsCount: 2,
+192 silly tar     _maxListeners: undefined,
+192 silly tar     writable: true,
+192 silly tar     readable: true,
+192 silly tar     extended: null,
+192 silly tar     globalExtended: null,
+192 silly tar     header: Header {
+192 silly tar       cksumValid: true,
+192 silly tar       needPax: false,
+192 silly tar       nullBlock: false,
+192 silly tar       block: null,
+192 silly tar       path: 'package/standard_fonts/LiberationSans-Regular.ttf',
+192 silly tar       mode: 420,
+192 silly tar       uid: null,
+192 silly tar       gid: null,
+192 silly tar       size: 139512,
+192 silly tar       mtime: 1985-10-26T08:15:00.000Z,
+192 silly tar       cksum: 7898,
+192 silly tar       linkpath: '',
+192 silly tar       uname: '',
+192 silly tar       gname: '',
+192 silly tar       devmaj: 0,
+192 silly tar       devmin: 0,
+192 silly tar       atime: null,
+192 silly tar       ctime: null,
+192 silly tar       [Symbol(type)]: '0'
+192 silly tar     },
+192 silly tar     startBlockSize: 139776,
+192 silly tar     blockRemain: 109121,
+192 silly tar     remain: 108857,
+192 silly tar     type: 'File',
+192 silly tar     meta: false,
+192 silly tar     ignore: false,
+192 silly tar     path: 'standard_fonts/LiberationSans-Regular.ttf',
+192 silly tar     mode: 438,
+192 silly tar     uid: null,
+192 silly tar     gid: null,
+192 silly tar     uname: '',
+192 silly tar     gname: '',
+192 silly tar     size: 139512,
+192 silly tar     mtime: 1985-10-26T08:15:00.000Z,
+192 silly tar     atime: null,
+192 silly tar     ctime: null,
+192 silly tar     linkpath: '',
+192 silly tar     absolute: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf',
+192 silly tar     [Symbol(shapeMode)]: false,
+192 silly tar     [Symbol(kCapture)]: false,
+192 silly tar     [Symbol(flowing)]: false,
+192 silly tar     [Symbol(paused)]: true,
+192 silly tar     [Symbol(pipes)]: [ [Pipe] ],
+192 silly tar     [Symbol(buffer)]: [
+192 silly tar       <Buffer 8f d4 8f dc 8f e4 8f ec 90 22 90 2a 90 32 90 3a 90 c2 91 52 91 5a 91 98 92 04 92 54 92 b0 93 0e 93 84 93 e2 94 8c 95 26 95 d0 95 d8 96 7c 97 0c 97 38 ... 16334 more bytes>,
+192 silly tar       <Buffer 01 10 03 05 b8 ff e8 40 ff 0c 0f 48 05 04 0e 02 01 08 0e 07 69 08 a9 08 02 06 08 16 08 36 08 46 08 04 0e 08 06 01 5a 26 02 56 02 96 02 03 76 02 e6 02 ... 5237 more bytes>
+192 silly tar     ],
+192 silly tar     [Symbol(objectMode)]: false,
+192 silly tar     [Symbol(encoding)]: null,
+192 silly tar     [Symbol(async)]: false,
+192 silly tar     [Symbol(decoder)]: null,
+192 silly tar     [Symbol(EOF)]: false,
+192 silly tar     [Symbol(emittedEnd)]: false,
+192 silly tar     [Symbol(emittingEnd)]: false,
+192 silly tar     [Symbol(closed)]: false,
+192 silly tar     [Symbol(emittedError)]: null,
+192 silly tar     [Symbol(bufferLength)]: 21671,
+192 silly tar     [Symbol(destroyed)]: false,
+192 silly tar     [Symbol(signal)]: undefined,
+192 silly tar     [Symbol(aborted)]: false
+192 silly tar   },
+192 silly tar   cwd: '/Users/artemsaraiev/main_vault/stud/mit/term_7/6.104/6104_assignment_4/frontend/node_modules/pdfjs-dist',
+192 silly tar   tarCode: 'TAR_ENTRY_ERROR'
+192 silly tar }
+193 http fetch GET 200 https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-4.10.38.tgz 879ms (cache miss)
+194 http fetch GET 200 https://registry.npmjs.org/@vitejs%2fplugin-vue 65ms (cache miss)
+195 http fetch GET 200 https://registry.npmjs.org/@napi-rs/canvas-darwin-arm64/-/canvas-darwin-arm64-0.1.81.tgz 1398ms (cache miss)
+196 silly ADD
+197 silly ADD
+198 silly ADD
+199 silly ADD
+200 silly ADD
+201 silly ADD
+202 silly ADD
+203 silly ADD
+204 silly ADD node_modules/@napi-rs/canvas-darwin-arm64
+205 silly ADD
+206 silly ADD node_modules/@napi-rs/canvas
+207 silly ADD node_modules/pdfjs-dist
+208 silly ADD
+209 silly ADD
+210 silly ADD
+211 silly ADD
+212 silly ADD
+213 silly ADD
+214 silly ADD
+215 silly ADD
+216 silly ADD
+217 silly ADD
+218 silly ADD
+219 silly ADD
+220 silly ADD
+221 silly ADD
+222 silly ADD
+223 silly ADD
+224 silly ADD
+225 silly ADD
+226 silly ADD
+227 silly ADD
+228 silly ADD
+229 silly ADD
+230 silly ADD
+231 silly ADD
+232 silly ADD
+233 silly ADD
+234 silly ADD
+235 silly ADD
+236 silly ADD
+237 silly ADD
+238 silly ADD
+239 silly ADD
+240 silly ADD
+241 silly ADD
+242 silly ADD
+243 silly ADD
+244 silly ADD
+245 silly ADD
+246 silly ADD
+247 silly ADD
+248 silly ADD
+249 silly ADD
+250 silly ADD
+251 notice
+251 notice New major version of npm available! 10.7.0 -> 11.6.2
+251 notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+251 notice To update run: npm install -g npm@11.6.2
+251 notice  { force: true, [Symbol(proc-log.meta)]: true }
+252 verbose exit 0
+253 info ok
