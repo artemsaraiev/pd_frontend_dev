@@ -1,0 +1,379 @@
+<template>
+  <div class="pdf-annotator">
+    <div v-if="error" class="error">
+      {{ error }}
+      <br>
+      <a :href="src" target="_blank">Try opening directly</a>
+    </div>
+    <div class="viewer">
+      <div v-if="loading" class="loading">
+        Loading PDF... <br>
+        <small>{{ src }}</small>
+      </div>
+      <div ref="pagesContainer" class="pages"></div>
+    </div>
+
+    <!-- Popup for confirming highlight -->
+    <div
+      v-if="showPopup"
+      class="selection-popup"
+      :style="{ left: popupX + 'px', top: popupY + 'px' }"
+    >
+      <button class="popup-btn" @click="confirmHighlight">
+        <span class="icon" :style="{ color: activeColor }">🖊️</span> Highlight
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted, ref, watch, onBeforeUnmount } from 'vue';
+import * as pdfjsLib from 'pdfjs-dist';
+import 'pdfjs-dist/web/pdf_viewer.css';
+import { PDFPageView, EventBus } from 'pdfjs-dist/web/pdf_viewer';
+
+// Setup worker (same as PdfView)
+// @ts-ignore
+import workerSrc from 'pdfjs-dist/build/pdf.worker.min.js?url';
+(pdfjsLib as any).GlobalWorkerOptions.workerSrc = workerSrc;
+
+const props = defineProps<{
+  src: string;
+  activeColor: string;
+  zoom?: number;
+}>();
+
+interface HighlightRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface Highlight {
+  id: string;
+  pageIndex: number;
+  rects: HighlightRect[]; // Normalized 0-1
+  color: string;
+  text?: string;
+}
+
+const emit = defineEmits<{
+  (e: 'highlight', highlight: Highlight): void;
+}>();
+
+const pagesContainer = ref<HTMLElement | null>(null);
+const loading = ref(false);
+const error = ref('');
+
+// Rendering state (mirrors PdfView)
+let pageWrappers: HTMLElement[] = [];
+let pdfDoc: any = null;
+let cancelled = false;
+let renderToken = 0;
+
+// Highlights state
+const highlights = ref<Highlight[]>([]);
+
+// Selection state
+const showPopup = ref(false);
+const popupX = ref(0);
+const popupY = ref(0);
+let pendingSelection:
+  | { pageIndex: number; rects: HighlightRect[]; text: string }
+  | null = null;
+
+async function loadPdf() {
+  const myToken = ++renderToken;
+  if (!props.src) return;
+
+  loading.value = true;
+  error.value = '';
+
+  // Cleanup old
+  if (pagesContainer.value) {
+    pagesContainer.value.innerHTML = '';
+  }
+  pageWrappers = [];
+  pdfDoc = null;
+
+  try {
+    const loadingTask = (pdfjsLib as any).getDocument({
+      url: props.src,
+      withCredentials: false,
+    });
+    pdfDoc = await loadingTask.promise;
+
+    if (!pdfDoc || cancelled || myToken !== renderToken) return;
+
+    const total = pdfDoc.numPages;
+    if (total === 0) {
+      error.value = 'PDF has 0 pages';
+      return;
+    }
+
+    const eventBus = new EventBus();
+    const container = pagesContainer.value!;
+    const containerWidth = container.clientWidth || 800;
+    const zoom = props.zoom ?? 1;
+
+    for (let i = 1; i <= total; i++) {
+      if (cancelled || myToken !== renderToken) return;
+
+      const page = await pdfDoc.getPage(i);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'page-wrapper';
+      container.appendChild(wrapper);
+      pageWrappers[i - 1] = wrapper;
+
+      // Match PdfView scaling behaviour, with optional external zoom
+      const baseViewport = page.getViewport({ scale: 1 });
+      const scale = (containerWidth / baseViewport.width) * zoom;
+
+      const pageView: any = new PDFPageView({
+        container: wrapper,
+        id: i,
+        scale,
+        defaultViewport: baseViewport,
+        eventBus,
+        textLayerMode: 1,
+        annotationMode: 1,
+      });
+
+      await pageView.setPdfPage(page);
+      await pageView.draw();
+
+      // Draw any existing highlights on this page
+      drawHighlightsForPage(i - 1);
+    }
+  } catch (e: any) {
+    console.error('PdfAnnotator error:', e);
+    error.value = 'Failed to load PDF. ' + (e?.message ?? String(e));
+  } finally {
+    loading.value = false;
+  }
+}
+
+function drawHighlightsForPage(pageIndex: number) {
+  const wrapper = pageWrappers[pageIndex];
+  if (!wrapper) return;
+
+  let overlay = wrapper.querySelector('.overlay') as HTMLElement | null;
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    wrapper.appendChild(overlay);
+  }
+
+  const w = wrapper.clientWidth;
+  const hPx = wrapper.clientHeight;
+  overlay.innerHTML = '';
+
+  const pageHighlights = highlights.value.filter(
+    (h) => h.pageIndex === pageIndex,
+  );
+
+  for (const h of pageHighlights) {
+    for (const r of h.rects) {
+      const div = document.createElement('div');
+      div.className = 'hl';
+      div.style.left = `${Math.round(r.x * w)}px`;
+      div.style.top = `${Math.round(r.y * hPx)}px`;
+      div.style.width = `${Math.round(r.w * w)}px`;
+      div.style.height = `${Math.round(r.h * hPx)}px`;
+      div.style.backgroundColor = h.color;
+      overlay.appendChild(div);
+    }
+  }
+}
+
+// Handle text selection (copied from PdfView with minimal changes)
+function onMouseUp(e: MouseEvent) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+
+  const text = sel.toString().trim();
+  if (!text) {
+    showPopup.value = false;
+    return;
+  }
+
+  // Find which page wrapper contains the selection
+  let pageIndex = -1;
+  for (let i = 0; i < pageWrappers.length; i++) {
+    const w = pageWrappers[i];
+    if (!w) continue;
+    if (w.contains(sel.anchorNode) || w.contains(sel.focusNode)) {
+      pageIndex = i;
+      break;
+    }
+  }
+
+  if (pageIndex < 0) {
+    showPopup.value = false;
+    return;
+  }
+
+  const wrapper = pageWrappers[pageIndex];
+  const textLayer = wrapper.querySelector('.textLayer') as HTMLElement | null;
+  if (!textLayer) {
+    showPopup.value = false;
+    return;
+  }
+
+  const tlRect = textLayer.getBoundingClientRect();
+  const range = sel.getRangeAt(0);
+  const rectList = Array.from(range.getClientRects());
+  if (!rectList.length) {
+    showPopup.value = false;
+    return;
+  }
+
+  const normRects: HighlightRect[] = [];
+  for (const r of rectList.slice(0, 8)) {
+    const x = (r.left - tlRect.left) / tlRect.width;
+    const y = (r.top - tlRect.top) / tlRect.height;
+    const w = r.width / tlRect.width;
+    const h = r.height / tlRect.height;
+    if (w > 0 && h > 0 && x >= 0 && y >= 0 && x <= 1 && y <= 1) {
+      normRects.push({ x, y, w, h });
+    }
+  }
+
+  if (!normRects.length) {
+    showPopup.value = false;
+    return;
+  }
+
+  // Show popup near selection (account for page scroll)
+  const lastRect = rectList[rectList.length - 1];
+  popupX.value = e.clientX;
+  popupY.value = lastRect.bottom + window.scrollY + 5;
+
+  pendingSelection = { pageIndex, rects: normRects, text };
+  showPopup.value = true;
+}
+
+function confirmHighlight() {
+  if (!pendingSelection) return;
+
+  const highlight: Highlight = {
+    id: Date.now().toString(36),
+    pageIndex: pendingSelection.pageIndex,
+    rects: pendingSelection.rects,
+    color: props.activeColor,
+    text: pendingSelection.text,
+  };
+
+  highlights.value.push(highlight);
+  drawHighlightsForPage(highlight.pageIndex);
+  emit('highlight', highlight);
+
+  // Clear selection
+  try {
+    window.getSelection()?.removeAllRanges();
+  } catch {
+    // ignore
+  }
+  showPopup.value = false;
+  pendingSelection = null;
+}
+
+onMounted(() => {
+  cancelled = false;
+  loadPdf();
+  document.addEventListener('mouseup', onMouseUp);
+});
+
+onBeforeUnmount(() => {
+  cancelled = true;
+  document.removeEventListener('mouseup', onMouseUp);
+});
+
+watch(
+  () => [props.src, props.zoom],
+  () => {
+    cancelled = false;
+    loadPdf();
+  },
+);
+</script>
+
+<style scoped>
+.pdf-annotator {
+  display: block;
+  position: relative;
+  height: 100%;
+}
+.viewer {
+  display: block;
+}
+.loading {
+  color: #666;
+  padding: 8px 0;
+  text-align: center;
+}
+.error {
+  padding: 20px;
+  color: red;
+  background: #fee;
+  border: 1px solid #fcc;
+  margin: 10px;
+}
+.pages {
+  display: block;
+}
+.page-wrapper {
+  position: relative;
+  margin: 0 auto 6px;
+  width: fit-content;
+}
+:global(.overlay) {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+:global(.hl) {
+  position: absolute;
+  background: rgba(255, 230, 0, 0.35);
+  outline: 1px solid rgba(255, 200, 0, 0.9);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.selection-popup {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(-50%);
+}
+.popup-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  background: #fff;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.popup-btn:hover {
+  background: #f5f5f5;
+}
+.popup-btn .icon {
+  font-size: 14px;
+}
+</style>

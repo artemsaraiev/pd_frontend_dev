@@ -200,9 +200,15 @@ async function onStartThread() {
   if (!pubId.value || busyThread.value) return; // Prevent double-submit
   busyThread.value = true; errorThread.value=''; threadMsg.value='';
   try {
-    const res = await discussion.startThread({ pubId: pubId.value, author: session.userId || 'anonymous', body: body.value, anchorId: anchorId.value || undefined, session: session.token || undefined });
-    threadMsg.value = `Thread created (id: ${res.threadId})`;
-    actions.value.unshift(`Thread ${res.threadId} created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}`);
+    const res = await discussion.startThread({
+      pubId: pubId.value,
+      author: session.userId || 'anonymous',
+      body: body.value,
+      anchorId: anchorId.value || undefined,
+      session: session.token || undefined,
+    });
+    threadMsg.value = `Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}`;
+    actions.value.unshift(`Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}`);
     body.value = '';
     anchorId.value = '';
     replyThreadId.value = res.threadId;
@@ -265,12 +271,30 @@ function onTextSelected(e: Event) {
   }
 }
 
+function onStartThreadWithHighlight(e: Event) {
+  const custom = e as CustomEvent<{ anchorId: string; text: string }>;
+  const { anchorId: aid, text } = custom.detail;
+  anchorId.value = aid;
+  body.value = `> ${text}\n\n`;
+  
+  // Focus the thread body textarea
+  setTimeout(() => {
+    const el = document.querySelector('.panel textarea[rows="3"]') as HTMLTextAreaElement | null;
+    if (el) {
+      el.focus();
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
 onMounted(() => {
   window.addEventListener('text-selected', onTextSelected);
+  window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('text-selected', onTextSelected);
+  window.removeEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
 });
 </script>
 

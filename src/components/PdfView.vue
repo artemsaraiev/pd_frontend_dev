@@ -6,8 +6,8 @@
       <div ref="pagesContainer" class="pages"></div>
     </div>
     <div v-if="showPopup" class="selection-popup" :style="{ left: popupX + 'px', top: popupY + 'px' }">
-      <button class="popup-btn" @click="insertIntoTextarea" title="Insert into active text field">
-        <span class="icon">💬</span> Annotate
+      <button class="popup-btn" @click="onHighlight" title="Highlight and discuss">
+        <span class="icon">🖊️</span> Highlight
       </button>
     </div>
   </div>
@@ -18,6 +18,7 @@ import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 import 'pdfjs-dist/web/pdf_viewer.css';
 import { PDFPageView, EventBus } from 'pdfjs-dist/web/pdf_viewer';
+import { useSessionStore } from '@/stores/session';
 // Use Vite's asset url import to resolve worker at build-time
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -48,6 +49,8 @@ let cancelled = false;
 let renderToken = 0;
 let pageWrappers: HTMLElement[] = [];
 const highlights: Record<number, Array<{ x: number; y: number; w: number; h: number }>> = {};
+
+const session = useSessionStore();
 
 async function tryLoad(url: string) {
   const loadingTask = (pdfjsLib as any).getDocument({
@@ -112,16 +115,16 @@ function parseRef(ref: string): { page?: number; rects?: Array<{ x:number; y:num
 async function loadExistingAnchors() {
   if (!props.paperId) return;
   try {
-    const { anchored } = await import('@/api/endpoints');
-    const { anchors } = await anchored.listByPaper({ paperId: props.paperId });
-    for (const a of anchors) {
-      const { page, rects } = parseRef(a.ref || '');
-      if (page != null && rects && rects.length) {
-        const idx = page - 1;
-        highlights[idx] = (highlights[idx] || []).concat(rects);
-      }
-    }
-  } catch (e) {
+    // const { anchored } = await import('@/api/endpoints');
+    // const { anchors } = await anchored.listByPaper({ paperId: props.paperId });
+    // for (const a of anchors) {
+    //   const { page, rects } = parseRef(a.ref || '');
+    //   if (page != null && rects && rects.length) {
+    //     const idx = page - 1;
+    //     highlights[idx] = (highlights[idx] || []).concat(rects);
+    //   }
+    // }
+  } catch {
     // ignore
   }
 }
@@ -298,6 +301,7 @@ async function createAnchor() {
       kind: 'Lines',
       ref,
       snippet: text.slice(0, 300),
+      session: session.token,
     });
     highlights[pageIndex] = (highlights[pageIndex] || []).concat(normRects);
     // Repaint current page overlay
@@ -312,14 +316,27 @@ async function createAnchor() {
   pendingSelection = null;
 }
 
-function insertIntoTextarea() {
+function onHighlight() {
   if (!pendingSelection) return;
   showPopup.value = false;
-  emit('textSelected', selectedText.value);
-  // Also dispatch global event for any active textarea
+  const { pageIndex, text, normRects } = pendingSelection;
+  
+  // Create a temporary anchor ID
+  const anchorId = `temp-${Date.now().toString(36)}`;
+  
+  // Add to local highlights immediately
+  highlights[pageIndex] = (highlights[pageIndex] || []).concat(normRects);
+  drawHighlights(pageIndex, 0, 0);
+  
+  // Emit event to start thread
+  // We pass the text as well so the thread can be pre-filled
+  const detail = { anchorId, text, pageIndex, rects: normRects };
+  emit('anchorCreated', anchorId); // Keep legacy emit for now
+  
   try { 
-    window.dispatchEvent(new CustomEvent('text-selected', { detail: selectedText.value })); 
+    window.dispatchEvent(new CustomEvent('start-thread-with-highlight', { detail })); 
   } catch {}
+
   const sel = window.getSelection();
   try { sel?.removeAllRanges(); } catch {}
   pendingSelection = null;

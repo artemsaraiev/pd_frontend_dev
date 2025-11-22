@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { anchored, type AnchorKind } from '@/api/endpoints';
+import { useSessionStore } from '@/stores/session';
 
 const props = defineProps<{ paperId: string | null }>();
 defineEmits<{ (e: 'filter-by-anchor', anchorId: string): void }>();
@@ -52,6 +53,8 @@ const toast = ref('');
 const error = ref('');
 const recent = ref<{ anchorId: string; kind: AnchorKind; ref: string }[]>([]);
 
+const session = useSessionStore();
+
 watch(props, () => { error.value = ''; });
 
 async function onAdd() {
@@ -60,7 +63,13 @@ async function onAdd() {
   toast.value = '';
   busy.value = true;
   try {
-    const res = await anchored.create({ paperId: props.paperId, kind: kind.value, ref: refVal.value, snippet: snippet.value });
+    const res = await anchored.create({
+      paperId: props.paperId,
+      kind: kind.value,
+      ref: refVal.value,
+      snippet: snippet.value,
+      session: session.token,
+    });
     toast.value = `Anchor created (id: ${res.anchorId})`;
     recent.value.unshift({ anchorId: res.anchorId, kind: kind.value, ref: refVal.value });
     setTimeout(() => (toast.value = ''), 2000);
