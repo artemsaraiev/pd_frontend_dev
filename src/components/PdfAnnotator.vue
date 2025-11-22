@@ -83,6 +83,24 @@ let pendingSelection:
   | { pageIndex: number; rects: HighlightRect[]; text: string }
   | null = null;
 
+function withAlpha(color: string, alpha: number): string {
+  if (color.startsWith('#')) {
+    let hex = color.slice(1);
+    if (hex.length === 3) {
+      hex = hex
+        .split('')
+        .map((c) => c + c)
+        .join('');
+    }
+    const num = parseInt(hex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  return color;
+}
+
 async function loadPdf() {
   const myToken = ++renderToken;
   if (!props.src) return;
@@ -181,7 +199,7 @@ function drawHighlightsForPage(pageIndex: number) {
       div.style.top = `${Math.round(r.y * hPx)}px`;
       div.style.width = `${Math.round(r.w * w)}px`;
       div.style.height = `${Math.round(r.h * hPx)}px`;
-      div.style.backgroundColor = h.color;
+      div.style.backgroundColor = withAlpha(h.color, 0.3);
       overlay.appendChild(div);
     }
   }
