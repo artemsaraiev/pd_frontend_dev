@@ -101,6 +101,54 @@ function withAlpha(color: string, alpha: number): string {
   return color;
 }
 
+function mergeRects(rects: HighlightRect[]): HighlightRect[] {
+  if (rects.length <= 1) return rects;
+
+  const rowTolerance = 0.02; // how close vertically to belong to same text line
+
+  type Row = { cy: number; items: HighlightRect[] };
+  const rows: Row[] = [];
+
+  for (const r of rects) {
+    const cy = r.y + r.h / 2;
+    let row = rows.find((row) => Math.abs(row.cy - cy) < rowTolerance);
+    if (!row) {
+      row = { cy, items: [] };
+      rows.push(row);
+    }
+    row.items.push(r);
+  }
+
+  const merged: HighlightRect[] = [];
+
+  for (const row of rows) {
+    // For each visual line, just create ONE rect that spans from the
+    // left-most to right-most glyph (including any equations / gaps).
+    let left = Number.POSITIVE_INFINITY;
+    let right = Number.NEGATIVE_INFINITY;
+    let top = Number.POSITIVE_INFINITY;
+    let bottom = Number.NEGATIVE_INFINITY;
+
+    for (const r of row.items) {
+      left = Math.min(left, r.x);
+      right = Math.max(right, r.x + r.w);
+      top = Math.min(top, r.y);
+      bottom = Math.max(bottom, r.y + r.h);
+    }
+
+    if (left < right && top < bottom) {
+      merged.push({
+        x: left,
+        y: top,
+        w: right - left,
+        h: bottom - top,
+      });
+    }
+  }
+
+  return merged;
+}
+
 async function loadPdf() {
   const myToken = ++renderToken;
   if (!props.src) return;
@@ -248,27 +296,46 @@ function onMouseUp(e: MouseEvent) {
   }
 
   const normRects: HighlightRect[] = [];
-  for (const r of rectList.slice(0, 8)) {
-    const x = (r.left - tlRect.left) / tlRect.width;
-    const y = (r.top - tlRect.top) / tlRect.height;
-    const w = r.width / tlRect.width;
-    const h = r.height / tlRect.height;
-    if (w > 0 && h > 0 && x >= 0 && y >= 0 && x <= 1 && y <= 1) {
-      normRects.push({ x, y, w, h });
-    }
+  for (const r of rectList) {
+    let x = (r.left - tlRect.left) / tlRect.width;
+    let y = (r.top - tlRect.top) / tlRect.height;
+    let w = r.width / tlRect.width;
+    let h = r.height / tlRect.height;
+
+    if (w <= 0 || h <= 0) continue;
+
+    // Be tolerant of tiny numerical drift outside [0,1].
+    const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+    x = clamp01(x);
+    y = clamp01(y);
+    const x2 = clamp01(x + w);
+    const y2 = clamp01(y + h);
+    w = x2 - x;
+    h = y2 - y;
+    if (w <= 0 || h <= 0) continue;
+
+    normRects.push({ x, y, w, h });
   }
+
+  console.debug('PdfAnnotator selection', {
+    rawRects: rectList.length,
+    normalizedRects: normRects.length,
+    text,
+  });
 
   if (!normRects.length) {
     showPopup.value = false;
     return;
   }
 
+  const mergedRects = mergeRects(normRects);
+
   // Show popup near selection (account for page scroll)
   const lastRect = rectList[rectList.length - 1];
   popupX.value = e.clientX;
   popupY.value = lastRect.bottom + window.scrollY + 5;
 
-  pendingSelection = { pageIndex, rects: normRects, text };
+  pendingSelection = { pageIndex, rects: mergedRects, text };
   showPopup.value = true;
 }
 
