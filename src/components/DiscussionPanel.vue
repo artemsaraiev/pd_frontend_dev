@@ -9,6 +9,16 @@
       <input disabled placeholder="Sign in to post" />
     </div>
     <div class="compose-area">
+      <div class="editor-toolbar">
+        <button class="icon-btn" type="button" @click="formatThread('bold')"><strong>B</strong></button>
+        <button class="icon-btn" type="button" @click="formatThread('italic')"><em>I</em></button>
+        <button class="icon-btn" type="button" @click="formatThread('code')">{ }</button>
+        <button class="icon-btn" type="button" @click="formatThread('blockquote')">“”</button>
+        <button class="icon-btn" type="button" @click="formatThread('olist')">1.</button>
+        <button class="icon-btn" type="button" @click="formatThread('ulist')">•</button>
+        <button class="icon-btn" type="button" @click="formatThread('inlineMath')">\(x\)</button>
+        <button class="icon-btn" type="button" @click="formatThread('blockMath')">∑</button>
+      </div>
       <div v-if="attachments.length" class="attachments-preview">
         <div v-for="(url, i) in attachments" :key="url" class="attachment-thumb">
           <img :src="url" @click="openViewerFromAttachments(attachments, i)" />
@@ -16,6 +26,7 @@
         </div>
       </div>
       <textarea
+        ref="threadTextarea"
         v-model="body"
         rows="3"
         @paste="handlePaste($event, attachments)"
@@ -34,6 +45,17 @@
            @change="handleFileSelect($event, attachments)"
          />
       </div>
+    </div>
+    <div
+      v-if="body || attachments.length"
+      class="preview-container"
+    >
+      <div class="preview-label">Preview</div>
+      <div
+        class="preview-body"
+        v-html="renderBodyPreview"
+        @click="handleBodyClick"
+      ></div>
     </div>
     <!-- Anchor is now implicit (set via Prompt); no manual field needed -->
     <button
@@ -85,6 +107,16 @@
           </div>
           <div class="body" v-html="renderBody(t.body)" @click="handleBodyClick"></div>
           <div v-if="replyThreadId === t.id" class="compose-thread-reply">
+            <div class="editor-toolbar">
+              <button class="icon-btn" type="button" @click="formatReply('bold')"><strong>B</strong></button>
+              <button class="icon-btn" type="button" @click="formatReply('italic')"><em>I</em></button>
+              <button class="icon-btn" type="button" @click="formatReply('code')">{ }</button>
+              <button class="icon-btn" type="button" @click="formatReply('blockquote')">“”</button>
+              <button class="icon-btn" type="button" @click="formatReply('olist')">1.</button>
+              <button class="icon-btn" type="button" @click="formatReply('ulist')">•</button>
+              <button class="icon-btn" type="button" @click="formatReply('inlineMath')">\(x\)</button>
+              <button class="icon-btn" type="button" @click="formatReply('blockMath')">∑</button>
+            </div>
             <div v-if="replyAttachments.length" class="attachments-preview">
               <div v-for="(url, i) in replyAttachments" :key="url" class="attachment-thumb">
                 <img :src="url" @click="openViewerFromAttachments(replyAttachments, i)" />
@@ -97,6 +129,10 @@
               placeholder="Reply to thread... (Paste images or click icon)"
               @paste="handlePaste($event, replyAttachments)"
             />
+            <div v-if="replyBody || replyAttachments.length" class="preview-container">
+              <div class="preview-label">Preview</div>
+              <div class="preview-body" v-html="renderReplyPreview" @click="handleBodyClick"></div>
+            </div>
             <div class="actions-row">
               <label class="icon-btn" title="Add Image">
                 📷
@@ -129,12 +165,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useSessionStore } from '@/stores/session';
 import { discussion } from '@/api/endpoints';
 import { BASE_URL } from '@/api/client';
 import ReplyTree from '@/components/ReplyTree.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
+import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
 
 const props = defineProps<{ paperId: string | null; anchorFilterProp?: string | null }>();
 
@@ -176,13 +213,19 @@ const filteredThreads = computed(() =>
     : threads.value
 );
 
+const threadTextarea = ref<HTMLTextAreaElement | null>(null);
+const replyTextarea = ref<HTMLTextAreaElement | null>(null);
+
+const renderBodyPreview = computed(() =>
+  renderMarkdown(buildBodyWithImages(body.value, attachments.value)),
+);
+
+const renderReplyPreview = computed(() =>
+  renderMarkdown(buildBodyWithImages(replyBody.value, replyAttachments.value)),
+);
+
 function renderBody(text: string) {
-  if (!text) return '';
-  // Basic XSS protection
-  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  // Replace markdown image syntax: ![alt](url) -> <img src="url" alt="alt">
-  // We add a class to identify these images for the click handler
-  return safe.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="post-image" />');
+  return renderMarkdown(text);
 }
 
 async function handleUpload(file: File): Promise<string | null> {
@@ -341,10 +384,7 @@ async function onStartThread() {
   if (!pubId.value || busyThread.value) return; // Prevent double-submit
   busyThread.value = true; errorThread.value=''; threadMsg.value='';
   try {
-    let finalBody = body.value;
-    if (attachments.value.length) {
-       finalBody += '\n\n' + attachments.value.map(url => `![image](${url})`).join('\n');
-    }
+    const finalBody = buildBodyWithImages(body.value, attachments.value);
 
     const res = await discussion.startThread({
       pubId: pubId.value,
@@ -371,10 +411,7 @@ async function onReply() {
   if (busyReply.value) return; // Prevent double-submit
   busyReply.value = true; errorReply.value=''; replyMsg.value='';
   try {
-    let finalBody = replyBody.value;
-    if (replyAttachments.value.length) {
-       finalBody += '\n\n' + replyAttachments.value.map(url => `![image](${url})`).join('\n');
-    }
+    const finalBody = buildBodyWithImages(replyBody.value, replyAttachments.value);
 
     // Use reply (not replyTo) for top-level replies to threads
     const res = await discussion.reply({ threadId: replyThreadId.value, author: session.userId || 'anonymous', body: finalBody, session: session.token || undefined });
@@ -409,6 +446,88 @@ function openViewerFromAttachments(list: string[], idx: number) {
   if (!list.length) return;
   viewerImages.value = [...list];
   viewerIndex.value = idx;
+}
+
+type FormatKind = 'bold' | 'italic' | 'code' | 'blockquote' | 'olist' | 'ulist' | 'inlineMath' | 'blockMath';
+
+function surroundSelection(
+  el: HTMLTextAreaElement | null,
+  model: { value: string },
+  left: string,
+  right: string = left,
+) {
+  if (!el) return;
+  const start = el.selectionStart ?? 0;
+  const end = el.selectionEnd ?? 0;
+  const text = model.value ?? '';
+  const before = text.slice(0, start);
+  const sel = text.slice(start, end);
+  const after = text.slice(end);
+  model.value = before + left + sel + right + after;
+  nextTick(() => {
+    const cursorStart = start + left.length;
+    const cursorEnd = cursorStart + sel.length;
+    el.focus();
+    el.selectionStart = cursorStart;
+    el.selectionEnd = cursorEnd;
+  });
+}
+
+function formatBlock(
+  el: HTMLTextAreaElement | null,
+  model: { value: string },
+  prefix: string,
+) {
+  if (!el) return;
+  const start = el.selectionStart ?? 0;
+  const end = el.selectionEnd ?? 0;
+  const text = model.value ?? '';
+  const before = text.slice(0, start);
+  const sel = text.slice(start, end) || '';
+  const after = text.slice(end);
+  const lines = sel.split('\n');
+  const formatted = lines.map((l, idx) => (l ? `${prefix}${l}` : idx === 0 ? `${prefix}` : l)).join('\n');
+  model.value = before + formatted + after;
+  nextTick(() => {
+    el.focus();
+  });
+}
+
+function applyFormat(kind: FormatKind, el: HTMLTextAreaElement | null, model: { value: string }) {
+  switch (kind) {
+    case 'bold':
+      surroundSelection(el, model, '**');
+      break;
+    case 'italic':
+      surroundSelection(el, model, '_');
+      break;
+    case 'code':
+      surroundSelection(el, model, '`');
+      break;
+    case 'inlineMath':
+      surroundSelection(el, model, '$');
+      break;
+    case 'blockMath':
+      surroundSelection(el, model, '$$\n', '\n$$');
+      break;
+    case 'blockquote':
+      formatBlock(el, model, '> ');
+      break;
+    case 'olist':
+      formatBlock(el, model, '1. ');
+      break;
+    case 'ulist':
+      formatBlock(el, model, '- ');
+      break;
+  }
+}
+
+function formatThread(kind: FormatKind) {
+  applyFormat(kind, threadTextarea.value, body);
+}
+
+function formatReply(kind: FormatKind) {
+  applyFormat(kind, replyTextarea.value, replyBody);
 }
 
 function toggleReply(tid: string) {
@@ -575,6 +694,22 @@ button:disabled { opacity: 0.6; }
   justify-content: center;
   cursor: pointer;
   padding: 0;
+}
+.preview-container {
+  margin: 8px 0;
+  border: 1px dashed #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fafafa;
+}
+.preview-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 4px;
+}
+.preview-body {
+  font-size: 14px;
 }
 </style>
 

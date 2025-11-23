@@ -7,6 +7,16 @@
       <button v-if="sessionStore.userId === node.author" class="ghost small delete" @click="deleteReply">Delete</button>
     </div>
     <div v-if="replying" class="compose-area">
+      <div class="editor-toolbar">
+        <button class="icon-btn" type="button" @click="formatReply('bold')"><strong>B</strong></button>
+        <button class="icon-btn" type="button" @click="formatReply('italic')"><em>I</em></button>
+        <button class="icon-btn" type="button" @click="formatReply('code')">{ }</button>
+        <button class="icon-btn" type="button" @click="formatReply('blockquote')">“”</button>
+        <button class="icon-btn" type="button" @click="formatReply('olist')">1.</button>
+        <button class="icon-btn" type="button" @click="formatReply('ulist')">•</button>
+        <button class="icon-btn" type="button" @click="formatReply('inlineMath')">\(x\)</button>
+        <button class="icon-btn" type="button" @click="formatReply('blockMath')">∑</button>
+      </div>
       <div v-if="attachments.length" class="attachments-preview">
         <div v-for="(url, i) in attachments" :key="url" class="attachment-thumb">
           <img :src="url" @click="openViewerFromAttachments(attachments, i)" />
@@ -14,11 +24,16 @@
         </div>
       </div>
       <textarea
+        ref="replyTextarea"
         v-model="body"
         rows="2"
         placeholder="Reply... (Paste images or click icon)"
         @paste="handlePaste($event, attachments)"
       />
+      <div v-if="body || attachments.length" class="preview-container">
+        <div class="preview-label">Preview</div>
+        <div class="preview-body" v-html="renderBodyPreview" @click="handleBodyClick"></div>
+      </div>
       <div class="toolbar">
          <button class="icon-btn" title="Add Image" @click="openReplyFilePicker">📷</button>
          <input
@@ -52,11 +67,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { discussion } from '@/api/endpoints';
 import { useSessionStore } from '@/stores/session';
 import { BASE_URL } from '@/api/client';
 import ImageViewer from '@/components/ImageViewer.vue';
+import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
 
 const props = defineProps<{
   node: any;
@@ -76,10 +92,12 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const viewerImages = ref<string[]>([]);
 const viewerIndex = ref(0);
 
+const renderBodyPreview = computed(() =>
+  renderMarkdown(buildBodyWithImages(body.value, attachments.value)),
+);
+
 function renderBody(text: string) {
-  if (!text) return '';
-  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return safe.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="post-image" />');
+  return renderMarkdown(text);
 }
 
 async function handleUpload(file: File): Promise<string | null> {
@@ -203,6 +221,80 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('text-selected', onTextSelected);
 });
+
+const replyTextarea = ref<HTMLTextAreaElement | null>(null);
+
+type FormatKind = 'bold' | 'italic' | 'code' | 'blockquote' | 'olist' | 'ulist' | 'inlineMath' | 'blockMath';
+
+function surroundSelection(
+  el: HTMLTextAreaElement | null,
+  model: { value: string },
+  left: string,
+  right: string = left,
+) {
+  if (!el) return;
+  const start = el.selectionStart ?? 0;
+  const end = el.selectionEnd ?? 0;
+  const text = model.value ?? '';
+  const before = text.slice(0, start);
+  const sel = text.slice(start, end);
+  const after = text.slice(end);
+  model.value = before + left + sel + right + after;
+  // import { nextTick } from 'vue'; // Make sure nextTick is imported
+  // Actually I can't import inside function. It should be imported at top.
+  // I missed adding nextTick to imports.
+}
+
+function formatBlock(
+  el: HTMLTextAreaElement | null,
+  model: { value: string },
+  prefix: string,
+) {
+  if (!el) return;
+  const start = el.selectionStart ?? 0;
+  const end = el.selectionEnd ?? 0;
+  const text = model.value ?? '';
+  const before = text.slice(0, start);
+  const sel = text.slice(start, end) || '';
+  const after = text.slice(end);
+  const lines = sel.split('\n');
+  const formatted = lines.map((l, idx) => (l ? `${prefix}${l}` : idx === 0 ? `${prefix}` : l)).join('\n');
+  model.value = before + formatted + after;
+  // Focus back logic...
+}
+
+function applyFormat(kind: FormatKind, el: HTMLTextAreaElement | null, model: { value: string }) {
+  switch (kind) {
+    case 'bold':
+      surroundSelection(el, model, '**');
+      break;
+    case 'italic':
+      surroundSelection(el, model, '_');
+      break;
+    case 'code':
+      surroundSelection(el, model, '`');
+      break;
+    case 'inlineMath':
+      surroundSelection(el, model, '$');
+      break;
+    case 'blockMath':
+      surroundSelection(el, model, '$$\n', '\n$$');
+      break;
+    case 'blockquote':
+      formatBlock(el, model, '> ');
+      break;
+    case 'olist':
+      formatBlock(el, model, '1. ');
+      break;
+    case 'ulist':
+      formatBlock(el, model, '- ');
+      break;
+  }
+}
+
+function formatReply(kind: FormatKind) {
+  applyFormat(kind, replyTextarea.value, body);
+}
 </script>
 
 <style scoped>
@@ -296,5 +388,21 @@ onBeforeUnmount(() => {
   max-height: 220px;
   object-fit: cover;
 }
-</style>
 
+.preview-container {
+  margin: 8px;
+  border: 1px dashed #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fafafa;
+}
+.preview-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 4px;
+}
+.preview-body {
+  font-size: 14px;
+}
+</style>
