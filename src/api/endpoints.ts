@@ -147,18 +147,17 @@ export const anchored = {
     if (!contexts.length) return { anchors: [] };
 
     // Load all highlights for this paper (uses internal _id)
-    const hlData = await post<
-      Array<{
-        highlights: Array<{
-          _id: string;
-          paper: string;
-          page: number;
-          rects: Array<{ x: number; y: number; w: number; h: number }>;
-          quote?: string;
-        }>;
-      }>
-    >(`/PdfHighlighter/_listByPaper`, { paper: internalPaperId });
-    const highlights = hlData[0]?.highlights ?? [];
+    // The sync collects all highlights and responds with { highlights: [...] }
+    const hlData = await post<{
+      highlights: Array<{
+        _id: string;
+        paper: string;
+        page: number;
+        rects: Array<{ x: number; y: number; w: number; h: number }>;
+        quote?: string;
+      }>;
+    }>(`/PdfHighlighter/_listByPaper`, { paper: internalPaperId });
+    const highlights = hlData?.highlights ?? [];
     const hlById = new Map(highlights.map((h) => [h._id, h]));
 
     const anchors = contexts
