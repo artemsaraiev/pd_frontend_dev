@@ -10,19 +10,27 @@ export const paper = {
   async updateMeta(args: { id: string; title?: string }): Promise<void> {
     await post<{ ok: true }>(`/PaperIndex/updateMeta`, args);
   },
-  async get(args: { id: string }): Promise<{ id: string; title?: string }> {
+  async get(args: { id: string }): Promise<{ id: string; paperId: string; title?: string }> {
+    // id is the external paperId (DOI, arXiv, etc.)
+    // Use _getByPaperId to get the paper by external identifier
     const data = await post<
-      Array<{ paper: { _id: string; title?: string } | null }>
-    >(`/PaperIndex/_get`, { paper: args.id });
-    const doc = data[0]?.paper ?? { _id: args.id };
-    return { id: doc._id, title: doc.title };
+      Array<{ paper: { _id: string; paperId: string; title?: string } | null }>
+    >(`/PaperIndex/_getByPaperId`, { paperId: args.id });
+    const doc = data[0]?.paper;
+    if (doc) {
+      // Return both internal _id (for backend operations) and external paperId (for display/URLs)
+      return { id: doc._id, paperId: doc.paperId, title: doc.title };
+    }
+    // If paper doesn't exist, return the external id as fallback for both
+    return { id: args.id, paperId: args.id };
   },
-  async listRecent(args?: { limit?: number }): Promise<{ papers: Array<{ id: string; title?: string; createdAt?: number }> }> {
+  async listRecent(args?: { limit?: number }): Promise<{ papers: Array<{ id: string; paperId: string; title?: string; createdAt?: number }> }> {
     const data = await post<
-      Array<{ papers: Array<{ _id: string; title?: string; createdAt?: number }> }>
+      Array<{ papers: Array<{ _id: string; paperId: string; title?: string; createdAt?: number }> }>
     >(`/PaperIndex/_listRecent`, args ?? {});
     const papers = (data[0]?.papers ?? []).map(r => ({
-      id: r._id,
+      id: r._id, // Internal _id for backend operations
+      paperId: r.paperId, // External paperId for display/URLs
       title: r.title,
       createdAt: r.createdAt,
     }));
@@ -46,6 +54,11 @@ export const anchored = {
     session: string;
   }): Promise<{ anchorId: string }> {
     const { paperId, kind, ref, snippet, session } = args;
+
+    // Convert external paperId to internal _id for PdfHighlighter operations
+    // Ensure paper exists and get internal _id
+    const ensured = await paper.ensure({ id: paperId });
+    const internalPaperId = ensured.id;
 
     // Parse legacy ref string "p=3;rects=x,y,w,h|..."
     let page = 1;
@@ -72,12 +85,13 @@ export const anchored = {
     }
 
     // 1) Create the PDF highlight (geometry + quote)
+    // Use internal _id for PdfHighlighter operations
     const highlightRes = await post<{
       highlightId?: string;
       error?: string;
     }>(`/PdfHighlighter/createHighlight`, {
       session,
-      paper: paperId,
+      paper: internalPaperId,
       page,
       rects,
       quote: snippet,
@@ -110,7 +124,12 @@ export const anchored = {
   > {
     const { paperId } = args;
 
-    // Load contexts for this paper
+    // Convert external paperId to internal _id for PdfHighlighter operations
+    // Ensure paper exists and get internal _id
+    const ensured = await paper.ensure({ id: paperId });
+    const internalPaperId = ensured.id;
+
+    // Load contexts for this paper (uses external paperId)
     const ctxData = await post<
       Array<{
         filteredContexts: Array<{
@@ -127,7 +146,7 @@ export const anchored = {
     const contexts = ctxData[0]?.filteredContexts ?? [];
     if (!contexts.length) return { anchors: [] };
 
-    // Load all highlights for this paper
+    // Load all highlights for this paper (uses internal _id)
     const hlData = await post<
       Array<{
         highlights: Array<{
@@ -138,7 +157,7 @@ export const anchored = {
           quote?: string;
         }>;
       }>
-    >(`/PdfHighlighter/_listByPaper`, { paper: paperId });
+    >(`/PdfHighlighter/_listByPaper`, { paper: internalPaperId });
     const highlights = hlData[0]?.highlights ?? [];
     const hlById = new Map(highlights.map((h) => [h._id, h]));
 
