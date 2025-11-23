@@ -6,7 +6,6 @@
       <button class="primary" @click="emitSearch">Search</button>
     </div>
     <div class="right">
-      <button class="ghost" @click="goNewThread">+ New Thread</button>
       <div class="status" :class="{ ok: backendOk, bad: !backendOk }">{{ backendOk ? 'Connected' : 'Offline' }}</div>
       <button v-if="!token" class="primary" @click="goLogin">Sign in</button>
       <div v-else class="user">Signed in <a href="#" @click.prevent="logout">Sign out</a></div>
@@ -38,7 +37,6 @@ async function emitSearch() {
 }
 function goHome() { window.location.assign('/'); }
 function goLogin() { window.location.assign('/login'); }
-function goNewThread() { window.location.assign('/'); }
 async function logout() {
   if (store?.token) {
     try { await session.logout({ session: store.token }); } catch {}

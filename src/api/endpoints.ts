@@ -198,6 +198,14 @@ export const discussion = {
     const threads = data[0]?.threads ?? [];
     return { threads };
   },
+  async deleteThread(args: { threadId: string; session?: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/DiscussionPub/deleteThread`, args);
+    return data;
+  },
+  async deleteReply(args: { replyId: string; session?: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/DiscussionPub/deleteReply`, args);
+    return data;
+  },
   async listReplies(args: { threadId: string }): Promise<{ replies: Array<{ _id: string; author: string; body: string; createdAt: number; editedAt?: number }>}> {
     const data = await post<
       Array<{ replies: Array<{ _id: string; author: string; body: string; anchorId?: string; parentId?: string; createdAt: number; editedAt?: number }> }>
@@ -232,8 +240,8 @@ export const session = {
   async register(args: { username: string; password: string }): Promise<{ user?: string; error?: string }> {
     return await post<{ user?: string; error?: string }>(`/UserAuthentication/register`, args);
   },
-  async login(args: { username: string; password: string }): Promise<{ session: string } | { error: string }> {
-    return await post<{ session: string } | { error: string }>(`/login`, args);
+  async login(args: { username: string; password: string }): Promise<{ session: string; user: string } | { error: string }> {
+    return await post<{ session: string; user: string } | { error: string }>(`/login`, args);
   },
   async logout(args: { session: string }): Promise<{ status: string }> {
     return await post<{ status: string }>(`/logout`, args);

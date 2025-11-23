@@ -4,6 +4,7 @@
     <p class="body">{{ node.body }}</p>
     <div class="actions">
       <button class="ghost small" @click="replying = !replying">Reply</button>
+      <button v-if="sessionStore.userId === node.author" class="ghost small delete" @click="deleteReply">Delete</button>
     </div>
     <div v-if="replying" class="compose">
       <textarea v-model.trim="body" rows="2" placeholder="Reply..." />
@@ -58,27 +59,24 @@ async function send() {
   }
 }
 
+async function deleteReply() {
+  if (!confirm('Delete this reply?')) return;
+  try {
+    await discussion.deleteReply({
+      replyId: props.node._id,
+      session: sessionStore.token || undefined,
+    });
+    emit('replied'); // Trigger reload
+  } catch (e: any) {
+    alert(e?.message ?? 'Failed to delete reply');
+  }
+}
+
 function onTextSelected(e: Event) {
   const custom = e as CustomEvent<string>;
   const text = custom.detail;
   if (!text) return;
-  
-  // Find the focused textarea
-  const active = document.activeElement as HTMLTextAreaElement | null;
-  if (active && active.tagName === 'TEXTAREA') {
-    // Insert at cursor position
-    const start = active.selectionStart || 0;
-    const end = active.selectionEnd || 0;
-    const current = active.value;
-    const before = current.substring(0, start);
-    const after = current.substring(end);
-    const quote = `> ${text}\n\n`;
-    active.value = before + quote + after;
-    active.selectionStart = active.selectionEnd = start + quote.length;
-    active.focus();
-    // Trigger Vue reactivity
-    active.dispatchEvent(new Event('input', { bubbles: true }));
-  }
+  // Legacy quote-to-textarea behavior disabled; ignore.
 }
 
 onMounted(() => {
@@ -100,6 +98,7 @@ textarea { padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; }
 .small { padding: 4px 8px; font-size: 12px; }
 .primary { background: var(--brand); color: #fff; border: 1px solid var(--brand); border-radius: 6px; }
 .ghost { background: #fff; color: var(--brand); border: 1px solid var(--brand); border-radius: 6px; }
+.delete { color: var(--error); border-color: var(--error); }
 .children { list-style: none; padding-left: 0; display: grid; gap: 6px; margin-top: 6px; }
 </style>
 

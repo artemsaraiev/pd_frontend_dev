@@ -3,8 +3,8 @@
     <div class="toolbar">
       <h2>Annotation Test: {{ paperId }}</h2>
       <div class="colors">
-        <button 
-          v-for="color in colors" 
+        <button
+          v-for="color in colors"
           :key="color.value"
           :style="{ backgroundColor: color.value }"
           :class="{ active: selectedColor === color.value }"
@@ -18,13 +18,14 @@
         <button @click="zoomIn">+</button>
       </div>
     </div>
+
     <div class="pdf-container">
       <!-- Source hidden as per user feedback about "box" -->
       <!-- <div style="padding: 5px; font-size: 10px; color: #999;">Source: {{ pdfUrl }}</div> -->
-      
-      <!-- We will reimplement/use a modular PDF viewer here -->
-      <PdfAnnotator 
-        :src="pdfUrl" 
+
+      <PdfAnnotator
+        :src="pdfUrl"
+        :paper-id="paperId"
         :active-color="selectedColor"
         :zoom="zoom"
         @highlight="onHighlight"

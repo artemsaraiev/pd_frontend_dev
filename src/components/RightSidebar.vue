@@ -4,10 +4,6 @@
       <h3>Discussion</h3>
       <DiscussionPanel :paperId="paperId" :anchorFilterProp="anchorFilter" />
     </div>
-    <div v-if="paperId" class="card">
-      <h3>Anchors</h3>
-      <AnchorsPanel :paperId="paperId" @filter-by-anchor="anchorFilter = $event" />
-    </div>
     <div v-else class="card">
       <small>No paper selected.</small>
     </div>
@@ -18,7 +14,6 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import DiscussionPanel from '@/components/DiscussionPanel.vue';
-import AnchorsPanel from '@/components/AnchorsPanel.vue';
 
 const route = useRoute();
 const paperId = ref<string | null>(null);

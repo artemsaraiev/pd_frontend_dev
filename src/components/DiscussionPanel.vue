@@ -1,17 +1,9 @@
 <template>
   <div class="panel">
-    <h3>Open Discussion</h3>
+    <h3>Discussion</h3>
     <p class="hint" v-if="!paperId">Set a current paper first.</p>
-    <div class="row">
-      <label>Paper</label>
-      <input :value="paperId ?? ''" disabled />
-    </div>
-    <button :disabled="busyOpen || !paperId || pubOpened || !session.token" @click="onOpenPub">{{ !session.token ? 'Sign in to open' : (pubOpened ? 'Pub opened' : (busyOpen ? 'Opening…' : 'Open Pub')) }}</button>
-    <small v-if="busyOpen">Loading…</small>
-    <p v-if="pubMsg" class="msg ok">{{ pubMsg }}</p>
-    <p v-if="errorOpen" class="msg err">{{ errorOpen }}</p>
+    <div v-if="errorOpen" class="msg err">{{ errorOpen }}</div>
 
-    <h3>Start a thread</h3>
     <div class="row" v-if="!session.token">
       <label>Author</label>
       <input disabled placeholder="Sign in to post" />
@@ -20,32 +12,21 @@
       <label>Topic</label>
       <textarea v-model.trim="body" rows="3" />
     </div>
-    <div class="row">
-      <label>Anchor Id</label>
-      <input v-model.trim="anchorId" placeholder="optional" />
-    </div>
-    <button :disabled="busyThread || !pubId || !body || !session.token" @click="onStartThread">{{ !session.token ? 'Sign in to post' : (busyThread ? 'Posting…' : 'Start Thread') }}</button>
+    <!-- Anchor is now implicit (set via Prompt); no manual field needed -->
+    <button
+      :disabled="busyThread || !pubId || !body || !session.token"
+      @click="onStartThread"
+    >
+      {{ !session.token ? 'Sign in to post' : (busyThread ? 'Posting…' : 'Start Thread') }}
+    </button>
     <small v-if="busyThread">Loading…</small>
     <p v-if="threadMsg" class="msg ok">{{ threadMsg }}</p>
     <p v-if="errorThread" class="msg err">{{ errorThread }}</p>
 
-    <h3>Quick reply</h3>
-    <div class="row">
-      <label>Thread Id</label>
-      <input v-model.trim="replyThreadId" />
-    </div>
-    <div class="row">
-      <label>Reply Body</label>
-      <textarea v-model.trim="replyBody" rows="2" />
-    </div>
-    <button :disabled="busyReply || !replyThreadId || !replyBody || !session.token" @click="onReply">{{ !session.token ? 'Sign in to reply' : (busyReply ? 'Replying…' : 'Reply') }}</button>
-    <small v-if="busyReply">Loading…</small>
-    <p v-if="replyMsg" class="msg ok">{{ replyMsg }}</p>
-    <p v-if="errorReply" class="msg err">{{ errorReply }}</p>
-
     <h3>Threads</h3>
-    <div v-if="!pubId" class="hint">Open the pub for this paper to view threads.</div>
-    <div v-else>
+    <div v-if="!pubId && busyOpen" class="hint">Loading discussions…</div>
+    <div v-if="!pubId && !busyOpen && errorOpen" class="hint">Failed to load discussions: {{ errorOpen }}</div>
+    <div v-if="pubId">
       <div class="row">
         <label>Filter by anchor</label>
         <div class="filter">
@@ -57,7 +38,11 @@
         <li v-for="t in filteredThreads" :key="t.id" class="card">
           <div class="meta">
             <strong>{{ t.author }}</strong>
-            <span v-if="t.anchorId" class="anchor">#{{ t.anchorId }}</span>
+            <span
+              v-if="t.anchorId"
+              class="anchor"
+              @click.prevent="focusAnchor(t.anchorId)"
+            >#{{ t.anchorId }}</span>
             <span class="count">{{ t.replies?.length ?? 0 }} replies</span>
             <a
               v-if="t.replies && t.replies.length"
@@ -65,9 +50,24 @@
               class="toggle-link"
               @click.prevent="toggleExpanded(t.id)"
             >{{ expanded[t.id] ? 'Hide replies' : 'View replies' }}</a>
-            <a href="#" class="reply-link" @click.prevent="replyTo(t.id)">Reply</a>
+            <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
+            <a
+              v-if="session.userId === t.author"
+              href="#"
+              class="delete-link"
+              @click.prevent="deleteThread(t.id)"
+            >
+              Delete
+            </a>
           </div>
           <p class="body">{{ t.body }}</p>
+          <div v-if="replyThreadId === t.id" class="compose-thread-reply">
+            <textarea v-model.trim="replyBody" rows="2" placeholder="Reply to thread..." />
+            <div class="actions-row">
+              <button class="primary small" :disabled="!replyBody || !session.token || busyReply" @click="onReply">{{ !session.token ? 'Sign in' : (busyReply ? 'Sending…' : 'Reply') }}</button>
+              <button class="ghost small" @click="replyThreadId = ''">Cancel</button>
+            </div>
+          </div>
           <p v-if="!t.replies || t.replies.length === 0" class="hint">No replies yet.</p>
           <ReplyTree v-if="expanded[t.id]" :nodes="t.replies" :threadId="t.id" @refresh="loadThreads" />
         </li>
@@ -127,6 +127,8 @@ async function loadThreads() {
   if (!pubId.value) { threads.value = []; return; }
   const activeFilter = (props.anchorFilterProp ?? anchorFilter.value) || undefined;
   const { threads: list } = await discussion.listThreads({ pubId: pubId.value, anchorId: activeFilter });
+  console.log('[DiscussionPanel] Loaded threads', list);
+  console.log('[DiscussionPanel] Current user ID:', session.userId);
   const built: Thread[] = [];
   for (const t of list) {
     // Prefer the tree API; fall back to flat list if tree is empty for any reason.
@@ -141,25 +143,49 @@ async function loadThreads() {
   // Note: expanded state is preserved across reloads (not reset)
 }
 
-watch(() => props.paperId, () => { pubId.value = null; pubMsg.value=''; pubOpened.value = false; });
-
-// Resolve existing pub and load threads on enter / change
-watch(
-  () => props.paperId,
-  async (pid) => {
-    threads.value = [];
-    if (!pid) return;
-    try {
-      const { pubId: maybe } = await discussion.getPubIdByPaper({ paperId: pid });
+async function ensurePub() {
+  if (!props.paperId) return;
+  busyOpen.value = true;
+  errorOpen.value = '';
+  try {
+    // Try to get existing pub first
+    const { pubId: maybe } = await discussion.getPubIdByPaper({ paperId: props.paperId });
+    if (maybe) {
+      pubId.value = maybe;
+      pubOpened.value = true;
+      await loadThreads();
+    } else {
+      // Create if doesn't exist
+      const res = await discussion.open({ paperId: props.paperId, session: session.token || undefined });
+      pubId.value = res.pubId;
+      pubOpened.value = true;
+      await loadThreads();
+    }
+  } catch (e: any) {
+     try {
+      const { pubId: maybe } = await discussion.getPubIdByPaper({ paperId: props.paperId });
       if (maybe) {
         pubId.value = maybe;
         pubOpened.value = true;
         await loadThreads();
+        errorOpen.value = '';
+      } else {
+        errorOpen.value = e?.message ?? String(e);
       }
-    } catch { /* ignore */ }
-  },
-  { immediate: true }
-);
+    } catch {
+       errorOpen.value = e?.message ?? String(e);
+    }
+  } finally {
+    busyOpen.value = false;
+  }
+}
+
+watch(() => props.paperId, () => {
+  pubId.value = null;
+  pubMsg.value = '';
+  pubOpened.value = false;
+  ensurePub();
+}, { immediate: true });
 
 // Reload when filter changes and pub is present
 watch(
@@ -229,6 +255,7 @@ async function onReply() {
     replyMsg.value = `Reply created (id: ${res.replyId})`;
     actions.value.unshift(`Reply ${res.replyId} added to ${replyThreadId.value}`);
     replyBody.value = '';
+    replyThreadId.value = ''; // Close box after sending
     await loadThreads();
   } catch (e: any) {
     errorReply.value = e?.message ?? String(e);
@@ -237,47 +264,48 @@ async function onReply() {
   }
 }
 
-function replyTo(tid: string) {
-  replyThreadId.value = tid;
-  // Focus Quick reply textarea and scroll it into view
-  const el = document.querySelector('.panel textarea[rows="2"]') as HTMLTextAreaElement | null;
-  el?.focus();
-  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+function toggleReply(tid: string) {
+  if (replyThreadId.value === tid) {
+    replyThreadId.value = '';
+  } else {
+    replyThreadId.value = tid;
+    replyBody.value = '';
+  }
+}
+
+function focusAnchor(aid?: string) {
+  if (!aid) return;
+  try {
+    window.dispatchEvent(new CustomEvent('anchor-focus', { detail: aid }));
+  } catch {
+    // ignore
+  }
+}
+
+async function deleteThread(threadId: string) {
+  if (!pubId.value || !session.token) return;
+  if (!confirm('Delete this thread and its replies?')) return;
+  try {
+    await discussion.deleteThread({ threadId, session: session.token });
+    await loadThreads();
+  } catch (e: any) {
+    alert(e?.message ?? 'Failed to delete thread');
+  }
 }
 
 function onTextSelected(e: Event) {
   const custom = e as CustomEvent<string>;
   const text = custom.detail;
   if (!text) return;
-  
-  // Find the focused textarea or the quick reply textarea
-  const active = document.activeElement as HTMLTextAreaElement | null;
-  if (active && active.tagName === 'TEXTAREA') {
-    // Insert at cursor position
-    const start = active.selectionStart || 0;
-    const end = active.selectionEnd || 0;
-    const current = active.value;
-    const before = current.substring(0, start);
-    const after = current.substring(end);
-    const quote = `> ${text}\n\n`;
-    active.value = before + quote + after;
-    active.selectionStart = active.selectionEnd = start + quote.length;
-    active.focus();
-    // Trigger Vue reactivity
-    active.dispatchEvent(new Event('input', { bubbles: true }));
-  } else {
-    // Fall back to quick reply body
-    replyBody.value = `> ${text}\n\n` + replyBody.value;
-  }
+  // Legacy quote-to-textarea behavior disabled; we just ignore the
+  // text-selected event now to avoid auto-inserting text.
 }
 
 function onStartThreadWithHighlight(e: Event) {
   const custom = e as CustomEvent<{ anchorId: string; text: string }>;
   const { anchorId: aid, text } = custom.detail;
   anchorId.value = aid;
-  body.value = `> ${text}\n\n`;
-  
-  // Focus the thread body textarea
+  // Do not prefill the body with quoted text anymore; just focus the box.
   setTimeout(() => {
     const el = document.querySelector('.panel textarea[rows="3"]') as HTMLTextAreaElement | null;
     if (el) {
@@ -313,7 +341,11 @@ button:disabled { opacity: 0.6; }
 .card { border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
 .meta { display: flex; gap: 8px; align-items: baseline; }
 .reply-link { margin-left: auto; font-size: 12px; }
+.delete-link { font-size: 12px; color: var(--error); }
 .toggle-link { font-size: 12px; }
+.compose-thread-reply { margin: 8px 0; display: grid; gap: 6px; }
+.actions-row { display: flex; gap: 8px; }
+.small { padding: 4px 8px; font-size: 12px; }
 .anchor { background: var(--chip-bg); border: 1px solid var(--border); border-radius: 999px; padding: 0 6px; font-size: 12px; }
 .body { margin: 6px 0; }
 .replies { padding-left: 16px; }

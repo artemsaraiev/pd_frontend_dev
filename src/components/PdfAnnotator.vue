@@ -13,7 +13,7 @@
       <div ref="pagesContainer" class="pages"></div>
     </div>
 
-    <!-- Popup for confirming highlight -->
+    <!-- Popup for confirming highlight / prompt -->
     <div
       v-if="showPopup"
       class="selection-popup"
@@ -21,6 +21,9 @@
     >
       <button class="popup-btn" @click="confirmHighlight">
         <span class="icon" :style="{ color: activeColor }">🖊️</span> Highlight
+      </button>
+      <button class="popup-btn" @click="confirmPrompt">
+        <span class="icon">💬</span> Prompt
       </button>
     </div>
   </div>
@@ -31,6 +34,8 @@ import { onMounted, ref, watch, onBeforeUnmount } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 import 'pdfjs-dist/web/pdf_viewer.css';
 import { PDFPageView, EventBus } from 'pdfjs-dist/web/pdf_viewer';
+import { anchored } from '@/api/endpoints';
+import { useSessionStore } from '@/stores/session';
 
 // Setup worker (same as PdfView)
 // @ts-ignore
@@ -41,6 +46,25 @@ const props = defineProps<{
   src: string;
   activeColor: string;
   zoom?: number;
+  /**
+   * Optional paper id, needed when we turn a selection into a
+   * persistent prompt anchor (so others can see the highlight).
+   */
+  paperId?: string;
+  /**
+   * Optional map from highlight id -> visibility category.
+   * Used by higher-level pages to dim / emphasize highlights.
+   */
+  highlightVisibility?: Record<
+    string,
+    'self' | 'ancestor' | 'descendant' | 'other'
+  >;
+  /**
+   * When true, highlights become clickable and we emit
+   * 'highlightClicked' with the highlight id. (Not used on
+   * annotate-test right now, but kept for future.)
+   */
+  highlightClickMode?: boolean;
 }>();
 
 interface HighlightRect {
@@ -60,6 +84,7 @@ interface Highlight {
 
 const emit = defineEmits<{
   (e: 'highlight', highlight: Highlight): void;
+  (e: 'highlightClicked', highlightId: string): void;
 }>();
 
 const pagesContainer = ref<HTMLElement | null>(null);
@@ -74,6 +99,7 @@ let renderToken = 0;
 
 // Highlights state
 const highlights = ref<Highlight[]>([]);
+const sessionStore = useSessionStore();
 
 // Selection state
 const showPopup = ref(false);
@@ -177,6 +203,68 @@ function mergeRects(rects: HighlightRect[]): HighlightRect[] {
   return merged;
 }
 
+function parseRef(
+  ref: string,
+): { page?: number; rects?: Array<{ x: number; y: number; w: number; h: number }> } {
+  try {
+    const m = ref.match(/p=(\d+)/);
+    const page = m ? parseInt(m[1], 10) : undefined;
+    const rectsPart = ref.split('rects=')[1];
+    const rects: Array<{ x: number; y: number; w: number; h: number }> = [];
+    if (rectsPart) {
+      for (const seg of rectsPart.split('|')) {
+        const parts = seg.split(',').map((s) => parseFloat(s));
+        if (parts.length === 4 && parts.every((n) => !Number.isNaN(n))) {
+          const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+          rects.push({
+            x: clamp01(parts[0]),
+            y: clamp01(parts[1]),
+            w: clamp01(parts[2]),
+            h: clamp01(parts[3]),
+          });
+        }
+      }
+    }
+    return { page, rects };
+  } catch {
+    return {};
+  }
+}
+
+async function loadExistingAnchors() {
+  if (!props.paperId) return;
+  try {
+    const { anchors } = await anchored.listByPaper({ paperId: props.paperId });
+    const loaded: Highlight[] = [];
+    for (const a of anchors) {
+      const { page, rects } = parseRef(a.ref || '');
+      if (page == null || !rects || rects.length === 0) continue;
+      const pageIndex = page - 1;
+      loaded.push({
+        id: a._id,
+        pageIndex,
+        rects: rects.map((r) => ({
+          x: r.x,
+          y: r.y,
+          w: r.w,
+          h: r.h,
+        })),
+        color: props.activeColor,
+        text: a.snippet,
+      });
+    }
+    if (loaded.length) {
+      highlights.value = [...highlights.value, ...loaded];
+      const pages = new Set(loaded.map((h) => h.pageIndex));
+      for (const pi of pages) {
+        drawHighlightsForPage(pi);
+      }
+    }
+  } catch (e) {
+    console.error('PdfAnnotator: failed to load existing anchors', e);
+  }
+}
+
 async function loadPdf() {
   const myToken = ++renderToken;
   if (!props.src) return;
@@ -190,6 +278,7 @@ async function loadPdf() {
   }
   pageWrappers = [];
   pdfDoc = null;
+   highlights.value = [];
 
   try {
     const loadingTask = (pdfjsLib as any).getDocument({
@@ -245,6 +334,9 @@ async function loadPdf() {
       // Draw any existing highlights on this page
       drawHighlightsForPage(i - 1);
     }
+
+    // After pages are ready, load any persisted anchors for this paper
+    await loadExistingAnchors();
   } catch (e: any) {
     console.error('PdfAnnotator error:', e);
     error.value = 'Failed to load PDF. ' + (e?.message ?? String(e));
@@ -264,6 +356,15 @@ function drawHighlightsForPage(pageIndex: number) {
     wrapper.appendChild(overlay);
   }
 
+  // Toggle clickability for highlight selection mode
+  if (props.highlightClickMode) {
+    overlay.classList.add('clickable');
+    overlay.style.pointerEvents = 'auto';
+  } else {
+    overlay.classList.remove('clickable');
+    overlay.style.pointerEvents = 'none';
+  }
+
   const w = wrapper.clientWidth;
   const hPx = wrapper.clientHeight;
   overlay.innerHTML = '';
@@ -273,6 +374,17 @@ function drawHighlightsForPage(pageIndex: number) {
   );
 
   for (const h of pageHighlights) {
+    // Determine how visible this highlight should be
+    const vis =
+      (props.highlightVisibility &&
+        props.highlightVisibility[h.id]) ||
+      'other';
+
+    let alpha = 0.2;
+    if (vis === 'self') alpha = 0.6;
+    else if (vis === 'ancestor') alpha = 0.4;
+    else if (vis === 'descendant') alpha = 0.3;
+
     for (const r of h.rects) {
       const div = document.createElement('div');
       div.className = 'hl';
@@ -280,9 +392,18 @@ function drawHighlightsForPage(pageIndex: number) {
       div.style.top = `${Math.round(r.y * hPx)}px`;
       div.style.width = `${Math.round(r.w * w)}px`;
       div.style.height = `${Math.round(r.h * hPx)}px`;
-      div.style.backgroundColor = withAlpha(h.color, 0.3);
+      div.style.backgroundColor = withAlpha(h.color, alpha);
       div.style.border = `1px solid ${darken(h.color)}`;
       div.style.boxSizing = 'border-box';
+
+      if (props.highlightClickMode) {
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          emit('highlightClicked', h.id);
+        });
+      }
+
       overlay.appendChild(div);
     }
   }
@@ -515,6 +636,95 @@ function confirmHighlight() {
   pendingSelection = null;
 }
 
+async function confirmPrompt() {
+  if (!pendingSelection) return;
+
+  const { pageIndex, rects, text } = pendingSelection;
+
+  // If we know the paper + session, create a persistent anchor so
+  // highlights survive reloads and can be linked to threads.
+  let anchorId: string | null = null;
+  if (props.paperId && sessionStore.token) {
+    try {
+      console.log(
+        "[PdfAnnotator.confirmPrompt] starting with session",
+        {
+          paperId: props.paperId,
+          hasSessionToken: !!sessionStore.token,
+          sessionTokenPrefix: sessionStore.token.slice(0, 8),
+        },
+      );
+      const rectsEncoded = rects
+        .map((r) =>
+          [r.x, r.y, r.w, r.h].map((n) => Number(n.toFixed(4))).join(','),
+        )
+        .join('|');
+      const ref = `p=${pageIndex + 1};rects=${rectsEncoded}`;
+      console.log(
+        "[PdfAnnotator.confirmPrompt] calling anchored.create",
+        {
+          ref,
+          snippetPreview: (text || '').slice(0, 80),
+        },
+      );
+      console.time("[PdfAnnotator.confirmPrompt] anchored.create");
+      const res = await anchored.create({
+        paperId: props.paperId,
+        kind: 'Lines',
+        ref,
+        snippet: (text || '').slice(0, 300),
+        session: sessionStore.token,
+      });
+      console.timeEnd("[PdfAnnotator.confirmPrompt] anchored.create");
+      console.log(
+        "[PdfAnnotator.confirmPrompt] anchored.create success",
+        res,
+      );
+      anchorId = res.anchorId;
+    } catch (e) {
+      console.error('PdfAnnotator: failed to create anchor for prompt', e);
+    }
+  }
+
+  const id = anchorId ?? Date.now().toString(36);
+
+  const highlight: Highlight = {
+    id,
+    pageIndex,
+    rects,
+    color: props.activeColor,
+    text,
+  };
+  highlights.value.push(highlight);
+  drawHighlightsForPage(pageIndex);
+  emit('highlight', highlight);
+
+  // Dispatch global event so DiscussionPanel can prefill a thread
+  const aid = id;
+  const detail = {
+    anchorId: aid,
+    text,
+    pageIndex,
+    rects,
+  };
+  try {
+    window.dispatchEvent(
+      new CustomEvent('start-thread-with-highlight', { detail }),
+    );
+  } catch {
+    // ignore
+  }
+
+  // Clear selection
+  try {
+    window.getSelection()?.removeAllRanges();
+  } catch {
+    // ignore
+  }
+  showPopup.value = false;
+  pendingSelection = null;
+}
+
 onMounted(() => {
   cancelled = false;
   loadPdf();
@@ -527,7 +737,7 @@ onBeforeUnmount(() => {
 });
 
 watch(
-  () => [props.src, props.zoom],
+  () => [props.src, props.zoom, props.highlightVisibility, props.highlightClickMode],
   () => {
     cancelled = false;
     loadPdf();

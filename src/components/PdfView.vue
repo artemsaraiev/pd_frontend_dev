@@ -5,9 +5,16 @@
       <div v-if="loading" class="loading">Loading PDF…</div>
       <div ref="pagesContainer" class="pages"></div>
     </div>
-    <div v-if="showPopup" class="selection-popup" :style="{ left: popupX + 'px', top: popupY + 'px' }">
-      <button class="popup-btn" @click="onHighlight" title="Highlight and discuss">
+    <div
+      v-if="showPopup"
+      class="selection-popup"
+      :style="{ left: popupX + 'px', top: popupY + 'px' }"
+    >
+      <button class="popup-btn" @click="onHighlightOnly">
         <span class="icon">🖊️</span> Highlight
+      </button>
+      <button class="popup-btn" @click="onPrompt">
+        <span class="icon">💬</span> Prompt
       </button>
     </div>
   </div>
@@ -115,15 +122,15 @@ function parseRef(ref: string): { page?: number; rects?: Array<{ x:number; y:num
 async function loadExistingAnchors() {
   if (!props.paperId) return;
   try {
-    // const { anchored } = await import('@/api/endpoints');
-    // const { anchors } = await anchored.listByPaper({ paperId: props.paperId });
-    // for (const a of anchors) {
-    //   const { page, rects } = parseRef(a.ref || '');
-    //   if (page != null && rects && rects.length) {
-    //     const idx = page - 1;
-    //     highlights[idx] = (highlights[idx] || []).concat(rects);
-    //   }
-    // }
+    const { anchored } = await import('@/api/endpoints');
+    const { anchors } = await anchored.listByPaper({ paperId: props.paperId });
+    for (const a of anchors) {
+      const { page, rects } = parseRef(a.ref || '');
+      if (page != null && rects && rects.length) {
+        const idx = page - 1;
+        highlights[idx] = (highlights[idx] || []).concat(rects);
+      }
+    }
   } catch {
     // ignore
   }
@@ -316,29 +323,46 @@ async function createAnchor() {
   pendingSelection = null;
 }
 
-function onHighlight() {
+function clearSelection() {
+  const sel = window.getSelection();
+  try { sel?.removeAllRanges(); } catch {}
+}
+
+function onHighlightOnly() {
   if (!pendingSelection) return;
   showPopup.value = false;
   const { pageIndex, text, normRects } = pendingSelection;
   
   // Create a temporary anchor ID
-  const anchorId = `temp-${Date.now().toString(36)}`;
-  
-  // Add to local highlights immediately
   highlights[pageIndex] = (highlights[pageIndex] || []).concat(normRects);
   drawHighlights(pageIndex, 0, 0);
-  
-  // Emit event to start thread
-  // We pass the text as well so the thread can be pre-filled
-  const detail = { anchorId, text, pageIndex, rects: normRects };
-  emit('anchorCreated', anchorId); // Keep legacy emit for now
-  
-  try { 
-    window.dispatchEvent(new CustomEvent('start-thread-with-highlight', { detail })); 
-  } catch {}
 
-  const sel = window.getSelection();
-  try { sel?.removeAllRanges(); } catch {}
+  clearSelection();
+  pendingSelection = null;
+}
+
+function onPrompt() {
+  if (!pendingSelection) return;
+  showPopup.value = false;
+  const { pageIndex, text, normRects } = pendingSelection;
+
+  // Local highlight
+  highlights[pageIndex] = (highlights[pageIndex] || []).concat(normRects);
+  drawHighlights(pageIndex, 0, 0);
+
+  const anchorId = `temp-${Date.now().toString(36)}`;
+  const detail = { anchorId, text, pageIndex, rects: normRects };
+  emit('anchorCreated', anchorId);
+
+  try {
+    window.dispatchEvent(
+      new CustomEvent('start-thread-with-highlight', { detail }),
+    );
+  } catch {
+    // ignore
+  }
+
+  clearSelection();
   pendingSelection = null;
 }
 </script>

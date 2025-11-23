@@ -66,7 +66,7 @@ async function loginUser() {
   try {
     const res = await session.login({ username: username.value, password: password.value });
     if ('error' in res) throw new Error(res.error);
-    store.setSession(username.value, res.session);
+    store.setSession(res.user, res.session);
     window.location.assign('/');
   } catch (e: any) {
     error.value = String(e?.message ?? 'Failed to sign in');
