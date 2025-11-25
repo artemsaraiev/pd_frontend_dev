@@ -55,9 +55,10 @@ export const anchored = {
     kind: AnchorKind;
     ref: string;
     snippet: string;
+    color?: string;
     session: string;
   }): Promise<{ anchorId: string }> {
-    const { paperId, kind, ref, snippet, session } = args;
+    const { paperId, kind, ref, snippet, color, session } = args;
 
     // Convert external paperId to internal _id for PdfHighlighter operations
     // Ensure paper exists and get internal _id
@@ -99,6 +100,7 @@ export const anchored = {
       page,
       rects,
       quote: snippet,
+      color,
     });
     if (!highlightRes.highlightId) {
       throw new Error(highlightRes.error ?? "Failed to create highlight");
@@ -124,7 +126,7 @@ export const anchored = {
   async listByPaper(args: {
     paperId: string;
   }): Promise<
-    { anchors: Array<{ _id: string; kind: AnchorKind; ref: string; snippet: string }> }
+    { anchors: Array<{ _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string }> }
   > {
     const { paperId } = args;
 
@@ -161,6 +163,7 @@ export const anchored = {
           page: number;
           rects: Array<{ x: number; y: number; w: number; h: number }>;
           quote?: string;
+          color?: string;
         };
       }>;
     }>(`/PdfHighlighter/_listByPaper`, { paper: internalPaperId });
@@ -184,9 +187,10 @@ export const anchored = {
           kind: ctx.kind ?? "Lines",
           ref,
           snippet: hl.quote ?? "",
+          color: hl.color,
         };
       })
-      .filter((a): a is { _id: string; kind: AnchorKind; ref: string; snippet: string } =>
+      .filter((a): a is { _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string } =>
         a !== null
       );
 

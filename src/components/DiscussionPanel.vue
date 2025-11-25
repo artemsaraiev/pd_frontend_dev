@@ -164,6 +164,16 @@
       :start-index="viewerIndex"
       @close="viewerImages = []"
     />
+    <!-- Confirmation Dialog -->
+    <div v-if="showDeleteConfirm" class="confirm-dialog-overlay" @click="showDeleteConfirm = false">
+      <div class="confirm-dialog" @click.stop>
+        <p>Delete this thread and its replies?</p>
+        <div class="confirm-actions">
+          <button class="ghost" @click="showDeleteConfirm = false">Cancel</button>
+          <button class="primary delete" @click="confirmDeleteThread">Delete</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -207,6 +217,8 @@ const replyAttachments = ref<string[]>([]);
 const busyReply = ref(false);
 const errorReply = ref('');
 const replyMsg = ref('');
+const showDeleteConfirm = ref(false);
+const pendingDeleteThreadId = ref<string | null>(null);
 
 const actions = ref<string[]>([]);
 type ReplyNode = { _id: string; author: string; body: string; children?: ReplyNode[]; deleted?: boolean };
@@ -303,7 +315,7 @@ async function loadThreads() {
   const activeFilter = (props.anchorFilterProp ?? anchorFilter.value) || undefined;
   // Use loose typing here to avoid TS friction; backend supports includeDeleted.
   const { threads: list } = await (discussion as any).listThreads({ pubId: pubId.value, anchorId: activeFilter, includeDeleted: true });
-  console.log('[DiscussionPanel] Loaded threads', list);
+  console.log('[DiscussionPanel] Loaded threads raw:', JSON.stringify(list, null, 2));
   console.log('[DiscussionPanel] Current user ID:', session.userId);
   const built: Thread[] = [];
   for (const t of list) {
@@ -318,11 +330,33 @@ async function loadThreads() {
   threads.value = built;
   // Note: expanded state is preserved across reloads (not reset)
   // Emit deleted anchors for highlight styling
+  console.log('[DiscussionPanel] deletedAnchors:', Array.from(deletedAnchors.value));
   emit('deletedAnchorsChanged', deletedAnchors.value);
+  // Also broadcast a global snapshot so PdfAnnotator (in a different
+  // part of the layout) can gray out any associated highlights.
+  try {
+    console.log('[DiscussionPanel] dispatching anchor-deleted-visual-snapshot', Array.from(deletedAnchors.value));
+    window.dispatchEvent(
+      new CustomEvent('anchor-deleted-visual-snapshot', {
+        detail: Array.from(deletedAnchors.value),
+      }),
+    );
+  } catch {
+    // ignore
+  }
 }
 
 watch(deletedAnchors, () => {
   emit('deletedAnchorsChanged', deletedAnchors.value);
+  try {
+    window.dispatchEvent(
+      new CustomEvent('anchor-deleted-visual-snapshot', {
+        detail: Array.from(deletedAnchors.value),
+      }),
+    );
+  } catch {
+    // ignore
+  }
 }, { deep: true });
 
 async function ensurePub() {
@@ -572,19 +606,35 @@ function focusAnchor(aid?: string) {
   }
 }
 
-async function deleteThread(threadId: string) {
+function deleteThread(threadId: string) {
   if (!pubId.value || !session.token) return;
-  if (!confirm('Delete this thread and its replies?')) return;
+  pendingDeleteThreadId.value = threadId;
+  showDeleteConfirm.value = true;
+}
+
+async function confirmDeleteThread() {
+  if (!pendingDeleteThreadId.value || !pubId.value || !session.token) {
+    showDeleteConfirm.value = false;
+    pendingDeleteThreadId.value = null;
+    return;
+  }
+  
+  const threadId = pendingDeleteThreadId.value;
+  showDeleteConfirm.value = false;
+  pendingDeleteThreadId.value = null;
+  
   try {
     // Remember the anchor for visual highlight updates
     const t = threads.value.find((th) => th.id === threadId);
     const aid = t?.anchorId;
+    console.log('[DiscussionPanel] deleteThread found anchorId:', aid, 'for thread:', threadId);
 
     await discussion.deleteThread({ threadId, session: session.token });
 
     // Notify PDF annotator so it can stripe the associated highlight
     if (aid) {
       try {
+        console.log('[DiscussionPanel] dispatching immediate anchor-deleted-visual for', aid);
         window.dispatchEvent(
           new CustomEvent('anchor-deleted-visual', { detail: aid }),
         );
@@ -621,14 +671,30 @@ function onStartThreadWithHighlight(e: Event) {
   }, 100);
 }
 
+function onRequestDeletedAnchorsStatus() {
+  // Reply with current state
+  try {
+    console.log('[DiscussionPanel] Replying to status request with', Array.from(deletedAnchors.value));
+    window.dispatchEvent(
+      new CustomEvent('anchor-deleted-visual-snapshot', {
+        detail: Array.from(deletedAnchors.value),
+      }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
 onMounted(() => {
   window.addEventListener('text-selected', onTextSelected);
   window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
+  window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('text-selected', onTextSelected);
   window.removeEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
+  window.removeEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
 });
 </script>
 
@@ -752,6 +818,54 @@ button:disabled { opacity: 0.6; }
 }
 .preview-body {
   font-size: 14px;
+}
+
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-dialog p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-actions button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.confirm-actions .delete {
+  background: var(--error, #dc3545);
+  color: white;
+  border-color: var(--error, #dc3545);
+}
+
+.confirm-actions .delete:hover {
+  background: #c82333;
+  border-color: #c82333;
 }
 </style>
 

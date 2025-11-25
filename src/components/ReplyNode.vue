@@ -69,6 +69,16 @@
       :start-index="viewerIndex"
       @close="viewerImages = []"
     />
+    <!-- Confirmation Dialog -->
+    <div v-if="showDeleteConfirm" class="confirm-dialog-overlay" @click="showDeleteConfirm = false">
+      <div class="confirm-dialog" @click.stop>
+        <p>Delete this reply?</p>
+        <div class="confirm-actions">
+          <button class="ghost" @click="showDeleteConfirm = false">Cancel</button>
+          <button class="primary delete" @click="confirmDelete">Delete</button>
+        </div>
+      </div>
+    </div>
   </li>
 </template>
 
@@ -97,6 +107,7 @@ const attachments = ref<string[]>([]);
 const fileInput = ref<HTMLInputElement | null>(null);
 const viewerImages = ref<string[]>([]);
 const viewerIndex = ref(0);
+const showDeleteConfirm = ref(false);
 
 const renderBodyPreview = computed(() =>
   renderMarkdown(buildBodyWithImages(body.value, attachments.value)),
@@ -200,8 +211,12 @@ async function send() {
   }
 }
 
-async function deleteReply() {
-  if (!confirm('Delete this reply?')) return;
+function deleteReply() {
+  showDeleteConfirm.value = true;
+}
+
+async function confirmDelete() {
+  showDeleteConfirm.value = false;
   try {
     await discussion.deleteReply({
       replyId: props.node._id,
@@ -413,5 +428,53 @@ function formatReply(kind: FormatKind) {
 }
 .preview-body {
   font-size: 14px;
+}
+
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-dialog p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-actions button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.confirm-actions .delete {
+  background: var(--error, #dc3545);
+  color: white;
+  border-color: var(--error, #dc3545);
+}
+
+.confirm-actions .delete:hover {
+  background: #c82333;
+  border-color: #c82333;
 }
 </style>

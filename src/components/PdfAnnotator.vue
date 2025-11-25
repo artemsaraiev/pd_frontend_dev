@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, onBeforeUnmount } from 'vue';
+import { onMounted, ref, watch, onBeforeUnmount, reactive } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 import 'pdfjs-dist/web/pdf_viewer.css';
 import { PDFPageView, EventBus } from 'pdfjs-dist/web/pdf_viewer';
@@ -106,7 +106,7 @@ let renderToken = 0;
 // Highlights state
 const highlights = ref<Highlight[]>([]);
 // Track anchors whose threads have been deleted (for visual stripes)
-const deletedAnchorIds = new Set<string>();
+const deletedAnchorIds = reactive(new Set<string>());
 const sessionStore = useSessionStore();
 
 // Selection state
@@ -248,6 +248,7 @@ async function loadExistingAnchors() {
       const { page, rects } = parseRef(a.ref || '');
       if (page == null || !rects || rects.length === 0) continue;
       const pageIndex = page - 1;
+      console.log('[PdfAnnotator] Loaded anchor:', a._id, 'color:', a.color);
       loaded.push({
         id: a._id,
         pageIndex,
@@ -257,7 +258,7 @@ async function loadExistingAnchors() {
           w: r.w,
           h: r.h,
         })),
-        color: props.activeColor,
+        color: a.color || props.activeColor,
         text: a.snippet,
       });
     }
@@ -436,12 +437,17 @@ function drawHighlightsForPage(pageIndex: number) {
         // pending highlights.
       }
 
-      // Add diagonal stripes for deleted anchors (threads)
+      // Visual treatment for deleted anchors (threads)
       if (
         (props.deletedAnchors && props.deletedAnchors.has(h.id)) ||
         deletedAnchorIds.has(h.id)
       ) {
+        console.log('[PdfAnnotator] Graying out deleted anchor:', h.id);
         div.classList.add('deleted-anchor');
+        // Override color to a neutral gray so it's very clear that the
+        // discussion was deleted but the region is still visible.
+        div.style.backgroundColor = 'rgba(160, 160, 160, 0.35)';
+        div.style.borderColor = '#888';
       }
 
       overlay.appendChild(div);
@@ -451,6 +457,11 @@ function drawHighlightsForPage(pageIndex: number) {
 
 // Handle text selection (copied from PdfView with minimal changes)
 function onMouseUp(e: MouseEvent) {
+  // Ignore clicks inside the popup to prevent it from moving/drifting
+  if ((e.target as HTMLElement).closest('.selection-popup')) {
+    return;
+  }
+
   // If we were drawing a box, finish that first
   if (boxDrawing) {
     finishBoxDrawing(e);
@@ -759,6 +770,7 @@ async function confirmPrompt() {
         ref,
         snippet: (text || '').slice(0, 300),
         session: sessionStore.token,
+        color: props.activeColor,
       });
       console.timeEnd("[PdfAnnotator.confirmPrompt] anchored.create");
       console.log(
@@ -839,17 +851,42 @@ function onAnchorDeletedVisual(e: Event) {
   }
 }
 
+// Handle a full snapshot of all deleted anchors (emitted by DiscussionPanel
+// after it reloads threads). This keeps the PDF view in sync even if we miss
+// individual delete events for some reason.
+function onDeletedAnchorsSnapshot(e: Event) {
+  const custom = e as CustomEvent<string[]>;
+  const ids = custom.detail || [];
+  console.log('[PdfAnnotator] onDeletedAnchorsSnapshot received:', ids);
+  deletedAnchorIds.clear();
+  for (const id of ids) {
+    deletedAnchorIds.add(id);
+  }
+  const pages = new Set(highlights.value.map((h) => h.pageIndex));
+  for (const pi of pages) {
+    drawHighlightsForPage(pi);
+  }
+}
+
 onMounted(() => {
   cancelled = false;
   loadPdf();
   document.addEventListener('mouseup', onMouseUp);
   window.addEventListener('anchor-deleted-visual', onAnchorDeletedVisual);
+  window.addEventListener('anchor-deleted-visual-snapshot', onDeletedAnchorsSnapshot);
+  // Request current status in case we mounted after the initial event
+  try {
+    window.dispatchEvent(new Event('request-deleted-anchors-status'));
+  } catch {
+    // ignore
+  }
 });
 
 onBeforeUnmount(() => {
   cancelled = true;
   document.removeEventListener('mouseup', onMouseUp);
   window.removeEventListener('anchor-deleted-visual', onAnchorDeletedVisual);
+  window.removeEventListener('anchor-deleted-visual-snapshot', onDeletedAnchorsSnapshot);
 });
 
 watch(
