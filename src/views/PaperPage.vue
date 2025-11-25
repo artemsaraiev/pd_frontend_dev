@@ -4,7 +4,7 @@
       <div class="title-row">
         <h2 class="title">{{ header.title || id }}</h2>
         <div class="actions">
-          <a class="ghost" :href="pdfArxivLink" target="_blank" rel="noreferrer">Open on arXiv</a>
+          <a class="ghost" :href="externalAbsLink" target="_blank" rel="noreferrer">Open on {{ sourceName }}</a>
           <button class="ghost" @click="saveToLibrary">Add to library</button>
           <a class="ghost" href="/">Back to Feed</a>
         </div>
@@ -54,6 +54,8 @@ import PdfAnnotator from '@/components/PdfAnnotator.vue';
 import { paper } from '@/api/endpoints';
 import { BASE_URL } from '@/api/client';
 
+type PaperSource = 'arxiv' | 'biorxiv';
+
 const props = defineProps<{ id: string }>();
 // id is the external paperId (from route)
 const externalPaperId = ref<string>(props.id);
@@ -64,8 +66,40 @@ import { useSessionStore } from '@/stores/session';
 const session = useSessionStore();
 const banner = ref('');
 
-const pdfProxyLink = computed(() => `${BASE_URL}/pdf/${encodeURIComponent(externalPaperId.value)}`);
-const pdfArxivLink = computed(() => `https://arxiv.org/pdf/${encodeURIComponent(externalPaperId.value)}.pdf`);
+// Detect paper source from ID format
+// bioRxiv DOIs: 10.1101/YYYY.MM.DD.NNNNNN or just the suffix
+// arXiv IDs: YYMM.NNNNN or YYMM.NNNNNvN
+const paperSource = computed<PaperSource>(() => {
+  const id = externalPaperId.value;
+  // bioRxiv DOI patterns
+  if (id.startsWith('10.1101/') || /^\d{4}\.\d{2}\.\d{2}\.\d+$/.test(id)) {
+    return 'biorxiv';
+  }
+  return 'arxiv';
+});
+
+const sourceName = computed(() => paperSource.value === 'biorxiv' ? 'bioRxiv' : 'arXiv');
+
+const pdfProxyLink = computed(() => {
+  if (paperSource.value === 'biorxiv') {
+    // For bioRxiv, ensure we have full DOI format
+    const doi = externalPaperId.value.startsWith('10.1101/')
+      ? externalPaperId.value
+      : `10.1101/${externalPaperId.value}`;
+    return `${BASE_URL}/biorxiv-pdf/${encodeURIComponent(doi)}`;
+  }
+  return `${BASE_URL}/pdf/${encodeURIComponent(externalPaperId.value)}`;
+});
+
+const externalAbsLink = computed(() => {
+  if (paperSource.value === 'biorxiv') {
+    const doi = externalPaperId.value.startsWith('10.1101/')
+      ? externalPaperId.value
+      : `10.1101/${externalPaperId.value}`;
+    return `https://www.biorxiv.org/content/${doi}`;
+  }
+  return `https://arxiv.org/abs/${encodeURIComponent(externalPaperId.value)}`;
+});
 
 const zoom = ref(1);
 const colors = [
@@ -90,10 +124,20 @@ function onAnchorFocus(e: Event) {
   activeAnchorId.value = custom.detail || null;
 }
 
+// Check if ID is a valid paper ID pattern (arXiv or bioRxiv)
+function isValidPaperId(id: string): boolean {
+  // arXiv: YYMM.NNNNN or YYMM.NNNNNvN
+  const arxivPattern = /^\d{4}\.\d{4,5}(v\d+)?$/;
+  // bioRxiv DOI: 10.1101/... or just the suffix YYYY.MM.DD.NNNNNN
+  const biorxivFullDoi = /^10\.1101\//;
+  const biorxivSuffix = /^\d{4}\.\d{2}\.\d{2}\.\d+$/;
+  
+  return arxivPattern.test(id) || biorxivFullDoi.test(id) || biorxivSuffix.test(id);
+}
+
 onMounted(async () => {
   try {
-    const idLike = /^\d{4}\.\d{4,5}(v\d+)?$/;
-    if (!idLike.test(props.id)) {
+    if (!isValidPaperId(props.id)) {
       // Redirect to search results instead of auto-selecting the first match
       window.location.assign(`/search?q=${encodeURIComponent(props.id)}`);
       return;
@@ -101,7 +145,7 @@ onMounted(async () => {
     const { id, title } = await paper.get({ id: externalPaperId.value });
     header.title = title;
     header.doi = externalPaperId.value;
-    header.link = `https://arxiv.org/abs/${encodeURIComponent(externalPaperId.value)}`;
+    header.link = externalAbsLink.value;
     if (!title) {
       // banner.value = 'This paper is not yet in your index.';
     }
@@ -111,7 +155,10 @@ onMounted(async () => {
   // Auto-ensure paper exists in local index so we can attach discussions
   // This also gives us the internal _id which we need for PdfHighlighter operations
   try {
-    const ensured = await paper.ensure({ id: externalPaperId.value });
+    const ensured = await paper.ensure({
+      id: externalPaperId.value,
+      source: paperSource.value,
+    });
     // Store internal _id for PdfHighlighter operations
     internalPaperId.value = ensured.id;
     // Refresh title if it was missing
@@ -199,5 +246,3 @@ function zoomOut() { zoom.value = Math.max(zoom.value - 0.1, 0.3); }
   .columns { grid-template-columns: 1fr; }
 }
 </style>
-
-

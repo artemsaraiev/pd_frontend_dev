@@ -22,7 +22,8 @@
           <a :href="getPaperUrl(r)">{{ r.title || r.id }}</a>
         </h3>
         <div class="meta">
-          <template v-if="source === 'arxiv'">
+          <!-- Use resultSource (source when results were fetched) not source (current dropdown) -->
+          <template v-if="resultSource === 'arxiv'">
             <a :href="`https://arxiv.org/abs/${encodeURIComponent(r.id)}`" target="_blank" rel="noreferrer">arXiv</a>
             <span> · </span>
             <a :href="`https://arxiv.org/pdf/${encodeURIComponent(r.id)}.pdf`" target="_blank" rel="noreferrer">PDF</a>
@@ -50,13 +51,15 @@ const route = useRoute();
 const router = useRouter();
 const q = ref<string>((route.query.q as string) || '');
 const source = ref<PaperSource>((route.query.source as PaperSource) || 'arxiv');
+// Track what source was used for current results (so changing dropdown doesn't affect displayed results)
+const resultSource = ref<PaperSource>('arxiv');
 const results = ref<Array<{ id: string; title?: string; doi?: string }>>([]);
 const loading = ref(false);
 const hint = ref('');
 
 function getPaperUrl(r: { id: string; doi?: string }) {
-  // For bioRxiv, use the DOI if available, otherwise the id
-  const paperId = source.value === 'biorxiv' && r.doi ? r.doi : r.id;
+  // Use resultSource, not source, for generating URLs
+  const paperId = resultSource.value === 'biorxiv' && r.doi ? r.doi : r.id;
   return `/paper/${encodeURIComponent(paperId)}`;
 }
 
@@ -78,16 +81,20 @@ async function run() {
   loading.value = true;
   hint.value = '';
   results.value = [];
+  
+  // Capture the source at time of search
+  const searchSource = source.value;
+  
   try {
     // sync the URL so it's shareable
-    const newQuery = { q: query, source: source.value };
-    if (route.query.q !== query || route.query.source !== source.value) {
+    const newQuery = { q: query, source: searchSource };
+    if (route.query.q !== query || route.query.source !== searchSource) {
       router.replace({ path: '/search', query: newQuery });
     }
 
     // Call the appropriate search API based on source
     let papers: Array<{ id: string; title?: string; doi?: string }>;
-    if (source.value === 'biorxiv') {
+    if (searchSource === 'biorxiv') {
       const res = await paper.searchBiorxiv({ q: query });
       papers = res.papers;
     } else {
@@ -96,7 +103,9 @@ async function run() {
     }
 
     results.value = papers;
-    const sourceName = source.value === 'arxiv' ? 'arXiv' : 'bioRxiv';
+    resultSource.value = searchSource; // Store the source used for these results
+    
+    const sourceName = searchSource === 'arxiv' ? 'arXiv' : 'bioRxiv';
     if (papers.length > 0) {
       hint.value = `Showing ${papers.length} ${sourceName} result${papers.length === 1 ? '' : 's'} for "${query}"`;
     } else {
@@ -110,6 +119,8 @@ async function run() {
 }
 
 onMounted(() => {
+  // Initialize resultSource from URL if available
+  resultSource.value = (route.query.source as PaperSource) || 'arxiv';
   if (q.value) run();
 });
 
