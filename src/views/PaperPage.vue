@@ -82,12 +82,11 @@ const sourceName = computed(() => paperSource.value === 'biorxiv' ? 'bioRxiv' : 
 
 const pdfProxyLink = computed(() => {
   if (paperSource.value === 'biorxiv') {
-    // bioRxiv has Cloudflare protection that blocks server-side proxying
-    // Try direct URL - browser might be able to handle Cloudflare challenge
-    const doi = externalPaperId.value.startsWith('10.1101/')
-      ? externalPaperId.value
-      : `10.1101/${externalPaperId.value}`;
-    return `https://www.biorxiv.org/content/${doi}.full.pdf`;
+    // Use S3-backed proxy for bioRxiv PDFs
+    const suffix = externalPaperId.value.startsWith('10.1101/')
+      ? externalPaperId.value.slice('10.1101/'.length)
+      : externalPaperId.value;
+    return `${BASE_URL}/biorxiv-pdf/${encodeURIComponent(suffix)}`;
   }
   return `${BASE_URL}/pdf/${encodeURIComponent(externalPaperId.value)}`;
 });
@@ -100,6 +99,16 @@ const externalAbsLink = computed(() => {
     return `https://www.biorxiv.org/content/${doi}`;
   }
   return `https://arxiv.org/abs/${encodeURIComponent(externalPaperId.value)}`;
+});
+
+const externalPdfLink = computed(() => {
+  if (paperSource.value === 'biorxiv') {
+    const doi = externalPaperId.value.startsWith('10.1101/')
+      ? externalPaperId.value
+      : `10.1101/${externalPaperId.value}`;
+    return `https://www.biorxiv.org/content/${doi}.full.pdf`;
+  }
+  return `https://arxiv.org/pdf/${encodeURIComponent(externalPaperId.value)}.pdf`;
 });
 
 const zoom = ref(1);
@@ -245,5 +254,22 @@ function zoomOut() { zoom.value = Math.max(zoom.value - 0.1, 0.3); }
 }
 @media (max-width: 1100px) {
   .columns { grid-template-columns: 1fr; }
+}
+.biorxiv-fallback {
+  text-align: center;
+  padding: 48px 24px;
+}
+.biorxiv-fallback h3 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+.biorxiv-fallback p {
+  color: #666;
+  margin: 0 0 24px;
+}
+.biorxiv-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 </style>
