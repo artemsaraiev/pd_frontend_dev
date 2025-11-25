@@ -82,11 +82,12 @@ const sourceName = computed(() => paperSource.value === 'biorxiv' ? 'bioRxiv' : 
 
 const pdfProxyLink = computed(() => {
   if (paperSource.value === 'biorxiv') {
-    // For bioRxiv, send just the suffix (without 10.1101/) to avoid slash routing issues
-    const suffix = externalPaperId.value.startsWith('10.1101/')
-      ? externalPaperId.value.slice('10.1101/'.length)
-      : externalPaperId.value;
-    return `${BASE_URL}/biorxiv-pdf/${encodeURIComponent(suffix)}`;
+    // bioRxiv has Cloudflare protection that blocks server-side proxying
+    // Try direct URL - browser might be able to handle Cloudflare challenge
+    const doi = externalPaperId.value.startsWith('10.1101/')
+      ? externalPaperId.value
+      : `10.1101/${externalPaperId.value}`;
+    return `https://www.biorxiv.org/content/${doi}.full.pdf`;
   }
   return `${BASE_URL}/pdf/${encodeURIComponent(externalPaperId.value)}`;
 });
