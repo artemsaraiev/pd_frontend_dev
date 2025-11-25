@@ -98,9 +98,9 @@ const badgeErr = ref('');
 
 // Load existing ORCID on mount
 onMounted(async () => {
-  if (session.userId) {
+  if (session.token) {
     try {
-      const data = await identity.get({ userId: session.userId });
+      const data = await identity.get({ session: session.token });
       if (data.orcid) {
         currentOrcid.value = data.orcid;
         currentOrcidId.value = data.orcidId || null;
@@ -115,10 +115,9 @@ onMounted(async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   const state = urlParams.get('state');
-  const orcidParam = urlParams.get('orcid');
   
-  if (code && state && orcidParam) {
-    await handleOAuthCallback(code, state, orcidParam);
+  if (code && state) {
+    await handleOAuthCallback(code, state);
     // Clean up URL
     window.history.replaceState({}, document.title, window.location.pathname);
   }
@@ -129,7 +128,7 @@ async function onSaveOrcid() {
   if (!orcidRe.test(orcid.value)) { orcidErr.value = 'Invalid ORCID'; return; }
   busyOrcid.value = true; orcidErr.value=''; orcidMsg.value='';
   try {
-    const result = await identity.addORCID({ userId: session.userId, orcid: orcid.value });
+    const result = await identity.addORCID({ session: session.token || '', orcid: orcid.value });
     orcidMsg.value = 'ORCID saved';
     currentOrcid.value = orcid.value;
     currentOrcidId.value = result.newORCID;
@@ -144,9 +143,9 @@ async function onSaveOrcid() {
 }
 
 async function loadOrcidData() {
-  if (!session.userId) return;
+  if (!session.token) return;
   try {
-    const data = await identity.get({ userId: session.userId });
+    const data = await identity.get({ session: session.token });
     if (data.orcid) {
       currentOrcid.value = data.orcid;
       currentOrcidId.value = data.orcidId || null;
@@ -177,7 +176,8 @@ async function onVerifyOrcid() {
   verifyMsg.value = '';
   
   try {
-    const redirectUri = `${window.location.origin}${window.location.pathname}?orcid=${currentOrcidId.value}`;
+    // Use a fixed redirect URI that matches what's registered in ORCID
+    const redirectUri = `${window.location.origin}${window.location.pathname}`;
     const result = await identity.initiateVerification({ 
       orcid: currentOrcidId.value,
       redirectUri,
@@ -197,13 +197,33 @@ async function onVerifyOrcid() {
   }
 }
 
-async function handleOAuthCallback(code: string, state: string, orcid: string) {
+async function handleOAuthCallback(code: string, state: string) {
   busyVerify.value = true;
   verifyErr.value = '';
   verifyMsg.value = '';
   
   try {
-    await identity.completeVerification({ orcid, code, state });
+    // The backend will look up the ORCID from the state
+    // We need to pass the ORCID ID, but we can get it from currentOrcidId
+    // If we don't have it, we'll need to get it from the backend via the state
+    if (!currentOrcidId.value) {
+      // Try to reload ORCID data first
+      await loadOrcidData();
+    }
+    
+    if (!currentOrcidId.value) {
+      verifyErr.value = 'Could not determine ORCID ID. Please try again.';
+      return;
+    }
+    
+    // Use the same redirect URI that was used in the authorization request
+    const redirectUri = `${window.location.origin}${window.location.pathname}`;
+    await identity.completeVerification({ 
+      orcid: currentOrcidId.value, 
+      code, 
+      state,
+      redirectUri 
+    });
     verifyMsg.value = 'ORCID verified successfully!';
     isVerified.value = true;
     await loadOrcidData();
@@ -217,7 +237,7 @@ async function handleOAuthCallback(code: string, state: string, orcid: string) {
 async function onAddBadge() {
   busyBadge.value = true; badgeErr.value=''; badgeMsg.value='';
   try {
-    await identity.addBadge({ userId: session.userId, badge: badge.value });
+    await identity.addBadge({ session: session.token || '', badge: badge.value });
     badgeMsg.value = 'Badge added';
     badge.value = '';
   } catch (e: any) {
