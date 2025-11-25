@@ -193,9 +193,7 @@ export const anchored = {
           parentContext: ctx.parentContext,
         };
       })
-      .filter((a): a is { _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string; parentContext?: string } =>
-        a !== null
-      );
+      .filter((a): a is NonNullable<typeof a> => a !== null);
 
     return { anchors };
   },
