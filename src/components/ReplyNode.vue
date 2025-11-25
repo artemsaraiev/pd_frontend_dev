@@ -1,10 +1,16 @@
 <template>
   <li class="reply" :style="{ marginLeft: (depth * 16) + 'px' }">
-    <div class="meta"><strong>{{ node.author }}</strong></div>
-    <div class="body" v-html="renderBody(node.body)" @click="handleBodyClick"></div>
+    <div class="meta">
+      <strong v-if="!node.deleted">{{ node.author }}</strong>
+      <span v-else class="deleted-author">[deleted]</span>
+    </div>
+    <div class="body" :class="{ deleted: node.deleted }">
+      <div v-if="node.deleted" class="deleted-message">[deleted]</div>
+      <div v-else v-html="renderBody(node.body)" @click="handleBodyClick"></div>
+    </div>
     <div class="actions">
       <button class="ghost small" @click="replying = !replying">Reply</button>
-      <button v-if="sessionStore.userId === node.author" class="ghost small delete" @click="deleteReply">Delete</button>
+      <button v-if="sessionStore.userId === node.author && !node.deleted" class="ghost small delete" @click="deleteReply">Delete</button>
     </div>
     <div v-if="replying" class="compose-area">
       <div class="editor-toolbar">
@@ -63,6 +69,16 @@
       :start-index="viewerIndex"
       @close="viewerImages = []"
     />
+    <!-- Confirmation Dialog -->
+    <div v-if="showDeleteConfirm" class="confirm-dialog-overlay" @click="showDeleteConfirm = false">
+      <div class="confirm-dialog" @click.stop>
+        <p>Delete this reply?</p>
+        <div class="confirm-actions">
+          <button class="ghost" @click="showDeleteConfirm = false">Cancel</button>
+          <button class="primary delete" @click="confirmDelete">Delete</button>
+        </div>
+      </div>
+    </div>
   </li>
 </template>
 
@@ -91,6 +107,7 @@ const attachments = ref<string[]>([]);
 const fileInput = ref<HTMLInputElement | null>(null);
 const viewerImages = ref<string[]>([]);
 const viewerIndex = ref(0);
+const showDeleteConfirm = ref(false);
 
 const renderBodyPreview = computed(() =>
   renderMarkdown(buildBodyWithImages(body.value, attachments.value)),
@@ -194,8 +211,12 @@ async function send() {
   }
 }
 
-async function deleteReply() {
-  if (!confirm('Delete this reply?')) return;
+function deleteReply() {
+  showDeleteConfirm.value = true;
+}
+
+async function confirmDelete() {
+  showDeleteConfirm.value = false;
   try {
     await discussion.deleteReply({
       replyId: props.node._id,
@@ -301,6 +322,9 @@ function formatReply(kind: FormatKind) {
 .reply { border-left: 2px solid var(--border); padding-left: 8px; }
 .meta { font-size: 12px; color: #444; }
 .body { margin: 4px 0 6px; }
+.body.deleted { opacity: 0.6; font-style: italic; }
+.deleted-message { color: #888; font-size: 12px; }
+.deleted-author { color: #888; font-style: italic; }
 .actions { display: flex; gap: 6px; }
 .small { padding: 4px 8px; font-size: 12px; }
 .primary { background: var(--brand); color: #fff; border: 1px solid var(--brand); border-radius: 6px; }
@@ -404,5 +428,53 @@ function formatReply(kind: FormatKind) {
 }
 .preview-body {
   font-size: 14px;
+}
+
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-dialog p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-actions button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.confirm-actions .delete {
+  background: var(--error, #dc3545);
+  color: white;
+  border-color: var(--error, #dc3545);
+}
+
+.confirm-actions .delete:hover {
+  background: #c82333;
+  border-color: #c82333;
 }
 </style>

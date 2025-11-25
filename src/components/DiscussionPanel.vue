@@ -97,7 +97,7 @@
             >{{ expanded[t.id] ? 'Hide replies' : 'View replies' }}</a>
             <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
             <a
-              v-if="session.userId === t.author"
+              v-if="session.userId === t.author && !t.deleted"
               href="#"
               class="delete-link"
               @click.prevent="deleteThread(t.id)"
@@ -105,7 +105,10 @@
               Delete
             </a>
           </div>
-          <div class="body" v-html="renderBody(t.body)" @click="handleBodyClick"></div>
+          <div class="body" :class="{ deleted: t.deleted }">
+            <div v-if="t.deleted" class="deleted-message">[deleted]</div>
+            <div v-else v-html="renderBody(t.body)" @click="handleBodyClick"></div>
+          </div>
           <div v-if="replyThreadId === t.id" class="compose-thread-reply">
             <div class="editor-toolbar">
               <button class="icon-btn" type="button" @click="formatReply('bold')"><strong>B</strong></button>
@@ -161,6 +164,16 @@
       :start-index="viewerIndex"
       @close="viewerImages = []"
     />
+    <!-- Confirmation Dialog -->
+    <div v-if="showDeleteConfirm" class="confirm-dialog-overlay" @click="showDeleteConfirm = false">
+      <div class="confirm-dialog" @click.stop>
+        <p>Delete this thread and its replies?</p>
+        <div class="confirm-actions">
+          <button class="ghost" @click="showDeleteConfirm = false">Cancel</button>
+          <button class="primary delete" @click="confirmDeleteThread">Delete</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -174,6 +187,10 @@ import ImageViewer from '@/components/ImageViewer.vue';
 import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
 
 const props = defineProps<{ paperId: string | null; anchorFilterProp?: string | null }>();
+
+const emit = defineEmits<{
+  (e: 'deletedAnchorsChanged', anchors: Set<string>): void;
+}>();
 
 const session = useSessionStore();
 const pubId = ref<string | null>(null);
@@ -200,10 +217,12 @@ const replyAttachments = ref<string[]>([]);
 const busyReply = ref(false);
 const errorReply = ref('');
 const replyMsg = ref('');
+const showDeleteConfirm = ref(false);
+const pendingDeleteThreadId = ref<string | null>(null);
 
 const actions = ref<string[]>([]);
-type ReplyNode = { _id: string; author: string; body: string; children?: ReplyNode[] };
-type Thread = { id: string; author: string; body: string; anchorId?: string; replies: ReplyNode[] };
+type ReplyNode = { _id: string; author: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean };
+type Thread = { id: string; author: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean };
 const threads = ref<Thread[]>([]);
 const anchorFilter = ref('');
 const expanded = ref<Record<string, boolean>>({});
@@ -212,6 +231,34 @@ const filteredThreads = computed(() =>
     ? threads.value.filter(t => t.anchorId === (props.anchorFilterProp ?? anchorFilter.value))
     : threads.value
 );
+
+const deletedAnchors = computed(() => {
+  const deleted = new Set<string>();
+  
+  // Helper to recursively collect anchorIds from replies
+  function collectReplyAnchors(replies: ReplyNode[]) {
+    for (const r of replies) {
+      if (r.anchorId) {
+        deleted.add(r.anchorId);
+      }
+      if (r.children && r.children.length > 0) {
+        collectReplyAnchors(r.children);
+      }
+    }
+  }
+  
+  for (const t of threads.value) {
+    if (t.deleted) {
+      // Add thread's own anchor
+      if (t.anchorId) {
+        deleted.add(t.anchorId);
+      }
+      // Also add all reply anchors within this deleted thread
+      collectReplyAnchors(t.replies);
+    }
+  }
+  return deleted;
+});
 
 const threadTextarea = ref<HTMLTextAreaElement | null>(null);
 const replyTextarea = ref<HTMLTextAreaElement | null>(null);
@@ -284,22 +331,51 @@ function toggleExpanded(id: string) {
 async function loadThreads() {
   if (!pubId.value) { threads.value = []; return; }
   const activeFilter = (props.anchorFilterProp ?? anchorFilter.value) || undefined;
-  const { threads: list } = await discussion.listThreads({ pubId: pubId.value, anchorId: activeFilter });
-  console.log('[DiscussionPanel] Loaded threads', list);
+  // Use loose typing here to avoid TS friction; backend supports includeDeleted.
+  const { threads: list } = await (discussion as any).listThreads({ pubId: pubId.value, anchorId: activeFilter, includeDeleted: true });
+  console.log('[DiscussionPanel] Loaded threads raw:', JSON.stringify(list, null, 2));
   console.log('[DiscussionPanel] Current user ID:', session.userId);
   const built: Thread[] = [];
   for (const t of list) {
     // Prefer the tree API; fall back to flat list if tree is empty for any reason.
-    let nodes: any[] = (await discussion.listRepliesTree({ threadId: t._id })).replies as any[];
+    let nodes: any[] = (await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true })).replies as any[];
     if (!nodes || nodes.length === 0) {
-      const flat = await discussion.listReplies({ threadId: t._id });
-      nodes = flat.replies.map(r => ({ _id: r._id, author: r.author, body: r.body, children: [] as any[] }));
+      const flat = await (discussion as any).listReplies({ threadId: t._id, includeDeleted: true });
+      nodes = flat.replies.map((r: any) => ({ _id: r._id, author: r.author, body: r.body, anchorId: r.anchorId, children: [] as any[], deleted: r.deleted ?? false }));
     }
-    built.push({ id: t._id, author: t.author, body: t.body, anchorId: t.anchorId, replies: nodes as any });
+    built.push({ id: t._id, author: t.author, body: t.body, anchorId: t.anchorId, replies: nodes as any, deleted: t.deleted });
   }
   threads.value = built;
   // Note: expanded state is preserved across reloads (not reset)
+  // Emit deleted anchors for highlight styling
+  console.log('[DiscussionPanel] deletedAnchors:', Array.from(deletedAnchors.value));
+  emit('deletedAnchorsChanged', deletedAnchors.value);
+  // Also broadcast a global snapshot so PdfAnnotator (in a different
+  // part of the layout) can gray out any associated highlights.
+  try {
+    console.log('[DiscussionPanel] dispatching anchor-deleted-visual-snapshot', Array.from(deletedAnchors.value));
+    window.dispatchEvent(
+      new CustomEvent('anchor-deleted-visual-snapshot', {
+        detail: Array.from(deletedAnchors.value),
+      }),
+    );
+  } catch {
+    // ignore
+  }
 }
+
+watch(deletedAnchors, () => {
+  emit('deletedAnchorsChanged', deletedAnchors.value);
+  try {
+    window.dispatchEvent(
+      new CustomEvent('anchor-deleted-visual-snapshot', {
+        detail: Array.from(deletedAnchors.value),
+      }),
+    );
+  } catch {
+    // ignore
+  }
+}, { deep: true });
 
 async function ensurePub() {
   if (!props.paperId) return;
@@ -399,6 +475,14 @@ async function onStartThread() {
     attachments.value = [];
     anchorId.value = '';
     replyThreadId.value = res.threadId;
+    
+    // Clear parent anchor in PdfAnnotator so new prompts start fresh
+    try {
+      window.dispatchEvent(new Event('clear-parent-anchor'));
+    } catch {
+      // ignore
+    }
+    
     await loadThreads();
   } catch (e: any) {
     errorThread.value = e?.message ?? String(e);
@@ -548,11 +632,43 @@ function focusAnchor(aid?: string) {
   }
 }
 
-async function deleteThread(threadId: string) {
+function deleteThread(threadId: string) {
   if (!pubId.value || !session.token) return;
-  if (!confirm('Delete this thread and its replies?')) return;
+  pendingDeleteThreadId.value = threadId;
+  showDeleteConfirm.value = true;
+}
+
+async function confirmDeleteThread() {
+  if (!pendingDeleteThreadId.value || !pubId.value || !session.token) {
+    showDeleteConfirm.value = false;
+    pendingDeleteThreadId.value = null;
+    return;
+  }
+  
+  const threadId = pendingDeleteThreadId.value;
+  showDeleteConfirm.value = false;
+  pendingDeleteThreadId.value = null;
+  
   try {
+    // Remember the anchor for visual highlight updates
+    const t = threads.value.find((th) => th.id === threadId);
+    const aid = t?.anchorId;
+    console.log('[DiscussionPanel] deleteThread found anchorId:', aid, 'for thread:', threadId);
+
     await discussion.deleteThread({ threadId, session: session.token });
+
+    // Notify PDF annotator so it can stripe the associated highlight
+    if (aid) {
+      try {
+        console.log('[DiscussionPanel] dispatching immediate anchor-deleted-visual for', aid);
+        window.dispatchEvent(
+          new CustomEvent('anchor-deleted-visual', { detail: aid }),
+        );
+      } catch {
+        // ignore
+      }
+    }
+
     await loadThreads();
   } catch (e: any) {
     alert(e?.message ?? 'Failed to delete thread');
@@ -568,9 +684,33 @@ function onTextSelected(e: Event) {
 }
 
 function onStartThreadWithHighlight(e: Event) {
-  const custom = e as CustomEvent<{ anchorId: string; text: string }>;
-  const { anchorId: aid, text } = custom.detail;
-  anchorId.value = aid;
+  const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean }>;
+  const { anchorId: aid, text, isChild } = custom.detail;
+  
+  // If this is the first prompt OR it's a child of the current anchor, 
+  // track it appropriately
+  if (!anchorId.value) {
+    // First prompt becomes the parent anchor
+    anchorId.value = aid;
+    console.log('[DiscussionPanel] Set parent anchor:', aid);
+  } else if (isChild) {
+    // This is a child highlight nested under the parent - just log it
+    console.log('[DiscussionPanel] Added child anchor:', aid, 'under parent:', anchorId.value);
+  } else {
+    // New independent prompt - this replaces the parent
+    anchorId.value = aid;
+    console.log('[DiscussionPanel] Replaced parent anchor:', aid);
+  }
+  
+  // Broadcast current parent anchor so PdfAnnotator knows where to nest new prompts
+  try {
+    window.dispatchEvent(
+      new CustomEvent('current-parent-anchor', { detail: anchorId.value }),
+    );
+  } catch {
+    // ignore
+  }
+  
   // Do not prefill the body with quoted text anymore; just focus the box.
   setTimeout(() => {
     const el = document.querySelector('.panel textarea[rows="3"]') as HTMLTextAreaElement | null;
@@ -581,14 +721,30 @@ function onStartThreadWithHighlight(e: Event) {
   }, 100);
 }
 
+function onRequestDeletedAnchorsStatus() {
+  // Reply with current state
+  try {
+    console.log('[DiscussionPanel] Replying to status request with', Array.from(deletedAnchors.value));
+    window.dispatchEvent(
+      new CustomEvent('anchor-deleted-visual-snapshot', {
+        detail: Array.from(deletedAnchors.value),
+      }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
 onMounted(() => {
   window.addEventListener('text-selected', onTextSelected);
   window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
+  window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('text-selected', onTextSelected);
   window.removeEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
+  window.removeEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
 });
 </script>
 
@@ -614,6 +770,8 @@ button:disabled { opacity: 0.6; }
 .small { padding: 4px 8px; font-size: 12px; }
 .anchor { background: var(--chip-bg); border: 1px solid var(--border); border-radius: 999px; padding: 0 6px; font-size: 12px; }
 .body { margin: 6px 0; }
+.body.deleted { opacity: 0.6; font-style: italic; }
+.deleted-message { color: #888; font-size: 12px; }
 /* Deep selector because v-html renders dynamic content */
 .body :deep(.post-image) {
   display: inline-block;
@@ -710,6 +868,54 @@ button:disabled { opacity: 0.6; }
 }
 .preview-body {
   font-size: 14px;
+}
+
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-dialog p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-actions button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.confirm-actions .delete {
+  background: var(--error, #dc3545);
+  color: white;
+  border-color: var(--error, #dc3545);
+}
+
+.confirm-actions .delete:hover {
+  background: #c82333;
+  border-color: #c82333;
 }
 </style>
 

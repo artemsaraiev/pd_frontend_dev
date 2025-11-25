@@ -55,9 +55,11 @@ export const anchored = {
     kind: AnchorKind;
     ref: string;
     snippet: string;
+    color?: string;
     session: string;
+    parentContext?: string; // Optional: nest this highlight under a parent
   }): Promise<{ anchorId: string }> {
-    const { paperId, kind, ref, snippet, session } = args;
+    const { paperId, kind, ref, snippet, color, session, parentContext } = args;
 
     // Convert external paperId to internal _id for PdfHighlighter operations
     // Ensure paper exists and get internal _id
@@ -99,6 +101,7 @@ export const anchored = {
       page,
       rects,
       quote: snippet,
+      color,
     });
     if (!highlightRes.highlightId) {
       throw new Error(highlightRes.error ?? "Failed to create highlight");
@@ -113,6 +116,7 @@ export const anchored = {
       paperId,
       location: highlightRes.highlightId,
       kind,
+      ...(parentContext && { parentContext }),
     });
     if (!contextRes.newContext) {
       throw new Error(contextRes.error ?? "Failed to create context");
@@ -124,7 +128,7 @@ export const anchored = {
   async listByPaper(args: {
     paperId: string;
   }): Promise<
-    { anchors: Array<{ _id: string; kind: AnchorKind; ref: string; snippet: string }> }
+    { anchors: Array<{ _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string; parentContext?: string }> }
   > {
     const { paperId } = args;
 
@@ -161,6 +165,7 @@ export const anchored = {
           page: number;
           rects: Array<{ x: number; y: number; w: number; h: number }>;
           quote?: string;
+          color?: string;
         };
       }>;
     }>(`/PdfHighlighter/_listByPaper`, { paper: internalPaperId });
@@ -184,11 +189,11 @@ export const anchored = {
           kind: ctx.kind ?? "Lines",
           ref,
           snippet: hl.quote ?? "",
+          color: hl.color,
+          parentContext: ctx.parentContext,
         };
       })
-      .filter((a): a is { _id: string; kind: AnchorKind; ref: string; snippet: string } =>
-        a !== null
-      );
+      .filter((a): a is NonNullable<typeof a> => a !== null);
 
     return { anchors };
   },
@@ -218,11 +223,11 @@ export const discussion = {
     const result = data[0]?.result ?? null;
     return { pubId: result };
   },
-  async listThreads(args: { pubId: string; anchorId?: string }): Promise<{ threads: Array<{ _id: string; author: string; body: string; anchorId?: string; createdAt: number; editedAt?: number }>}> {
+  async listThreads(args: { pubId: string; anchorId?: string; includeDeleted?: boolean }): Promise<{ threads: Array<{ _id: string; author: string; body: string; anchorId?: string; createdAt: number; editedAt?: number; deleted?: boolean }>}> {
     // Query returns fan-out format: Array<{ thread: Thread }>
     const data = await post<
-      Array<{ thread: { _id: string; author: string; title?: string; body: string; anchorId?: string; createdAt: number; editedAt?: number } }>
-    >(`/DiscussionPub/_listThreads`, args);
+      Array<{ thread: { _id: string; author: string; title?: string; body: string; anchorId?: string; createdAt: number; editedAt?: number; deleted?: boolean } }>
+    >(`/DiscussionPub/_listThreads`, { ...args, includeDeleted: args.includeDeleted ?? true });
     // Sync collects threads into { threads: [...] } response
     const response = data as any;
     const threads = response.threads ?? data.map((r) => r.thread);
@@ -236,21 +241,21 @@ export const discussion = {
     const data = await post<{ ok: true }>(`/DiscussionPub/deleteReply`, args);
     return data;
   },
-  async listReplies(args: { threadId: string }): Promise<{ replies: Array<{ _id: string; author: string; body: string; createdAt: number; editedAt?: number }>}> {
+  async listReplies(args: { threadId: string; includeDeleted?: boolean }): Promise<{ replies: Array<{ _id: string; author: string; body: string; createdAt: number; editedAt?: number; deleted?: boolean }>}> {
     // Query returns fan-out format: Array<{ reply: Reply }>
     const data = await post<
-      Array<{ reply: { _id: string; author: string; body: string; anchorId?: string; parentId?: string; createdAt: number; editedAt?: number } }>
-    >(`/DiscussionPub/_listReplies`, args);
+      Array<{ reply: { _id: string; author: string; body: string; anchorId?: string; parentId?: string; createdAt: number; editedAt?: number; deleted?: boolean } }>
+    >(`/DiscussionPub/_listReplies`, { ...args, includeDeleted: args.includeDeleted ?? true });
     // Sync collects replies into { replies: [...] } response
     const response = data as any;
     const replies = response.replies ?? data.map((r) => r.reply);
     return { replies };
   },
-  async listRepliesTree(args: { threadId: string }): Promise<{ replies: Array<any> }> {
+  async listRepliesTree(args: { threadId: string; includeDeleted?: boolean }): Promise<{ replies: Array<any> }> {
     // Query returns fan-out format: Array<{ reply: ReplyTree }>
     const data = await post<
       Array<{ reply: any }>
-    >(`/DiscussionPub/_listRepliesTree`, args);
+    >(`/DiscussionPub/_listRepliesTree`, { ...args, includeDeleted: args.includeDeleted ?? true });
     // Sync collects replies into { replies: [...] } response
     const response = data as any;
     const replies = response.replies ?? data.map((r) => r.reply);
