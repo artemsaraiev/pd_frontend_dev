@@ -57,8 +57,9 @@ export const anchored = {
     snippet: string;
     color?: string;
     session: string;
+    parentContext?: string; // Optional: nest this highlight under a parent
   }): Promise<{ anchorId: string }> {
-    const { paperId, kind, ref, snippet, color, session } = args;
+    const { paperId, kind, ref, snippet, color, session, parentContext } = args;
 
     // Convert external paperId to internal _id for PdfHighlighter operations
     // Ensure paper exists and get internal _id
@@ -115,6 +116,7 @@ export const anchored = {
       paperId,
       location: highlightRes.highlightId,
       kind,
+      ...(parentContext && { parentContext }),
     });
     if (!contextRes.newContext) {
       throw new Error(contextRes.error ?? "Failed to create context");
@@ -126,7 +128,7 @@ export const anchored = {
   async listByPaper(args: {
     paperId: string;
   }): Promise<
-    { anchors: Array<{ _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string }> }
+    { anchors: Array<{ _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string; parentContext?: string }> }
   > {
     const { paperId } = args;
 
@@ -188,9 +190,10 @@ export const anchored = {
           ref,
           snippet: hl.quote ?? "",
           color: hl.color,
+          parentContext: ctx.parentContext,
         };
       })
-      .filter((a): a is { _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string } =>
+      .filter((a): a is { _id: string; kind: AnchorKind; ref: string; snippet: string; color?: string; parentContext?: string } =>
         a !== null
       );
 

@@ -475,6 +475,14 @@ async function onStartThread() {
     attachments.value = [];
     anchorId.value = '';
     replyThreadId.value = res.threadId;
+    
+    // Clear parent anchor in PdfAnnotator so new prompts start fresh
+    try {
+      window.dispatchEvent(new Event('clear-parent-anchor'));
+    } catch {
+      // ignore
+    }
+    
     await loadThreads();
   } catch (e: any) {
     errorThread.value = e?.message ?? String(e);
@@ -676,9 +684,33 @@ function onTextSelected(e: Event) {
 }
 
 function onStartThreadWithHighlight(e: Event) {
-  const custom = e as CustomEvent<{ anchorId: string; text: string }>;
-  const { anchorId: aid, text } = custom.detail;
-  anchorId.value = aid;
+  const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean }>;
+  const { anchorId: aid, text, isChild } = custom.detail;
+  
+  // If this is the first prompt OR it's a child of the current anchor, 
+  // track it appropriately
+  if (!anchorId.value) {
+    // First prompt becomes the parent anchor
+    anchorId.value = aid;
+    console.log('[DiscussionPanel] Set parent anchor:', aid);
+  } else if (isChild) {
+    // This is a child highlight nested under the parent - just log it
+    console.log('[DiscussionPanel] Added child anchor:', aid, 'under parent:', anchorId.value);
+  } else {
+    // New independent prompt - this replaces the parent
+    anchorId.value = aid;
+    console.log('[DiscussionPanel] Replaced parent anchor:', aid);
+  }
+  
+  // Broadcast current parent anchor so PdfAnnotator knows where to nest new prompts
+  try {
+    window.dispatchEvent(
+      new CustomEvent('current-parent-anchor', { detail: anchorId.value }),
+    );
+  } catch {
+    // ignore
+  }
+  
   // Do not prefill the body with quoted text anymore; just focus the box.
   setTimeout(() => {
     const el = document.querySelector('.panel textarea[rows="3"]') as HTMLTextAreaElement | null;

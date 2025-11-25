@@ -86,6 +86,7 @@ interface Highlight {
   color: string;
   text?: string;
   pending?: boolean; // True if highlight is pending confirmation (can be deleted)
+  parentContext?: string; // Parent anchor for nested highlights
 }
 
 const emit = defineEmits<{
@@ -107,6 +108,8 @@ let renderToken = 0;
 const highlights = ref<Highlight[]>([]);
 // Track anchors whose threads have been deleted (for visual stripes)
 const deletedAnchorIds = reactive(new Set<string>());
+// Track the current parent anchor for nesting additional prompts
+let currentParentAnchor: string | null = null;
 const sessionStore = useSessionStore();
 
 // Selection state
@@ -248,7 +251,7 @@ async function loadExistingAnchors() {
       const { page, rects } = parseRef(a.ref || '');
       if (page == null || !rects || rects.length === 0) continue;
       const pageIndex = page - 1;
-      console.log('[PdfAnnotator] Loaded anchor:', a._id, 'color:', a.color);
+      console.log('[PdfAnnotator] Loaded anchor:', a._id, 'color:', a.color, 'parent:', a.parentContext);
       loaded.push({
         id: a._id,
         pageIndex,
@@ -260,6 +263,7 @@ async function loadExistingAnchors() {
         })),
         color: a.color || props.activeColor,
         text: a.snippet,
+        parentContext: a.parentContext,
       });
     }
     if (loaded.length) {
@@ -438,11 +442,16 @@ function drawHighlightsForPage(pageIndex: number) {
       }
 
       // Visual treatment for deleted anchors (threads)
-      if (
+      // Also gray out children if their parent is deleted
+      const isDeleted = 
         (props.deletedAnchors && props.deletedAnchors.has(h.id)) ||
-        deletedAnchorIds.has(h.id)
-      ) {
-        console.log('[PdfAnnotator] Graying out deleted anchor:', h.id);
+        deletedAnchorIds.has(h.id) ||
+        (h.parentContext && (
+          (props.deletedAnchors && props.deletedAnchors.has(h.parentContext)) ||
+          deletedAnchorIds.has(h.parentContext)
+        ));
+      if (isDeleted) {
+        console.log('[PdfAnnotator] Graying out deleted anchor:', h.id, h.parentContext ? `(parent: ${h.parentContext})` : '');
         div.classList.add('deleted-anchor');
         // Override color to a neutral gray so it's very clear that the
         // discussion was deleted but the region is still visible.
@@ -771,6 +780,7 @@ async function confirmPrompt() {
         snippet: (text || '').slice(0, 300),
         session: sessionStore.token,
         color: props.activeColor,
+        ...(currentParentAnchor && { parentContext: currentParentAnchor }),
       });
       console.timeEnd("[PdfAnnotator.confirmPrompt] anchored.create");
       console.log(
@@ -791,6 +801,7 @@ async function confirmPrompt() {
     rects,
     color: props.activeColor,
     text,
+    ...(currentParentAnchor && { parentContext: currentParentAnchor }),
   };
   highlights.value.push(highlight);
   drawHighlightsForPage(pageIndex);
@@ -798,11 +809,13 @@ async function confirmPrompt() {
 
   // Dispatch global event so DiscussionPanel can prefill a thread
   const aid = id;
+  const isChild = !!currentParentAnchor;
   const detail = {
     anchorId: aid,
     text,
     pageIndex,
     rects,
+    isChild,
   };
   try {
     window.dispatchEvent(
@@ -868,12 +881,25 @@ function onDeletedAnchorsSnapshot(e: Event) {
   }
 }
 
+function onCurrentParentAnchor(e: Event) {
+  const custom = e as CustomEvent<string | null>;
+  currentParentAnchor = custom.detail;
+  console.log('[PdfAnnotator] Current parent anchor set to:', currentParentAnchor);
+}
+
+function onClearParentAnchor() {
+  currentParentAnchor = null;
+  console.log('[PdfAnnotator] Parent anchor cleared (thread created)');
+}
+
 onMounted(() => {
   cancelled = false;
   loadPdf();
   document.addEventListener('mouseup', onMouseUp);
   window.addEventListener('anchor-deleted-visual', onAnchorDeletedVisual);
   window.addEventListener('anchor-deleted-visual-snapshot', onDeletedAnchorsSnapshot);
+  window.addEventListener('current-parent-anchor', onCurrentParentAnchor);
+  window.addEventListener('clear-parent-anchor', onClearParentAnchor);
   // Request current status in case we mounted after the initial event
   try {
     window.dispatchEvent(new Event('request-deleted-anchors-status'));
@@ -887,6 +913,8 @@ onBeforeUnmount(() => {
   document.removeEventListener('mouseup', onMouseUp);
   window.removeEventListener('anchor-deleted-visual', onAnchorDeletedVisual);
   window.removeEventListener('anchor-deleted-visual-snapshot', onDeletedAnchorsSnapshot);
+  window.removeEventListener('current-parent-anchor', onCurrentParentAnchor);
+  window.removeEventListener('clear-parent-anchor', onClearParentAnchor);
 });
 
 watch(
