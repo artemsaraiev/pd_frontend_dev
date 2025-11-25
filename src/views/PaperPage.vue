@@ -82,11 +82,11 @@ const sourceName = computed(() => paperSource.value === 'biorxiv' ? 'bioRxiv' : 
 
 const pdfProxyLink = computed(() => {
   if (paperSource.value === 'biorxiv') {
-    // For bioRxiv, ensure we have full DOI format
-    const doi = externalPaperId.value.startsWith('10.1101/')
-      ? externalPaperId.value
-      : `10.1101/${externalPaperId.value}`;
-    return `${BASE_URL}/biorxiv-pdf/${encodeURIComponent(doi)}`;
+    // For bioRxiv, send just the suffix (without 10.1101/) to avoid slash routing issues
+    const suffix = externalPaperId.value.startsWith('10.1101/')
+      ? externalPaperId.value.slice('10.1101/'.length)
+      : externalPaperId.value;
+    return `${BASE_URL}/biorxiv-pdf/${encodeURIComponent(suffix)}`;
   }
   return `${BASE_URL}/pdf/${encodeURIComponent(externalPaperId.value)}`;
 });
