@@ -345,8 +345,9 @@ export const groups = {
     return { group: data[0]?.group ?? null };
   },
   async getGroupsForUser(args: { session: string }): Promise<{ groups: string[] }> {
-    const data = await post<{ groups: string[] }>(`/AccessControl/_getGroupsForUser`, args);
-    return data;
+    const data = await post<{ groups: Array<{ group: string }> }>(`/AccessControl/_getGroupsForUser`, args);
+    // Extract group IDs from the query structure
+    return { groups: data.groups.map(g => g.group) };
   },
   async getMembershipsByGroup(args: { group: string }): Promise<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }> {
     const data = await post<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }>(`/AccessControl/_getMembershipsByGroup`, args);
