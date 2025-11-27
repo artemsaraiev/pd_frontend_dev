@@ -341,20 +341,19 @@ export const groups = {
     return data;
   },
   async getGroup(args: { group: string }): Promise<{ group: { _id: string; name: string; description: string; admin: string } | null }> {
-    const data = await post<Array<{ group: { _id: string; name: string; description: string; admin: string } | null }>>(`/AccessControl/_getGroup`, args);
-    return { group: data[0]?.group ?? null };
+    const data = await post<{ group: { _id: string; name: string; description: string; admin: string } | null }>(`/AccessControl/getGroup`, args);
+    return data;
   },
   async getGroupsForUser(args: { session: string }): Promise<{ groups: string[] }> {
-    const data = await post<{ groups: Array<{ group: string }> }>(`/AccessControl/_getGroupsForUser`, args);
-    // Extract group IDs from the query structure
-    return { groups: data.groups.map(g => g.group) };
+    const data = await post<{ groups: string[] }>(`/AccessControl/getGroupsForUser`, args);
+    return data;
   },
   async getMembershipsByGroup(args: { group: string }): Promise<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }> {
-    const data = await post<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }>(`/AccessControl/_getMembershipsByGroup`, args);
+    const data = await post<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }>(`/AccessControl/getMembershipsByGroup`, args);
     return data;
   },
   async getMembershipsByUser(args: { session: string }): Promise<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }> {
-    const data = await post<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }>(`/AccessControl/_getMembershipsByUser`, args);
+    const data = await post<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }>(`/AccessControl/getMembershipsByUser`, args);
     return data;
   },
   async inviteUser(args: { session: string; group: string; invitee: string; message?: string }): Promise<{ newInvitation: string }> {
@@ -370,11 +369,11 @@ export const groups = {
     return data;
   },
   async listPendingInvitationsByUser(args: { session: string }): Promise<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }> {
-    const data = await post<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }>(`/AccessControl/_listPendingInvitationsByUser`, args);
+    const data = await post<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }>(`/AccessControl/listPendingInvitationsByUser`, args);
     return data;
   },
   async getInvitation(args: { invitation: string }): Promise<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }> {
-    const data = await post<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }>(`/AccessControl/_getInvitation`, args);
+    const data = await post<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }>(`/AccessControl/getInvitation`, args);
     return data;
   },
   async revokeMembership(args: { session: string; membership: string }): Promise<{ ok: true }> {
