@@ -1,14 +1,33 @@
 <template>
   <div class="feed">
     <div class="hero-section">
-      <img src="@/assets/images/pubDiscussLogo.png" alt="PubDiscuss" class="hero-logo" />
+      <img
+        src="@/assets/images/pubDiscussLogo.png"
+        alt="PubDiscuss"
+        class="hero-logo"
+      />
       <p class="tagline">Collaborative academic paper discussions</p>
     </div>
 
     <div class="toolbar">
-      <button :class="{tab:true,active:tab==='trending'}" @click="tab='trending'">Trending</button>
-      <button :class="{tab:true,active:tab==='new'}" @click="tab='new'">New</button>
-      <button :class="{tab:true,active:tab==='discussed'}" @click="tab='discussed'">Most discussed</button>
+      <button
+        :class="{ tab: true, active: tab === 'trending' }"
+        @click="tab = 'trending'"
+      >
+        Trending
+      </button>
+      <button
+        :class="{ tab: true, active: tab === 'new' }"
+        @click="tab = 'new'"
+      >
+        New
+      </button>
+      <button
+        :class="{ tab: true, active: tab === 'discussed' }"
+        @click="tab = 'discussed'"
+      >
+        Most discussed
+      </button>
       <select class="topic">
         <option>All topics</option>
       </select>
@@ -16,23 +35,35 @@
 
     <div class="cards">
       <div v-for="p in papers" :key="p.id" class="card">
-        <h3 class="title"><a :href="`/paper/${encodeURIComponent(p.paperId)}`">{{ p.title || p.paperId }}</a></h3>
-        <div class="meta">{{ p.createdAt ? new Date(p.createdAt).toLocaleString() : '' }}</div>
+        <h3 class="title">
+          <a :href="`/paper/${encodeURIComponent(p.paperId)}`">{{
+            p.title || p.paperId
+          }}</a>
+        </h3>
+        <div class="meta">
+          {{ p.createdAt ? new Date(p.createdAt).toLocaleString() : "" }}
+        </div>
         <div class="ctas">
-          <a class="primary" :href="`/paper/${encodeURIComponent(p.paperId)}`">View discussion</a>
+          <a class="primary" :href="`/paper/${encodeURIComponent(p.paperId)}`"
+            >View discussion</a
+          >
         </div>
       </div>
-      <p v-if="!loading && !papers.length" class="hint">No papers yet — use the search above or ensure one from the Paper page.</p>
+      <p v-if="!loading && !papers.length" class="hint">
+        No papers yet — use the search above or ensure one from the Paper page.
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { paper } from '@/api/endpoints';
+import { onMounted, ref } from "vue";
+import { paper } from "@/api/endpoints";
 
-const tab = ref<'trending'|'new'|'discussed'>('trending');
-const papers = ref<Array<{ id: string; paperId: string; title?: string; createdAt?: number }>>([]);
+const tab = ref<"trending" | "new" | "discussed">("trending");
+const papers = ref<
+  Array<{ id: string; paperId: string; title?: string; createdAt?: number }>
+>([]);
 const loading = ref(false);
 
 onMounted(async () => {
@@ -47,7 +78,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.feed { display: grid; gap: 24px; }
+.feed {
+  display: grid;
+  gap: 24px;
+}
 
 /* Hero Section */
 .hero-section {
@@ -56,10 +90,10 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 48px 24px 32px;
-  margin: -16px -16px 0 -16px;
+  margin: 10px;
   background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
   border-radius: 0 0 20px 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 .hero-logo {
   max-width: 400px;
@@ -128,13 +162,13 @@ onMounted(async () => {
   border-radius: 12px;
   background: #fff;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 }
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -145,7 +179,7 @@ onMounted(async () => {
   transition: opacity 0.3s ease;
 }
 .card:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   transform: translateY(-4px);
   border-color: #d1d5db;
 }
@@ -203,10 +237,14 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
-  .hero-logo { max-width: 280px; }
-  .tagline { font-size: 16px; }
-  .cards { grid-template-columns: 1fr; }
+  .hero-logo {
+    max-width: 280px;
+  }
+  .tagline {
+    font-size: 16px;
+  }
+  .cards {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
-
-
