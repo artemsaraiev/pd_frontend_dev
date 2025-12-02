@@ -7,7 +7,7 @@
         class="logo"
       />
     </div>
-    <div class="search">
+    <div v-if="!isSearchPage" class="search">
       <select v-model="source" class="source-select">
         <option value="arxiv">arXiv</option>
         <option value="biorxiv">bioRxiv</option>
@@ -46,6 +46,7 @@ import { ref, computed, onMounted } from "vue";
 import { useSessionStore } from "@/stores/session";
 import { session } from "@/api/endpoints";
 import { getUsernameById } from "@/utils/usernameCache";
+import { useRoute } from "vue-router";
 
 type PaperSource = "arxiv" | "biorxiv";
 
@@ -62,6 +63,10 @@ try {
   /* during HMR pinia may not be active yet */
 }
 const token = computed(() => store?.token ?? null);
+
+// Check if we're on the search results page
+const route = useRoute();
+const isSearchPage = computed(() => route.path === '/search');
 
 // Fetch and display the username
 onMounted(async () => {
@@ -120,21 +125,21 @@ async function logout() {
   position: sticky;
   top: 0;
   z-index: 50;
-  display: grid;
-  grid-template-columns: 200px 1fr auto;
-  gap: 16px;
+  display: flex;
   align-items: center;
   padding: 12px 20px;
   border-bottom: 1px solid var(--border);
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(8px);
+  gap: 16px;
 }
 .brand {
   cursor: pointer;
   display: flex;
   align-items: center;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 .brand:hover {
   transform: scale(1.02);
@@ -149,6 +154,11 @@ async function logout() {
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   max-width: 700px;
+  flex: 1;
+}
+.right {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .source-select {
   padding: 10px 14px;

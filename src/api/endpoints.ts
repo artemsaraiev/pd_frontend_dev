@@ -313,6 +313,10 @@ export const identity = {
     const data = await post<{ orcid: string }>(`/IdentityVerification/_getORCIDFromState`, args);
     return data;
   },
+  async removeORCID(args: { session: string; orcid: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/IdentityVerification/removeORCID`, args);
+    return data;
+  },
 };
 
 export const session = {

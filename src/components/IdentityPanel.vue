@@ -12,16 +12,27 @@
           </span>
           <span v-else class="badge unverified">Unverified</span>
         </div>
-        <button 
-          v-if="!isVerified" 
-          :disabled="busyVerify" 
-          @click="onVerifyOrcid"
-          class="btn btn-primary verify-btn"
-        >
-          {{ busyVerify ? 'Verifying…' : 'Verify ORCID' }}
-        </button>
+        <div class="orcid-actions">
+          <button
+            v-if="!isVerified"
+            :disabled="busyVerify"
+            @click="onVerifyOrcid"
+            class="btn btn-primary verify-btn"
+          >
+            {{ busyVerify ? 'Verifying…' : 'Verify ORCID' }}
+          </button>
+          <button
+            :disabled="busyRemove"
+            @click="onRemoveOrcid"
+            class="btn btn-danger"
+          >
+            {{ busyRemove ? 'Removing…' : 'Remove' }}
+          </button>
+        </div>
         <div v-if="verifyMsg" class="alert alert-success">{{ verifyMsg }}</div>
         <div v-if="verifyErr" class="alert alert-error">{{ verifyErr }}</div>
+        <div v-if="removeMsg" class="alert alert-success">{{ removeMsg }}</div>
+        <div v-if="removeErr" class="alert alert-error">{{ removeErr }}</div>
       </div>
       
       <!-- Add new ORCID -->
@@ -78,7 +89,6 @@ import { identity } from '@/api/endpoints';
 
 const session = useSessionStore();
 
-const open = ref(false);
 const orcid = ref('');
 const busyOrcid = ref(false);
 const orcidMsg = ref('');
@@ -90,6 +100,10 @@ const isVerified = ref(false);
 const busyVerify = ref(false);
 const verifyMsg = ref('');
 const verifyErr = ref('');
+
+const busyRemove = ref(false);
+const removeMsg = ref('');
+const removeErr = ref('');
 
 const badge = ref('');
 const busyBadge = ref(false);
@@ -235,6 +249,34 @@ async function handleOAuthCallback(code: string, state: string) {
   }
 }
 
+async function onRemoveOrcid() {
+  if (!currentOrcidId.value) {
+    removeErr.value = 'No ORCID ID found';
+    return;
+  }
+
+  if (!confirm('Are you sure you want to remove this ORCID? This action cannot be undone.')) {
+    return;
+  }
+
+  busyRemove.value = true;
+  removeErr.value = '';
+  removeMsg.value = '';
+
+  try {
+    await identity.removeORCID({ session: session.token || '', orcid: currentOrcidId.value });
+    removeMsg.value = 'ORCID removed successfully';
+    // Clear current ORCID data
+    currentOrcid.value = null;
+    currentOrcidId.value = null;
+    isVerified.value = false;
+  } catch (e: any) {
+    removeErr.value = e?.message ?? String(e);
+  } finally {
+    busyRemove.value = false;
+  }
+}
+
 async function onAddBadge() {
   busyBadge.value = true; badgeErr.value=''; badgeMsg.value='';
   try {
@@ -370,6 +412,22 @@ async function onAddBadge() {
 
 .verify-btn:hover:not(:disabled) {
   background: #059669;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.orcid-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 .badge {

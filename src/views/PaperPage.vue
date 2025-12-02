@@ -24,6 +24,9 @@
         <span v-if="header.authors"> · {{ header.authors }}</span>
       </div>
       <p v-if="banner" class="banner">{{ banner }}</p>
+      <div v-if="showSuccessNotice" class="success-notice">
+        Added to library!
+      </div>
     </header>
 
     <div class="columns">
@@ -171,6 +174,7 @@ import { useSessionStore } from "@/stores/session";
 const session = useSessionStore();
 const banner = ref("");
 const discussionCount = ref(0);
+const showSuccessNotice = ref(false);
 
 // Local PDF upload state (for bioRxiv papers)
 const localPdfUrl = ref<string | null>(null);
@@ -346,6 +350,13 @@ function saveToLibrary() {
   if (!ids.includes(externalPaperId.value)) {
     ids.push(externalPaperId.value);
     localStorage.setItem(key, JSON.stringify(ids));
+
+    // Show success notification
+    showSuccessNotice.value = true;
+    // Hide after 2 seconds
+    setTimeout(() => {
+      showSuccessNotice.value = false;
+    }, 2000);
   }
 }
 
@@ -506,6 +517,34 @@ async function removePdf() {
 .banner {
   margin-top: 8px;
   color: var(--error);
+}
+.success-notice {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  font-weight: 500;
+  animation: fadeInOut 2s ease-in-out;
+}
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 .divider {
   height: 1px;
