@@ -423,12 +423,16 @@ export const groups = {
     return { groups: data.groups.map(g => g.group) };
   },
   async getMembershipsByGroup(args: { group: string }): Promise<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }> {
-    const data = await post<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }>(`/AccessControl/getMembershipsByGroup`, args);
-    return data;
+    // Sync returns { memberships: [{ membership: MembershipDoc }, ...] }
+    const data = await post<{ memberships: Array<{ membership: { _id: string; groupId: string; user: string; isAdmin: boolean } }> }>(`/AccessControl/getMembershipsByGroup`, args);
+    // Unwrap memberships from { membership: MembershipDoc } format
+    return { memberships: data.memberships.map(m => m.membership) };
   },
   async getMembershipsByUser(args: { session: string }): Promise<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }> {
-    const data = await post<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }>(`/AccessControl/getMembershipsByUser`, args);
-    return data;
+    // Sync returns { memberships: [{ membership: MembershipDoc }, ...] }
+    const data = await post<{ memberships: Array<{ membership: { _id: string; groupId: string; user: string; isAdmin: boolean } }> }>(`/AccessControl/getMembershipsByUser`, args);
+    // Unwrap memberships from { membership: MembershipDoc } format
+    return { memberships: data.memberships.map(m => m.membership) };
   },
   async inviteUser(args: { session: string; group: string; invitee: string; message?: string }): Promise<{ newInvitation: string }> {
     const data = await post<{ newInvitation: string }>(`/AccessControl/inviteUser`, args);
@@ -443,8 +447,10 @@ export const groups = {
     return data;
   },
   async listPendingInvitationsByUser(args: { session: string }): Promise<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }> {
-    const data = await post<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }>(`/AccessControl/listPendingInvitationsByUser`, args);
-    return data;
+    // Sync returns { invitations: [{ invitation: InvitationDoc }, ...] }
+    const data = await post<{ invitations: Array<{ invitation: { _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number } }> }>(`/AccessControl/listPendingInvitationsByUser`, args);
+    // Unwrap invitations from { invitation: InvitationDoc } format
+    return { invitations: data.invitations.map(i => i.invitation) };
   },
   async getInvitation(args: { invitation: string }): Promise<{ invitation: { _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number } | null }> {
     const data = await post<{ invitation: { _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number } | null }>(`/AccessControl/getInvitation`, args);
