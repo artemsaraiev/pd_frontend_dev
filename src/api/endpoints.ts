@@ -238,7 +238,11 @@ export const discussion = {
     return { pubId: data.result };
   },
   async startThread(args: { pubId: string; author: string; body: string; anchorId?: string; groupId?: string; session?: string }): Promise<{ threadId: string }> {
-    const data = await post<{ result: string }>(`/DiscussionPub/startThread`, args);
+    // Use different endpoints for public vs private threads
+    const endpoint = args.groupId 
+      ? `/DiscussionPub/startPrivateThread` 
+      : `/DiscussionPub/startThread`;
+    const data = await post<{ result: string }>(endpoint, args);
     return { threadId: data.result };
   },
   async reply(args: { threadId: string; author: string; body: string; session?: string }): Promise<{ replyId: string }> {
