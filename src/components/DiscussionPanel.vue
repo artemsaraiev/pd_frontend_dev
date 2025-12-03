@@ -495,16 +495,6 @@ async function onStartThread() {
   try {
     const finalBody = buildBodyWithImages(body.value, attachments.value);
 
-    console.log('[DiscussionPanel] onStartThread - anchorId.value:', anchorId.value);
-    console.log('[DiscussionPanel] onStartThread - sending request with:', {
-      pubId: pubId.value,
-      author: session.userId || 'anonymous',
-      body: finalBody.slice(0, 50) + '...',
-      anchorId: anchorId.value || undefined,
-      groupId: threadVisibility.value !== 'public' ? threadVisibility.value : undefined,
-      session: session.token ? 'present' : undefined,
-    });
-
     const res = await discussion.startThread({
       pubId: pubId.value,
       author: session.userId || 'anonymous',
