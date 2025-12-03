@@ -8,11 +8,8 @@ export const paper = {
     const data = await post<{ result: string }>(`/PaperIndex/ensure`, args);
     return { id: data.result };
   },
-  async updateMeta(args: { paper: string; title: string }): Promise<void> {
-    const data = await post<{ ok: true } | { error: string }>(`/PaperIndex/updateMeta`, args);
-    if ('error' in data) {
-      throw new Error(data.error);
-    }
+  async updateMeta(args: { id: string; title?: string }): Promise<void> {
+    await post<{ ok: true }>(`/PaperIndex/updateMeta`, args);
   },
   async get(args: { id: string }): Promise<{ id: string; paperId: string; title?: string }> {
     // id is the external paperId (DOI, arXiv, etc.)
@@ -399,6 +396,10 @@ export const identity = {
     const data = await post<{ orcid: string | null }>(`/IdentityVerification/getORCIDFromState`, args);
     return data;
   },
+  async removeORCID(args: { session: string; orcid: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/IdentityVerification/removeORCID`, args);
+    return data;
+  },
 };
 
 export const session = {
@@ -410,6 +411,10 @@ export const session = {
   },
   async logout(args: { session: string }): Promise<{ status: string }> {
     return await post<{ status: string }>(`/logout`, args);
+  },
+  async getUsernameById(args: { session: string; user: string }): Promise<{ username?: string }> {
+    const data = await post<{ username?: string }>(`/UserAuthentication/_getUsernameById`, args);
+    return data;
   },
 };
 

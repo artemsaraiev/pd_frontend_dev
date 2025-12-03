@@ -105,7 +105,7 @@
       <ul class="threads" v-if="filteredThreads.length">
         <li v-for="t in filteredThreads" :key="t.id" class="card">
           <div class="meta">
-            <strong>{{ t.author }}</strong>
+            <strong>{{ t.authorName || t.author }}</strong>
             <span
               v-if="t.anchorId"
               class="anchor"
@@ -209,6 +209,7 @@ import { BASE_URL } from '@/api/client';
 import ReplyTree from '@/components/ReplyTree.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
 import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
+import { getUsernameById, prefetchUsernames } from '@/utils/usernameCache';
 
 const props = defineProps<{ paperId: string | null; anchorFilterProp?: string | null }>();
 
@@ -248,8 +249,8 @@ const showDeleteConfirm = ref(false);
 const pendingDeleteThreadId = ref<string | null>(null);
 
 const actions = ref<string[]>([]);
-type ReplyNode = { _id: string; author: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean };
-type Thread = { id: string; author: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean };
+type ReplyNode = { _id: string; author: string; authorName?: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean };
+type Thread = { id: string; author: string; authorName?: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean };
 const threads = ref<Thread[]>([]);
 const anchorFilter = ref('');
 const expanded = ref<Record<string, boolean>>({});
@@ -373,14 +374,51 @@ async function loadThreads() {
   console.log('[DiscussionPanel] Loaded threads raw:', JSON.stringify(list, null, 2));
   console.log('[DiscussionPanel] Current user ID:', session.userId);
   const built: Thread[] = [];
+
+  // Collect all unique author IDs for prefetching
+  const authorIds = new Set<string>();
+  for (const t of list) {
+    authorIds.add(t.author);
+    const replies = (await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true })).replies as any[];
+    function collectAuthors(nodes: any[]) {
+      for (const node of nodes) {
+        authorIds.add(node.author);
+        if (node.children) collectAuthors(node.children);
+      }
+    }
+    collectAuthors(replies);
+  }
+
+  // Prefetch all usernames
+  await prefetchUsernames(Array.from(authorIds));
+
+  // Build threads with usernames (already prefetched, so getUsernameById will return from cache)
   for (const t of list) {
     // Prefer the tree API; fall back to flat list if tree is empty for any reason.
     let nodes: any[] = (await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true })).replies as any[];
     if (!nodes || nodes.length === 0) {
       const flat = await (discussion as any).listReplies({ threadId: t._id, includeDeleted: true });
-      nodes = flat.replies.map((r: any) => ({ _id: r._id, author: r.author, body: r.body, anchorId: r.anchorId, children: [] as any[], deleted: r.deleted ?? false }));
+      nodes = await Promise.all(flat.replies.map(async (r: any) => ({
+        _id: r._id,
+        author: r.author,
+        authorName: await getUsernameById(r.author),
+        body: r.body,
+        anchorId: r.anchorId,
+        children: [] as any[],
+        deleted: r.deleted ?? false
+      })));
+    } else {
+      // Add authorName to tree nodes recursively
+      async function addAuthorNames(nodes: any[]) {
+        for (const node of nodes) {
+          node.authorName = await getUsernameById(node.author);
+          if (node.children) await addAuthorNames(node.children);
+        }
+      }
+      await addAuthorNames(nodes);
     }
-    built.push({ id: t._id, author: t.author, body: t.body, anchorId: t.anchorId, replies: nodes as any, deleted: t.deleted });
+    const authorName = await getUsernameById(t.author);
+    built.push({ id: t._id, author: t.author, authorName, body: t.body, anchorId: t.anchorId, replies: nodes as any, deleted: t.deleted });
   }
   threads.value = built;
   // Note: expanded state is preserved across reloads (not reset)
@@ -792,29 +830,95 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.panel { display: flex; flex-direction: column; gap: 8px; }
+.panel { display: flex; flex-direction: column; gap: 12px; }
 .row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center; }
 .filter { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
-input, textarea { padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; }
-button { padding: 6px 10px; border: 1px solid var(--brand); border-radius: 6px; background: var(--brand); color: white; }
-button:disabled { opacity: 0.6; }
-.msg { font-size: 12px; margin: 0; }
-.ok { color: var(--ok); }
-.err { color: var(--error); }
+input, textarea {
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+input:hover, textarea:hover { border-color: #d1d5db; }
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
+}
+button {
+  padding: 8px 16px;
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  background: var(--brand);
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  background: #9a1717;
+  border-color: #9a1717;
+  box-shadow: 0 4px 12px rgba(179, 27, 27, 0.3);
+  transform: translateY(-1px);
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.hint {
+  color: var(--muted);
+  font-style: italic;
+  padding: 12px;
+  text-align: center;
+}
+.msg { font-size: 13px; margin: 0; padding: 8px 12px; border-radius: 6px; }
+.ok { color: var(--ok); background: #e7f7ee; }
+.err { color: var(--error); background: #fde8e8; }
 .recent ul { margin: 0; padding-left: 16px; }
-.threads { list-style: none; padding-left: 0; display: grid; gap: 8px; }
-.card { border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
-.meta { display: flex; gap: 8px; align-items: baseline; }
-.reply-link { margin-left: auto; font-size: 12px; }
-.delete-link { font-size: 12px; color: var(--error); }
-.toggle-link { font-size: 12px; }
-.compose-thread-reply { margin: 8px 0; display: grid; gap: 6px; }
+.threads { list-style: none; padding-left: 0; display: grid; gap: 12px; }
+.card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+}
+.meta { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.reply-link { margin-left: auto; font-size: 13px; color: var(--brand); font-weight: 500; }
+.reply-link:hover { color: #9a1717; }
+.delete-link { font-size: 13px; color: var(--error); font-weight: 500; }
+.delete-link:hover { color: #c82333; }
+.toggle-link { font-size: 13px; color: var(--brand); font-weight: 500; }
+.toggle-link:hover { color: #9a1717; }
+.compose-thread-reply { margin: 12px 0; display: grid; gap: 8px; }
 .actions-row { display: flex; gap: 8px; }
-.small { padding: 4px 8px; font-size: 12px; }
-.anchor { background: var(--chip-bg); border: 1px solid var(--border); border-radius: 999px; padding: 0 6px; font-size: 12px; }
-.body { margin: 6px 0; }
+.small { padding: 6px 12px; font-size: 13px; }
+.anchor {
+  background: #fef2f2;
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.anchor:hover {
+  background: var(--brand);
+  color: white;
+}
+.count {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.body { margin: 10px 0; line-height: 1.6; }
 .body.deleted { opacity: 0.6; font-style: italic; }
-.deleted-message { color: #888; font-size: 12px; }
+.deleted-message { color: #888; font-size: 13px; }
 /* Deep selector because v-html renders dynamic content */
 .body :deep(.post-image) {
   display: inline-block;
@@ -827,11 +931,46 @@ button:disabled { opacity: 0.6; }
 }
 .replies { padding-left: 16px; }
 
+.ghost {
+  background: #fff;
+  color: var(--brand);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.ghost:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+}
+.primary {
+  background: var(--brand);
+  color: #fff;
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.primary:hover:not(:disabled) {
+  background: #9a1717;
+  border-color: #9a1717;
+  box-shadow: 0 4px 12px rgba(179, 27, 27, 0.3);
+  transform: translateY(-1px);
+}
 .compose-area {
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
   padding: 4px;
   background: #fff;
+  transition: border-color 0.2s ease;
+}
+.compose-area:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
 }
 .compose-area textarea {
   border: none;
@@ -840,31 +979,45 @@ button:disabled { opacity: 0.6; }
   padding: 8px;
   outline: none;
 }
+.editor-toolbar {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: #fafafa;
+  border-radius: 8px 8px 0 0;
+}
 .toolbar {
-  border-top: 1px solid #eee;
-  padding: 4px 8px;
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
   display: flex;
   gap: 8px;
+  background: #fafafa;
+  border-radius: 0 0 8px 8px;
 }
 .icon-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 18px;
-  padding: 4px;
-  border-radius: 4px;
+  font-size: 16px;
+  padding: 6px 8px;
+  border-radius: 6px;
   color: #666;
+  transition: all 0.15s ease;
+  font-weight: 500;
 }
 .icon-btn:hover {
-  background: #f5f5f5;
-  color: #333;
+  background: #fef2f2;
+  color: var(--brand);
 }
 .attachments-preview {
   display: flex;
-  gap: 8px;
-  padding: 8px;
+  gap: 10px;
+  padding: 12px;
   overflow-x: auto;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
 }
 .attachment-thumb {
   position: relative;
@@ -876,64 +1029,106 @@ button:disabled { opacity: 0.6; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #eee;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  transition: all 0.2s ease;
+}
+.attachment-thumb img:hover {
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 .remove-btn {
   position: absolute;
   top: -6px;
   right: -6px;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: #333;
+  background: var(--error, #dc3545);
   color: white;
-  border: none;
+  border: 2px solid white;
   font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.remove-btn:hover {
+  background: #c82333;
+  transform: scale(1.1);
 }
 .preview-container {
-  margin: 8px 0;
-  border: 1px dashed #ddd;
-  border-radius: 6px;
-  padding: 8px;
+  margin: 12px 0;
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  padding: 12px;
   background: #fafafa;
+  transition: all 0.2s ease;
+}
+.preview-container:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
 }
 .preview-label {
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
-  color: #888;
-  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--brand);
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
 }
 .preview-body {
   font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
 }
 
 .confirm-dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .confirm-dialog {
   background: white;
-  border-radius: 8px;
-  padding: 24px;
-  max-width: 400px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 28px;
+  max-width: 420px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .confirm-dialog p {
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
 }
 
 .confirm-actions {
@@ -943,11 +1138,13 @@ button:disabled { opacity: 0.6; }
 }
 
 .confirm-actions button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   font-size: 14px;
-  border-radius: 6px;
+  font-weight: 500;
+  border-radius: 8px;
   cursor: pointer;
-  border: 1px solid;
+  border: 1.5px solid;
+  transition: all 0.2s ease;
 }
 
 .confirm-actions .delete {
@@ -959,6 +1156,8 @@ button:disabled { opacity: 0.6; }
 .confirm-actions .delete:hover {
   background: #c82333;
   border-color: #c82333;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  transform: translateY(-1px);
 }
 </style>
 
