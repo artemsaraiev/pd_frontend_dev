@@ -13,11 +13,11 @@ export const paper = {
   },
   async get(args: { id: string }): Promise<{ id: string; paperId: string; title?: string }> {
     // id is the external paperId (DOI, arXiv, etc.)
-    // Use _getByPaperId to get the paper by external identifier
-    const data = await post<
-      Array<{ paper: { _id: string; paperId: string; title?: string } | null }>
-    >(`/PaperIndex/_getByPaperId`, { paperId: args.id });
-    const doc = data[0]?.paper;
+    // Use getByPaperId to get the paper by external identifier
+    const data = await post<{
+      result: { _id: string; paperId: string; title?: string } | null;
+    }>(`/PaperIndex/getByPaperId`, { paperId: args.id });
+    const doc = data.result;
     if (doc) {
       // Return both internal _id (for backend operations) and external paperId (for display/URLs)
       return { id: doc._id, paperId: doc.paperId, title: doc.title };
@@ -26,12 +26,21 @@ export const paper = {
     return { id: args.id, paperId: args.id };
   },
   async listRecent(args?: { limit?: number }): Promise<{ papers: Array<{ id: string; paperId: string; title?: string; createdAt?: number }> }> {
-    // Query returns fan-out format: Array<{ paper: PaperDoc }>
-    const data = await post<
-      Array<{ paper: { _id: string; paperId: string; title?: string; createdAt?: number; authors: string[]; links: string[] } }>
-    >(`/PaperIndex/_listRecent`, args ?? {});
-    // Collect all papers from fan-out format
-    const papers = data.map(r => ({
+    // Sync returns { papers: [{ paper: PaperDoc }, ...] }
+    const data = await post<{
+      papers: Array<{
+        paper: {
+          _id: string;
+          paperId: string;
+          title?: string;
+          createdAt?: number;
+          authors: string[];
+          links: string[];
+        };
+      }>;
+    }>(`/PaperIndex/listRecent`, args ?? {});
+    // Extract papers from wrapped format
+    const papers = data.papers.map((r) => ({
       id: r.paper._id, // Internal _id for backend operations
       paperId: r.paper.paperId, // External paperId for display/URLs
       title: r.paper.title,
@@ -157,9 +166,10 @@ export const anchored = {
     const internalPaperId = ensured.id;
 
     // Load contexts for this paper (uses external paperId)
-    const ctxData = await post<
-      Array<{
+    // Sync returns { filteredContexts: [{ filteredContext: ContextDoc }, ...] }
+    const ctxData = await post<{
         filteredContexts: Array<{
+        filteredContext: {
           _id: string;
           paperId: string;
           author: string;
@@ -167,10 +177,11 @@ export const anchored = {
           kind?: AnchorKind;
           parentContext?: string;
           createdAt: number;
+        };
         }>;
-      }>
-    >(`/HighlightedContext/_getFilteredContexts`, { paperIds: [paperId] });
-    const contexts = ctxData[0]?.filteredContexts ?? [];
+    }>(`/HighlightedContext/getFilteredContexts`, { paperIds: [paperId], authors: null });
+    // Extract contexts from the wrapped format
+    const contexts = ctxData.filteredContexts?.map((c) => c.filteredContext) ?? [];
     if (!contexts.length) return { anchors: [] };
 
     // Load all highlights for this paper (uses internal _id)
@@ -187,7 +198,7 @@ export const anchored = {
           color?: string;
         };
       }>;
-    }>(`/PdfHighlighter/_listByPaper`, { paper: internalPaperId });
+    }>(`/PdfHighlighter/listByPaper`, { paper: internalPaperId });
     const rawHighlights = hlData?.highlights ?? [];
     // Unwrap highlights from { highlight: HighlightDoc } format
     const highlights = rawHighlights.map((h) => h.highlight);
@@ -223,8 +234,17 @@ export const discussion = {
     const data = await post<{ result: string }>(`/DiscussionPub/open`, args);
     return { pubId: data.result };
   },
-  async startThread(args: { pubId: string; author: string; body: string; anchorId?: string; session?: string }): Promise<{ threadId: string }> {
-    const data = await post<{ result: string }>(`/DiscussionPub/startThread`, args);
+  async startThread(args: { pubId: string; author: string; body: string; anchorId?: string; groupId?: string; session?: string }): Promise<{ threadId: string }> {
+    // Use different endpoints for public vs private threads
+    const endpoint = args.groupId 
+      ? `/DiscussionPub/startPrivateThread` 
+      : `/DiscussionPub/startThread`;
+    // Always send anchorId (empty string if not provided) so the sync pattern matches
+    const payload = {
+      ...args,
+      anchorId: args.anchorId || '',
+    };
+    const data = await post<{ result: string }>(endpoint, payload);
     return { threadId: data.result };
   },
   async reply(args: { threadId: string; author: string; body: string; session?: string }): Promise<{ replyId: string }> {
@@ -236,20 +256,53 @@ export const discussion = {
     return { replyId: data.result };
   },
   async getPubIdByPaper(args: { paperId: string }): Promise<{ pubId: string | null }> {
-    const data = await post<
-      Array<{ result: string | null }>
-    >(`/DiscussionPub/_getPubIdByPaper`, args);
-    const result = data[0]?.result ?? null;
-    return { pubId: result };
+    const data = await post<{ result: string | null }>(
+      `/DiscussionPub/getPubIdByPaper`,
+      args,
+    );
+    return { pubId: data.result };
   },
-  async listThreads(args: { pubId: string; anchorId?: string; includeDeleted?: boolean }): Promise<{ threads: Array<{ _id: string; author: string; body: string; anchorId?: string; createdAt: number; editedAt?: number; deleted?: boolean }>}> {
-    // Query returns fan-out format: Array<{ thread: Thread }>
-    const data = await post<
-      Array<{ thread: { _id: string; author: string; title?: string; body: string; anchorId?: string; createdAt: number; editedAt?: number; deleted?: boolean } }>
-    >(`/DiscussionPub/_listThreads`, { ...args, includeDeleted: args.includeDeleted ?? true });
-    // Sync collects threads into { threads: [...] } response
-    const response = data as any;
-    const threads = response.threads ?? data.map((r) => r.thread);
+  async listThreads(
+    args: {
+      pubId: string;
+      anchorId?: string;
+      includeDeleted?: boolean;
+      session?: string;
+      groupFilter?: string; // 'all', 'public', or specific groupId
+    },
+  ): Promise<{
+    threads: Array<{
+      _id: string;
+      author: string;
+      title?: string;
+      body: string;
+      anchorId?: string;
+      createdAt: number;
+      editedAt?: number;
+      deleted?: boolean;
+    }>;
+  }> {
+    // Sync collects threads into { threads: [{ thread: ThreadDoc }, ...] } response
+    const data = await post<{
+      threads: Array<{
+        thread: {
+          _id: string;
+          author: string;
+          title?: string;
+          body: string;
+          anchorId?: string;
+          createdAt: number;
+          editedAt?: number;
+          deleted?: boolean;
+        };
+      }>;
+    }>(`/DiscussionPub/listThreads`, {
+      ...args,
+      includeDeleted: args.includeDeleted ?? true,
+      groupFilter: args.groupFilter || 'all',
+    });
+    // Unwrap threads from { thread: ThreadDoc } format
+    const threads = data.threads.map((t) => t.thread);
     return { threads };
   },
   async deleteThread(args: { threadId: string; session?: string }): Promise<{ ok: true }> {
@@ -260,24 +313,54 @@ export const discussion = {
     const data = await post<{ ok: true }>(`/DiscussionPub/deleteReply`, args);
     return data;
   },
-  async listReplies(args: { threadId: string; includeDeleted?: boolean }): Promise<{ replies: Array<{ _id: string; author: string; body: string; createdAt: number; editedAt?: number; deleted?: boolean }>}> {
-    // Query returns fan-out format: Array<{ reply: Reply }>
-    const data = await post<
-      Array<{ reply: { _id: string; author: string; body: string; anchorId?: string; parentId?: string; createdAt: number; editedAt?: number; deleted?: boolean } }>
-    >(`/DiscussionPub/_listReplies`, { ...args, includeDeleted: args.includeDeleted ?? true });
-    // Sync collects replies into { replies: [...] } response
-    const response = data as any;
-    const replies = response.replies ?? data.map((r) => r.reply);
+  async listReplies(
+    args: { threadId: string; includeDeleted?: boolean },
+  ): Promise<{
+    replies: Array<{
+      _id: string;
+      author: string;
+      body: string;
+      anchorId?: string;
+      parentId?: string;
+      createdAt: number;
+      editedAt?: number;
+      deleted?: boolean;
+    }>;
+  }> {
+    // Sync collects replies into { replies: [{ reply: ReplyDoc }, ...] } response
+    const data = await post<{
+      replies: Array<{
+        reply: {
+          _id: string;
+          author: string;
+          body: string;
+          anchorId?: string;
+          parentId?: string;
+          createdAt: number;
+          editedAt?: number;
+          deleted?: boolean;
+        };
+      }>;
+    }>(`/DiscussionPub/listReplies`, {
+      ...args,
+      includeDeleted: args.includeDeleted ?? true,
+    });
+    // Unwrap replies from { reply: ReplyDoc } format
+    const replies = data.replies.map((r) => r.reply);
     return { replies };
   },
-  async listRepliesTree(args: { threadId: string; includeDeleted?: boolean }): Promise<{ replies: Array<any> }> {
-    // Query returns fan-out format: Array<{ reply: ReplyTree }>
-    const data = await post<
-      Array<{ reply: any }>
-    >(`/DiscussionPub/_listRepliesTree`, { ...args, includeDeleted: args.includeDeleted ?? true });
-    // Sync collects replies into { replies: [...] } response
-    const response = data as any;
-    const replies = response.replies ?? data.map((r) => r.reply);
+  async listRepliesTree(
+    args: { threadId: string; includeDeleted?: boolean },
+  ): Promise<{ replies: Array<any> }> {
+    // Sync collects replies into { replies: [{ reply: ReplyTreeNode }, ...] } response
+    const data = await post<{
+      replies: Array<{ reply: any }>;
+    }>(`/DiscussionPub/listRepliesTree`, {
+      ...args,
+      includeDeleted: args.includeDeleted ?? true,
+    });
+    // Unwrap replies from { reply: ReplyTreeNode } format
+    const replies = data.replies.map((r) => r.reply);
     return { replies };
   },
 };
@@ -292,7 +375,7 @@ export const identity = {
   },
   async get(args: { session: string }): Promise<{ orcid?: string; orcidId?: string; verified?: boolean; affiliation?: string; badges: string[] }> {
     // Sync queries all three and combines them into { orcids, affiliations, badges }
-    const data = await post<{ orcids: Array<{ orcid: { _id: string; orcid: string; verified?: boolean } }>; affiliations: Array<{ affiliation: { affiliation: string } }>; badges: Array<{ badge: { badge: string } }> }>(`/IdentityVerification/_getByUser`, args);
+    const data = await post<{ orcids: Array<{ orcid: { _id: string; orcid: string; verified?: boolean } }>; affiliations: Array<{ affiliation: { affiliation: string } }>; badges: Array<{ badge: { badge: string } }> }>(`/IdentityVerification/getByUser`, args);
     const orcidDoc = data.orcids?.[0]?.orcid;
     const orcid = orcidDoc?.orcid;
     const orcidId = orcidDoc?._id;
@@ -309,8 +392,8 @@ export const identity = {
     const data = await post<{ ok: true }>(`/IdentityVerification/completeORCIDVerification`, args);
     return data;
   },
-  async getORCIDFromState(args: { state: string }): Promise<{ orcid: string }> {
-    const data = await post<{ orcid: string }>(`/IdentityVerification/_getORCIDFromState`, args);
+  async getORCIDFromState(args: { state: string }): Promise<{ orcid: string | null }> {
+    const data = await post<{ orcid: string | null }>(`/IdentityVerification/getORCIDFromState`, args);
     return data;
   },
   async removeORCID(args: { session: string; orcid: string }): Promise<{ ok: true }> {
@@ -331,6 +414,67 @@ export const session = {
   },
   async getUsernameById(args: { session: string; user: string }): Promise<{ username?: string }> {
     const data = await post<{ username?: string }>(`/UserAuthentication/_getUsernameById`, args);
+    return data;
+  },
+};
+
+export const groups = {
+  async createGroup(args: { session: string; name: string; description: string }): Promise<{ newGroup: string }> {
+    const data = await post<{ newGroup: string }>(`/AccessControl/createGroup`, args);
+    return data;
+  },
+  async updateGroup(args: { session: string; group: string; name?: string; description?: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/AccessControl/updateGroup`, args);
+    return data;
+  },
+  async removeGroup(args: { session: string; group: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/AccessControl/removeGroup`, args);
+    return data;
+  },
+  async getGroup(args: { group: string }): Promise<{ group: { _id: string; name: string; description: string; admin: string } | null }> {
+    const data = await post<{ group: { _id: string; name: string; description: string; admin: string } | null }>(`/AccessControl/getGroup`, args);
+    return data;
+  },
+  async getGroupsForUser(args: { session: string }): Promise<{ groups: string[] }> {
+    const data = await post<{ groups: { group: string }[] }>(`/AccessControl/getGroupsForUser`, args);
+    return { groups: data.groups.map(g => g.group) };
+  },
+  async getMembershipsByGroup(args: { group: string }): Promise<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }> {
+    // Sync returns { memberships: [{ membership: MembershipDoc }, ...] }
+    const data = await post<{ memberships: Array<{ membership: { _id: string; groupId: string; user: string; isAdmin: boolean } }> }>(`/AccessControl/getMembershipsByGroup`, args);
+    // Unwrap memberships from { membership: MembershipDoc } format
+    return { memberships: data.memberships.map(m => m.membership) };
+  },
+  async getMembershipsByUser(args: { session: string }): Promise<{ memberships: Array<{ _id: string; groupId: string; user: string; isAdmin: boolean }> }> {
+    // Sync returns { memberships: [{ membership: MembershipDoc }, ...] }
+    const data = await post<{ memberships: Array<{ membership: { _id: string; groupId: string; user: string; isAdmin: boolean } }> }>(`/AccessControl/getMembershipsByUser`, args);
+    // Unwrap memberships from { membership: MembershipDoc } format
+    return { memberships: data.memberships.map(m => m.membership) };
+  },
+  async inviteUser(args: { session: string; group: string; invitee: string; message?: string }): Promise<{ newInvitation: string }> {
+    const data = await post<{ newInvitation: string }>(`/AccessControl/inviteUser`, args);
+    return data;
+  },
+  async removeInvitation(args: { session: string; invitation: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/AccessControl/removeInvitation`, args);
+    return data;
+  },
+  async acceptInvitation(args: { session: string; invitation: string }): Promise<{ newMembership: string }> {
+    const data = await post<{ newMembership: string }>(`/AccessControl/acceptInvitation`, args);
+    return data;
+  },
+  async listPendingInvitationsByUser(args: { session: string }): Promise<{ invitations: Array<{ _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number }> }> {
+    // Sync returns { invitations: [{ invitation: InvitationDoc }, ...] }
+    const data = await post<{ invitations: Array<{ invitation: { _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number } }> }>(`/AccessControl/listPendingInvitationsByUser`, args);
+    // Unwrap invitations from { invitation: InvitationDoc } format
+    return { invitations: data.invitations.map(i => i.invitation) };
+  },
+  async getInvitation(args: { invitation: string }): Promise<{ invitation: { _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number } | null }> {
+    const data = await post<{ invitation: { _id: string; groupId: string; inviter: string; invitee: string; message?: string; createdAt: number } | null }>(`/AccessControl/getInvitation`, args);
+    return data;
+  },
+  async revokeMembership(args: { session: string; membership: string }): Promise<{ ok: true }> {
+    const data = await post<{ ok: true }>(`/AccessControl/revokeMembership`, args);
     return data;
   },
 };
