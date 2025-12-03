@@ -360,11 +360,13 @@ async function loadThreads() {
   const activeFilter = (props.anchorFilterProp ?? anchorFilter.value) || undefined;
   // Use loose typing here to avoid TS friction; backend supports includeDeleted and session.
   // Pass session for access control filtering on the backend
+  // Always send session (even empty string) so the session-based sync matches
+  // The backend will handle invalid/empty sessions by returning only public threads
   const { threads: list } = await (discussion as any).listThreads({ 
     pubId: pubId.value, 
     anchorId: activeFilter, 
     includeDeleted: true,
-    session: session.token || undefined,
+    session: session.token || '',
   });
   console.log('[DiscussionPanel] Loaded threads raw:', JSON.stringify(list, null, 2));
   console.log('[DiscussionPanel] Current user ID:', session.userId);
