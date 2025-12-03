@@ -242,7 +242,12 @@ export const discussion = {
     const endpoint = args.groupId 
       ? `/DiscussionPub/startPrivateThread` 
       : `/DiscussionPub/startThread`;
-    const data = await post<{ result: string }>(endpoint, args);
+    // Always send anchorId (empty string if not provided) so the sync pattern matches
+    const payload = {
+      ...args,
+      anchorId: args.anchorId || '',
+    };
+    const data = await post<{ result: string }>(endpoint, payload);
     return { threadId: data.result };
   },
   async reply(args: { threadId: string; author: string; body: string; session?: string }): Promise<{ replyId: string }> {
