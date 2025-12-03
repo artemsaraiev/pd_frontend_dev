@@ -13,11 +13,22 @@
         <button class="icon-btn" type="button" @click="formatThread('bold')"><strong>B</strong></button>
         <button class="icon-btn" type="button" @click="formatThread('italic')"><em>I</em></button>
         <button class="icon-btn" type="button" @click="formatThread('code')">{ }</button>
-        <button class="icon-btn" type="button" @click="formatThread('blockquote')">“”</button>
+        <button class="icon-btn" type="button" @click="formatThread('blockquote')">""</button>
         <button class="icon-btn" type="button" @click="formatThread('olist')">1.</button>
         <button class="icon-btn" type="button" @click="formatThread('ulist')">•</button>
         <button class="icon-btn" type="button" @click="formatThread('inlineMath')">\(x\)</button>
         <button class="icon-btn" type="button" @click="formatThread('blockMath')">∑</button>
+      </div>
+      <div v-if="session.token" class="row">
+        <label>Visibility</label>
+        <div class="visibility-selector">
+          <select v-model="threadVisibility" class="input">
+            <option value="public">Public</option>
+            <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
+              {{ groupsStore.groups[groupId]?.name || 'Loading...' }}
+            </option>
+          </select>
+        </div>
       </div>
       <div v-if="attachments.length" class="attachments-preview">
         <div v-for="(url, i) in attachments" :key="url" class="attachment-thumb">
@@ -77,6 +88,18 @@
         <div class="filter">
           <input v-model.trim="anchorFilter" placeholder="anchorId (optional)" />
           <button class="ghost" v-if="anchorFilter" @click="anchorFilter = ''">Clear</button>
+        </div>
+      </div>
+      <div v-if="session.token" class="row">
+        <label>Visibility filter</label>
+        <div class="filter">
+          <select v-model="visibilityFilter" class="input">
+            <option value="all">All threads</option>
+            <option value="public">Public only</option>
+            <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
+              {{ groupsStore.groups[groupId]?.name || 'Loading...' }}
+            </option>
+          </select>
         </div>
       </div>
       <ul class="threads" v-if="filteredThreads.length">
@@ -180,6 +203,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useSessionStore } from '@/stores/session';
+import { useGroupsStore } from '@/stores/groups';
 import { discussion } from '@/api/endpoints';
 import { BASE_URL } from '@/api/client';
 import ReplyTree from '@/components/ReplyTree.vue';
@@ -193,6 +217,7 @@ const emit = defineEmits<{
 }>();
 
 const session = useSessionStore();
+const groupsStore = useGroupsStore();
 const pubId = ref<string | null>(null);
 const pubOpened = ref(false);
 const busyOpen = ref(false);
@@ -202,6 +227,8 @@ const pubMsg = ref('');
 const author = ref(session.userId);
 const body = ref('');
 const anchorId = ref('');
+const threadVisibility = ref<string>('public');
+const visibilityFilter = ref<string>('all');
 const busyThread = ref(false);
 const errorThread = ref('');
 const threadMsg = ref('');
@@ -331,8 +358,14 @@ function toggleExpanded(id: string) {
 async function loadThreads() {
   if (!pubId.value) { threads.value = []; return; }
   const activeFilter = (props.anchorFilterProp ?? anchorFilter.value) || undefined;
-  // Use loose typing here to avoid TS friction; backend supports includeDeleted.
-  const { threads: list } = await (discussion as any).listThreads({ pubId: pubId.value, anchorId: activeFilter, includeDeleted: true });
+  // Use loose typing here to avoid TS friction; backend supports includeDeleted and session.
+  // Pass session for access control filtering on the backend
+  const { threads: list } = await (discussion as any).listThreads({ 
+    pubId: pubId.value, 
+    anchorId: activeFilter, 
+    includeDeleted: true,
+    session: session.token || undefined,
+  });
   console.log('[DiscussionPanel] Loaded threads raw:', JSON.stringify(list, null, 2));
   console.log('[DiscussionPanel] Current user ID:', session.userId);
   const built: Thread[] = [];
@@ -467,6 +500,7 @@ async function onStartThread() {
       author: session.userId || 'anonymous',
       body: finalBody,
       anchorId: anchorId.value || undefined,
+      groupId: threadVisibility.value !== 'public' ? threadVisibility.value : undefined,
       session: session.token || undefined,
     });
     threadMsg.value = `Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}`;
@@ -735,10 +769,15 @@ function onRequestDeletedAnchorsStatus() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('text-selected', onTextSelected);
   window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
   window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
+  
+  // Load groups if user is logged in
+  if (session.token) {
+    await groupsStore.loadMyGroups();
+  }
 });
 
 onBeforeUnmount(() => {

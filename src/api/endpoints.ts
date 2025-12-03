@@ -237,7 +237,7 @@ export const discussion = {
     const data = await post<{ result: string }>(`/DiscussionPub/open`, args);
     return { pubId: data.result };
   },
-  async startThread(args: { pubId: string; author: string; body: string; anchorId?: string; session?: string }): Promise<{ threadId: string }> {
+  async startThread(args: { pubId: string; author: string; body: string; anchorId?: string; groupId?: string; session?: string }): Promise<{ threadId: string }> {
     const data = await post<{ result: string }>(`/DiscussionPub/startThread`, args);
     return { threadId: data.result };
   },
@@ -261,6 +261,7 @@ export const discussion = {
       pubId: string;
       anchorId?: string;
       includeDeleted?: boolean;
+      session?: string;
     },
   ): Promise<{
     threads: Array<{
