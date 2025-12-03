@@ -171,7 +171,7 @@ export const anchored = {
     // Load contexts for this paper (uses external paperId)
     // Sync returns { filteredContexts: [{ filteredContext: ContextDoc }, ...] }
     const ctxData = await post<{
-      filteredContexts: Array<{
+        filteredContexts: Array<{
         filteredContext: {
           _id: string;
           paperId: string;
@@ -181,7 +181,7 @@ export const anchored = {
           parentContext?: string;
           createdAt: number;
         };
-      }>;
+        }>;
     }>(`/HighlightedContext/getFilteredContexts`, { paperIds: [paperId], authors: null });
     // Extract contexts from the wrapped format
     const contexts = ctxData.filteredContexts?.map((c) => c.filteredContext) ?? [];
