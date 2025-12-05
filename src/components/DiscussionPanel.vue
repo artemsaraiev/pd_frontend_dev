@@ -142,6 +142,13 @@
           :data-thread-id="t.id"
           @click="(e) => onThreadClick(e, t.anchorId)"
         >
+          <div 
+            class="collapse-toggle" 
+            v-if="t.replies && t.replies.length" 
+            @click.stop="toggleExpanded(t.id)"
+          >
+            <span class="toggle-icon">{{ expanded[t.id] === false ? '+' : '−' }}</span>
+          </div>
           <div class="vote-section" @click.stop>
             <button 
               class="vote-btn upvote" 
@@ -162,18 +169,7 @@
           <div class="content-section">
           <div class="meta" @click.stop>
             <strong>{{ t.authorName || t.author }}</strong>
-            <span
-              v-if="t.anchorId"
-              class="anchor"
-              @click.prevent="focusAnchor(t.anchorId)"
-            >#{{ t.anchorId }}</span>
             <span class="count">{{ t.replies?.length ?? 0 }} replies</span>
-            <a
-              v-if="t.replies && t.replies.length"
-              href="#"
-              class="toggle-link"
-              @click.prevent="toggleExpanded(t.id)"
-            >{{ expanded[t.id] ? 'Hide replies' : 'View replies' }}</a>
             <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
             <a
               v-if="session.userId === t.author && !t.deleted"
@@ -232,10 +228,11 @@
           </div>
           <p v-if="!t.replies || t.replies.length === 0" class="hint">No replies yet.</p>
           <ReplyTree 
-            v-if="expanded[t.id]" 
+            v-if="expanded[t.id] !== false" 
             :nodes="t.replies" 
             :threadId="t.id" 
             :highlightedAnchorId="highlightedAnchorId"
+            :focusedReplyId="focusedReplyId"
             :paperId="props.paperId"
             @refresh="loadThreads" 
           />
@@ -323,6 +320,7 @@ const showSortDropdown = ref(false);
 const expanded = ref<Record<string, boolean>>({});
 const threadVotes = ref<Record<string, 1 | -1 | null>>({});
 const highlightedAnchorId = ref<string | null>(null);
+const focusedReplyId = ref<string | null>(null);
 const pendingAnchors = ref<Record<string, { ref: string; snippet?: string; color?: string; parentContext?: string | null }>>({});
 function threadHasAnchor(t: Thread, anchorId: string): boolean {
   if (t.anchorId === anchorId) return true;
@@ -412,11 +410,12 @@ function setSort(sortBy: string) {
 
 const deletedAnchors = computed(() => {
   const deleted = new Set<string>();
-  
-  // Helper to recursively collect anchorIds from replies
+
+  // Helper to recursively collect anchorIds from replies that are themselves deleted
   function collectReplyAnchors(replies: ReplyNode[]) {
     for (const r of replies) {
-      if (r.anchorId) {
+      // Only gray out highlights for replies that are explicitly deleted
+      if (r.deleted && r.anchorId) {
         deleted.add(r.anchorId);
       }
       if (r.children && r.children.length > 0) {
@@ -424,17 +423,18 @@ const deletedAnchors = computed(() => {
       }
     }
   }
-  
+
   for (const t of threads.value) {
-    if (t.deleted) {
-      // Add thread's own anchor
-      if (t.anchorId) {
-        deleted.add(t.anchorId);
-      }
-      // Also add all reply anchors within this deleted thread
+    // Gray out the thread's own anchor when the thread is deleted
+    if (t.deleted && t.anchorId) {
+      deleted.add(t.anchorId);
+    }
+    // Independently track any replies that were deleted (even if the parent thread is not)
+    if (t.replies && t.replies.length > 0) {
       collectReplyAnchors(t.replies);
     }
   }
+
   return deleted;
 });
 
@@ -503,7 +503,9 @@ function openThreadFilePicker() {
 }
 
 function toggleExpanded(id: string) {
-  expanded.value = { ...expanded.value, [id]: !expanded.value[id] };
+  const current = expanded.value[id];
+  // Default state is expanded (undefined => true). Toggle between true/false.
+  expanded.value = { ...expanded.value, [id]: current === false };
 }
 
 async function loadThreads() {
@@ -712,8 +714,6 @@ async function onStartThread() {
     body.value = '';
     attachments.value = [];
     anchorId.value = '';
-    replyThreadId.value = res.threadId;
-    
     // Clear parent anchor in PdfAnnotator so new prompts start fresh
     try {
       window.dispatchEvent(new Event('clear-parent-anchor'));
@@ -1033,16 +1033,50 @@ function onAnchorHighlightClicked(e: Event) {
   const custom = e as CustomEvent<string>;
   const anchorId = custom.detail;
   highlightedAnchorId.value = anchorId;
-  // Scroll to the thread if it exists (thread anchor or any reply anchor)
+  // Scroll to the thread/reply if it exists (thread anchor or any reply anchor)
   nextTick(() => {
     const thread = threads.value.find(t => threadHasAnchor(t, anchorId));
-    if (thread) {
-      const element = document.querySelector(`[data-thread-id="${thread.id}"]`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!thread) return;
+
+    // Try to find the most specific reply node for this anchor
+    function findReplyByAnchor(nodes: ReplyNode[]): ReplyNode | null {
+      for (const n of nodes) {
+        if (n.anchorId === anchorId) return n;
+        if (n.children && n.children.length) {
+          const found = findReplyByAnchor(n.children as ReplyNode[]);
+          if (found) return found;
+        }
       }
+      return null;
+    }
+    const reply = findReplyByAnchor(thread.replies || []);
+    focusedReplyId.value = reply?._id ?? null;
+
+    // Always expand the thread so its replies are visible when a box is clicked
+    expanded.value = { ...expanded.value, [thread.id]: true };
+
+    // Prefer scrolling directly to the specific reply (if this is a reply anchor)
+    const replyEl = document.querySelector(
+      `[data-reply-anchor-id="${anchorId}"]`,
+    );
+    if (replyEl) {
+      replyEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // Fallback: scroll to the thread card itself
+    const element = document.querySelector(
+      `[data-thread-id="${thread.id}"]`,
+    );
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   });
+}
+
+function onReplySelected(e: Event) {
+  const custom = e as CustomEvent<string>;
+  focusedReplyId.value = custom.detail || null;
 }
 
 function onAnchorHighlightCleared() {
@@ -1094,6 +1128,7 @@ onMounted(async () => {
   window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
   window.addEventListener('anchor-highlight-clicked', onAnchorHighlightClicked);
   window.addEventListener('anchor-highlight-cleared', onAnchorHighlightCleared);
+  window.addEventListener('reply-selected', onReplySelected);
   document.addEventListener('click', handleClickOutside);
   
   // Load groups if user is logged in
@@ -1108,6 +1143,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
   window.removeEventListener('anchor-highlight-clicked', onAnchorHighlightClicked);
   window.removeEventListener('anchor-highlight-cleared', onAnchorHighlightCleared);
+  window.removeEventListener('reply-selected', onReplySelected);
   document.removeEventListener('click', handleClickOutside);
 });
 </script>
@@ -1186,6 +1222,21 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   gap: 4px;
   min-width: 40px;
   padding-top: 4px;
+}
+.collapse-toggle {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 6px;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  user-select: none;
+  margin-right: 4px;
+}
+.toggle-icon {
+  display: inline-block;
+  width: 14px;
+  text-align: center;
 }
 .vote-btn {
   background: none;

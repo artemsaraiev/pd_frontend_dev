@@ -178,10 +178,8 @@ async function loadOrcidData() {
   }
 }
 
-// Get redirect URI consistently - must match what's registered in ORCID
-// Using root path since IdentityPanel is available on all pages
 function getRedirectUri(): string {
-  return `${window.location.origin}/`;
+  return `${window.location.origin}/profile`;
 }
 
 async function onVerifyOrcid() {

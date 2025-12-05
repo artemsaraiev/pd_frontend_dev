@@ -1,10 +1,14 @@
 <template>
   <li 
     class="reply" 
-    :class="{ 'highlighted-reply': highlightedAnchorId === node.anchorId }"
+    :class="{ 'highlighted-reply': isHighlighted }"
     :style="{ marginLeft: (depth * 16) + 'px' }"
+    :data-reply-anchor-id="node.anchorId || undefined"
     @click="(e) => onReplyClick(e, node.anchorId)"
   >
+    <div class="collapse-toggle" v-if="node.children && node.children.length" @click.stop="collapsed = !collapsed">
+      <span class="toggle-icon">{{ collapsed ? '+' : '−' }}</span>
+    </div>
     <div class="vote-section" @click.stop>
       <button 
         class="vote-btn upvote" 
@@ -77,7 +81,7 @@
          <button class="primary small" :disabled="(!body && !attachments.length) || !sessionStore.token || sending" @click="send">{{ !sessionStore.token ? 'Sign in to reply' : (sending ? 'Sending…' : 'Reply') }}</button>
       </div>
     </div>
-    <ul class="children" v-if="node.children && node.children.length">
+    <ul class="children" v-if="node.children && node.children.length && !collapsed">
       <ReplyNode
         v-for="child in node.children"
         :key="child._id"
@@ -85,6 +89,8 @@
         :threadId="threadId"
         :depth="depth + 1"
         :highlightedAnchorId="highlightedAnchorId"
+        :focusedReplyId="focusedReplyId"
+        :paperId="paperId"
         @replied="$emit('replied')" />
     </ul>
     </div>
@@ -120,12 +126,14 @@ const props = defineProps<{
   threadId: string;
   depth: number;
   highlightedAnchorId?: string | null;
+  focusedReplyId?: string | null;
   paperId: string | null;
 }>();
 
 const emit = defineEmits<{ (e: 'replied'): void }>();
 
 const replying = ref(false);
+const collapsed = ref(false);
 const body = ref('');
 const anchorId = ref('');
 const sending = ref(false);
@@ -142,7 +150,7 @@ async function ensureAnchor(aid?: string): Promise<string | undefined> {
       paperId: props.paperId,
       kind: 'Lines',
       ref: pending.ref,
-      snippet: pending.snippet,
+      snippet: pending.snippet ?? pending.ref,
       color: pending.color,
       parentContext: pending.parentContext ?? undefined,
       session: sessionStore.token,
@@ -179,6 +187,11 @@ onMounted(async () => {
     }
   }
 });
+
+const isHighlighted = computed(() =>
+  (props.highlightedAnchorId && props.node.anchorId === props.highlightedAnchorId) ||
+  (props.focusedReplyId && props.node._id === props.focusedReplyId),
+);
 
 const renderBodyPreview = computed(() =>
   renderMarkdown(buildBodyWithImages(body.value, attachments.value)),
@@ -355,6 +368,11 @@ function onReplyClick(e: MouseEvent, anchorId?: string) {
     window.dispatchEvent(
       new CustomEvent('anchor-highlight-clicked', { detail: anchorId })
     );
+    // Also tell the DiscussionPanel which reply id was clicked so it can
+    // highlight this reply even if it shares the same anchor as its thread.
+    window.dispatchEvent(
+      new CustomEvent('reply-selected', { detail: props.node._id })
+    );
   } catch {
     // ignore
   }
@@ -486,6 +504,20 @@ async function voteReply(vote: 1 | -1) {
   gap: 2px;
   min-width: 32px;
   padding-top: 4px;
+}
+.collapse-toggle {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 6px;
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-icon {
+  display: inline-block;
+  width: 14px;
+  text-align: center;
 }
 .vote-btn {
   background: none;

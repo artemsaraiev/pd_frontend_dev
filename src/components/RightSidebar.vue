@@ -1,8 +1,5 @@
 <template>
   <div class="rs">
-    <div class="card">
-      <IdentityPanel />
-    </div>
     <div v-if="paperId" class="card">
       <DiscussionPanel :paperId="paperId" :anchorFilterProp="anchorFilter" />
     </div>
@@ -16,7 +13,6 @@
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRoute } from "vue-router";
 import DiscussionPanel from "@/components/DiscussionPanel.vue";
-import IdentityPanel from "@/components/IdentityPanel.vue";
 
 const route = useRoute();
 const paperId = ref<string | null>(null);

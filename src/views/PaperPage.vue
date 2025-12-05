@@ -107,6 +107,10 @@
                 <button class="ghost" @click="zoomIn">+</button>
               </div>
             </div>
+            <div class="toolbar-hint">
+              <span>Option/Alt + drag: create a box highlight.</span>
+              <span>Cmd/Ctrl + click a box: open its discussion.</span>
+            </div>
           </div>
           <PdfAnnotator
             :src="localPdfUrl"
@@ -138,6 +142,10 @@
               <button class="ghost" @click="zoomOut">-</button>
               <span class="z">{{ Math.round(zoom * 100) }}%</span>
               <button class="ghost" @click="zoomIn">+</button>
+            </div>
+            <div class="toolbar-hint">
+              <span>Option/Alt + drag: create a box highlight.</span>
+              <span>Cmd/Ctrl + click a box: open its discussion.</span>
             </div>
           </div>
           <PdfAnnotator
@@ -645,6 +653,15 @@ async function removePdf() {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.toolbar-hint {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+  text-align: right;
+  gap: 2px;
 }
 @media (max-width: 1100px) {
   .columns {

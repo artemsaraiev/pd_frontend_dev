@@ -7,6 +7,7 @@
       :threadId="threadId"
       :depth="0"
       :highlightedAnchorId="highlightedAnchorId"
+      :focusedReplyId="focusedReplyId"
       :paperId="paperId"
       @replied="$emit('refresh')" />
   </ul>
@@ -15,16 +16,27 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { discussion } from '@/api/endpoints';
-import { useSessionStore } from '@/stores/session';
 import ReplyNode from './ReplyNode.vue';
 
-const props = defineProps<{ nodes: any[]; threadId: string; highlightedAnchorId?: string | null; paperId: string | null }>();
+const props = defineProps<{
+  nodes: any[];
+  threadId: string;
+  highlightedAnchorId?: string | null;
+  focusedReplyId?: string | null;
+  paperId: string | null;
+}>();
 defineEmits<{ (e: 'refresh'): void }>();
 
-// Reorder replies: if an anchor is highlighted, move matching reply to top
+// Reorder replies: if an anchor or a specific reply is highlighted, move that reply to top
 const sortedNodes = computed(() => {
-  if (!props.highlightedAnchorId) return props.nodes;
-  const highlighted = props.nodes.find(n => n.anchorId === props.highlightedAnchorId);
+  const { highlightedAnchorId, focusedReplyId } = props;
+  if (!highlightedAnchorId && !focusedReplyId) return props.nodes;
+
+  const isHighlightedNode = (n: any) =>
+    (highlightedAnchorId && n.anchorId === highlightedAnchorId) ||
+    (focusedReplyId && n._id === focusedReplyId);
+
+  const highlighted = props.nodes.find(isHighlightedNode);
   if (highlighted) {
     return [highlighted, ...props.nodes.filter(n => n._id !== highlighted._id)];
   }

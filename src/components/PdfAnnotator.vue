@@ -136,6 +136,54 @@ let boxDrawing: {
   preview: HTMLElement;
 } | null = null;
 
+// Hit-test utility: given a point in client coordinates, find the
+// top-most highlight (if any) under the cursor.
+function findHighlightAtPoint(clientX: number, clientY: number): string | null {
+  for (let pageIndex = 0; pageIndex < pageWrappers.length; pageIndex++) {
+    const wrapper = pageWrappers[pageIndex];
+    if (!wrapper) continue;
+
+    const textLayer = wrapper.querySelector(".textLayer") as HTMLElement | null;
+    const base = textLayer
+      ? textLayer.getBoundingClientRect()
+      : wrapper.getBoundingClientRect();
+
+    if (
+      clientX < base.left ||
+      clientX > base.right ||
+      clientY < base.top ||
+      clientY > base.bottom
+    ) {
+      continue;
+    }
+
+    const w = base.width || 1;
+    const hPx = base.height || 1;
+
+    const pageHighlights = highlights.value.filter(
+      (h) => h.pageIndex === pageIndex,
+    );
+
+    for (const h of pageHighlights) {
+      for (const r of h.rects) {
+        const left = base.left + r.x * w;
+        const top = base.top + r.y * hPx;
+        const right = left + r.w * w;
+        const bottom = top + r.h * hPx;
+        if (
+          clientX >= left &&
+          clientX <= right &&
+          clientY >= top &&
+          clientY <= bottom
+        ) {
+          return h.id;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 function withAlpha(color: string, alpha: number): string {
   if (color.startsWith("#")) {
     let hex = color.slice(1);
@@ -390,15 +438,6 @@ function drawHighlightsForPage(pageIndex: number) {
     wrapper.appendChild(overlay);
   }
 
-  // Toggle clickability for highlight selection mode
-  if (props.highlightClickMode && !isSelectingText) {
-    overlay.classList.add("clickable");
-    overlay.style.pointerEvents = "auto";
-  } else {
-    overlay.classList.remove("clickable");
-    overlay.style.pointerEvents = "none";
-  }
-
   // Position overlay to match the textLayer exactly (not the wrapper)
   // This ensures highlights align with text regardless of wrapper size
   let w: number, hPx: number;
@@ -473,14 +512,6 @@ function drawHighlightsForPage(pageIndex: number) {
         div.dataset.highlightId = h.id; // Store ID for deletion
       }
 
-      if (props.highlightClickMode) {
-        div.style.cursor = "pointer";
-        div.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          emit("highlightClicked", h.id);
-        });
-      }
-
       // Add delete button only for pending highlights (before posting)
       if (h.pending) {
         const deleteBtn = document.createElement("button");
@@ -501,11 +532,7 @@ function drawHighlightsForPage(pageIndex: number) {
       // Also gray out children if their parent is deleted
       const isDeleted =
         (props.deletedAnchors && props.deletedAnchors.has(h.id)) ||
-        deletedAnchorIds.has(h.id) ||
-        (h.parentContext &&
-          ((props.deletedAnchors &&
-            props.deletedAnchors.has(h.parentContext)) ||
-            deletedAnchorIds.has(h.parentContext)));
+        deletedAnchorIds.has(h.id);
       if (isDeleted) {
         console.log(
           "[PdfAnnotator] Graying out deleted anchor:",
@@ -875,23 +902,26 @@ async function confirmPrompt() {
 
 // Track text selection to allow normal text selection while still supporting highlight clicks
 function onGlobalMouseDown(e: MouseEvent) {
-  isSelectingText = true;
-  // Temporarily disable overlay hit-testing to allow text selection
-  for (const wrapper of pageWrappers) {
-    const overlay = wrapper?.querySelector(".overlay") as HTMLElement | null;
-    if (overlay) overlay.style.pointerEvents = "none";
+  // Cmd/Ctrl + click on a box: open its discussion instead of starting
+  // a text selection. We don't rely on overlay pointer events; instead
+  // we hit-test against the known highlight rectangles.
+  if (props.highlightClickMode && (e.metaKey || e.ctrlKey)) {
+    const id = findHighlightAtPoint(e.clientX, e.clientY);
+    if (id) {
+      e.preventDefault();
+      e.stopPropagation();
+      emit("highlightClicked", id);
+      return;
+    }
   }
+
+  // Otherwise this is a normal interaction; allow text selection to
+  // proceed and keep overlays non-interfering.
+  isSelectingText = true;
 }
 
 function onGlobalMouseUp(e: MouseEvent) {
-  // Re-enable overlay hit-testing after mouseup (if highlightClickMode is on)
   isSelectingText = false;
-  for (const wrapper of pageWrappers) {
-    const overlay = wrapper?.querySelector(".overlay") as HTMLElement | null;
-    if (overlay) {
-      overlay.style.pointerEvents = props.highlightClickMode ? "auto" : "none";
-    }
-  }
 }
 
 function cleanupPendingHighlight() {
