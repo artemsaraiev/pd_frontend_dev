@@ -1,12 +1,19 @@
 <template>
   <div class="app">
     <TopNav :backendOk="backendOk" @search="onSearch" />
-    <div class="layout">
-      <aside class="sidebar-left"><LeftNav /></aside>
+    <div class="layout" :class="{ 'left-collapsed': leftCollapsed }">
+      <aside class="sidebar-left" :class="{ collapsed: leftCollapsed }">
+        <LeftNav
+          :collapsed="leftCollapsed"
+          @toggle-collapsed="leftCollapsed = !leftCollapsed"
+        />
+      </aside>
       <main class="content">
         <router-view />
       </main>
-      <aside class="sidebar-right"><RightSidebar /></aside>
+      <aside class="sidebar-right">
+        <RightSidebar />
+      </aside>
     </div>
   </div>
 </template>
@@ -19,8 +26,7 @@ import LeftNav from "@/components/LeftNav.vue";
 import RightSidebar from "@/components/RightSidebar.vue";
 
 const backendOk = ref(true);
-const currentPaperId = ref<string | null>(null);
-const anchorFilter = ref<string | null>(null);
+const leftCollapsed = ref(false);
 
 onMounted(async () => {
   try {
@@ -51,7 +57,11 @@ function onSearch(q: string) {
   gap: 10px;
   padding: 20px;
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
+}
+
+.layout.left-collapsed {
+  grid-template-columns: 52px 1fr 500px;
 }
 .sidebar-left {
   background: #ffffff;
@@ -59,9 +69,16 @@ function onSearch(q: string) {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border);
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
   overflow-wrap: break-word;
   word-wrap: break-word;
   min-width: 0;
+}
+.sidebar-left.collapsed {
+  padding: 12px 8px;
 }
 .sidebar-right {
   background: #ffffff;
@@ -69,11 +86,17 @@ function onSearch(q: string) {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border);
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 .content {
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  overflow: auto;
 }
 @media (max-width: 1100px) {
   .layout {

@@ -234,7 +234,8 @@
             :highlightedAnchorId="highlightedAnchorId"
             :focusedReplyId="focusedReplyId"
             :paperId="props.paperId"
-            @refresh="loadThreads" 
+            @refresh="loadThreads"
+            @replyClicked="onReplyClicked"
           />
           </div>
         </li>
@@ -548,7 +549,9 @@ async function loadThreads() {
   // Build threads with usernames (already prefetched, so getUsernameById will return from cache)
   for (const t of list) {
     // Prefer the tree API; fall back to flat list if tree is empty for any reason.
-    let nodes: any[] = (await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true })).replies as any[];
+    const treeResponse = await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true });
+    console.log('[DiscussionPanel] listRepliesTree response for thread', t._id, ':', JSON.stringify(treeResponse, null, 2));
+    let nodes: any[] = treeResponse.replies as any[];
     if (!nodes || nodes.length === 0) {
       const flat = await (discussion as any).listReplies({ threadId: t._id, includeDeleted: true });
       nodes = await Promise.all(flat.replies.map(async (r: any) => ({
@@ -1029,6 +1032,73 @@ function onThreadClick(e: MouseEvent, anchorId?: string) {
   }
 }
 
+function onReplyClicked(payload: { anchorId?: string; replyId: string; threadId: string }) {
+  const { anchorId, replyId, threadId } = payload;
+
+  console.log('[DiscussionPanel] onReplyClicked received:', payload);
+
+  // Always focus this specific reply in the UI
+  focusedReplyId.value = replyId;
+
+  // Find the thread and the reply path within it so we can walk ancestors
+  const thread = threads.value.find(t => t.id === threadId);
+  if (!thread) {
+    console.log('[DiscussionPanel] Thread not found:', threadId);
+    return;
+  }
+  console.log('[DiscussionPanel] Found thread:', thread.id, 'thread.anchorId:', thread.anchorId);
+
+  type ReplyNode = Thread['replies'][number];
+
+  function findPath(nodes: ReplyNode[], targetId: string, path: ReplyNode[] = []): ReplyNode[] | null {
+    for (const n of nodes) {
+      const nextPath = [...path, n];
+      if (n._id === targetId) return nextPath;
+      if (n.children && n.children.length) {
+        const found = findPath(n.children as ReplyNode[], targetId, nextPath);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  let effectiveAnchor = anchorId;
+
+  if (!effectiveAnchor) {
+    const path = findPath(thread.replies || [], replyId) || [];
+    // Walk ancestors from closest parent upward to find the first with an anchor
+    for (let i = path.length - 2; i >= 0 && !effectiveAnchor; i--) {
+      const ancestor = path[i];
+      if (ancestor.anchorId) {
+        effectiveAnchor = ancestor.anchorId;
+      }
+    }
+    // If still none, fall back to the thread's anchor
+    if (!effectiveAnchor && thread.anchorId) {
+      effectiveAnchor = thread.anchorId;
+    }
+  }
+
+  console.log('[DiscussionPanel] effectiveAnchor determined:', effectiveAnchor, 'from payload.anchorId:', anchorId);
+
+  if (effectiveAnchor) {
+    highlightedAnchorId.value = effectiveAnchor;
+    // Ensure thread is expanded so the focused reply is visible
+    expanded.value = { ...expanded.value, [threadId]: true };
+    // Tell the PDF to highlight this anchor
+    console.log('[DiscussionPanel] Dispatching highlight-pdf-anchors event with:', effectiveAnchor);
+    try {
+      window.dispatchEvent(
+        new CustomEvent('highlight-pdf-anchors', { detail: effectiveAnchor })
+      );
+    } catch {
+      // ignore
+    }
+  } else {
+    console.log('[DiscussionPanel] No effectiveAnchor found, not highlighting');
+  }
+}
+
 function onAnchorHighlightClicked(e: Event) {
   const custom = e as CustomEvent<string>;
   const anchorId = custom.detail;
@@ -1128,7 +1198,6 @@ onMounted(async () => {
   window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
   window.addEventListener('anchor-highlight-clicked', onAnchorHighlightClicked);
   window.addEventListener('anchor-highlight-cleared', onAnchorHighlightCleared);
-  window.addEventListener('reply-selected', onReplySelected);
   document.addEventListener('click', handleClickOutside);
   
   // Load groups if user is logged in

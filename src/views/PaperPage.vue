@@ -265,6 +265,7 @@ const highlightVisibility = computed<
 function onHighlightPdfAnchors(e: Event) {
   const custom = e as CustomEvent<string>;
   const anchorId = custom.detail;
+  console.log('[PaperPage] onHighlightPdfAnchors received:', anchorId);
   highlightedAnchorId.value = anchorId;
   activeAnchorId.value = anchorId;
 }

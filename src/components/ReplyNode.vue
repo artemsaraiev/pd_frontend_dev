@@ -4,7 +4,7 @@
     :class="{ 'highlighted-reply': isHighlighted }"
     :style="{ marginLeft: (depth * 16) + 'px' }"
     :data-reply-anchor-id="node.anchorId || undefined"
-    @click="(e) => onReplyClick(e, node.anchorId)"
+    @click.stop="(e) => onReplyClick(e, node.anchorId)"
   >
     <div class="collapse-toggle" v-if="node.children && node.children.length" @click.stop="collapsed = !collapsed">
       <span class="toggle-icon">{{ collapsed ? '+' : '−' }}</span>
@@ -91,7 +91,8 @@
         :highlightedAnchorId="highlightedAnchorId"
         :focusedReplyId="focusedReplyId"
         :paperId="paperId"
-        @replied="$emit('replied')" />
+        @replied="$emit('replied')"
+        @replyClicked="payload => $emit('replyClicked', payload)" />
     </ul>
     </div>
     <ImageViewer
@@ -130,7 +131,10 @@ const props = defineProps<{
   paperId: string | null;
 }>();
 
-const emit = defineEmits<{ (e: 'replied'): void }>();
+const emit = defineEmits<{
+  (e: 'replied'): void;
+  (e: 'replyClicked', payload: { anchorId?: string; replyId: string; threadId: string }): void;
+}>();
 
 const replying = ref(false);
 const collapsed = ref(false);
@@ -358,24 +362,22 @@ function onReplyClick(e: MouseEvent, anchorId?: string) {
   if (target.closest('button') || target.closest('a') || target.closest('.vote-section') || target.closest('.compose-area')) {
     return;
   }
-  
-  if (!anchorId) return;
-  // Dispatch event to highlight PDF anchors and update DiscussionPanel state
-  try {
-    window.dispatchEvent(
-      new CustomEvent('highlight-pdf-anchors', { detail: anchorId })
-    );
-    window.dispatchEvent(
-      new CustomEvent('anchor-highlight-clicked', { detail: anchorId })
-    );
-    // Also tell the DiscussionPanel which reply id was clicked so it can
-    // highlight this reply even if it shares the same anchor as its thread.
-    window.dispatchEvent(
-      new CustomEvent('reply-selected', { detail: props.node._id })
-    );
-  } catch {
-    // ignore
-  }
+
+  console.log('[ReplyNode] onReplyClick called:', {
+    anchorId,
+    nodeAnchorId: props.node.anchorId,
+    replyId: props.node._id,
+    threadId: props.threadId,
+    nodeData: props.node,
+  });
+
+  // Let DiscussionPanel decide which anchor to use (reply's own, ancestor, or thread),
+  // and handle all PDF + sidebar highlighting logic centrally.
+  emit('replyClicked', {
+    anchorId,
+    replyId: props.node._id,
+    threadId: props.threadId,
+  });
 }
 
 onMounted(() => {

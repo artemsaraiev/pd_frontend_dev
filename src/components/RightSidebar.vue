@@ -42,8 +42,11 @@ watch(() => route.fullPath, sync);
 
 <style scoped>
 .rs {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
+  height: 100%;
+  min-height: 0;
 }
 .card {
   border: 1px solid var(--border);
@@ -52,6 +55,9 @@ watch(() => route.fullPath, sync);
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.2s ease;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);

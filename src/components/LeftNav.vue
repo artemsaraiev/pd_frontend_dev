@@ -1,6 +1,11 @@
 <template>
-  <nav class="leftnav">
-    <div class="links">
+  <nav class="leftnav" :class="{ collapsed }">
+    <button class="collapse-toggle" type="button" @click="onToggleCollapsed">
+      <span v-if="collapsed">›</span>
+      <span v-else>‹</span>
+    </button>
+
+    <div v-if="!collapsed" class="links">
       <router-link class="item" :class="{ active: at('/') }" to="/">Home</router-link>
       <router-link class="item" :class="{ active: at('/my') }" to="/my">My Papers</router-link>
       <router-link class="item" :class="{ active: at('/groups') }" to="/groups">Groups</router-link>
@@ -8,7 +13,7 @@
     </div>
 
     <button
-      v-if="isLoggedIn"
+      v-if="isLoggedIn && !collapsed"
       class="profile-block"
       type="button"
       @click="goProfile"
@@ -22,7 +27,7 @@
       </div>
     </button>
     <button
-      v-else
+      v-else-if="!collapsed"
       class="profile-block guest"
       type="button"
       @click="goLogin"
@@ -43,9 +48,19 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useSessionStore } from "@/stores/session";
 
+const props = defineProps<{
+  collapsed?: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: "toggle-collapsed"): void;
+}>();
+
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+
+const collapsed = computed(() => !!props.collapsed);
 
 function at(path: string) {
   return route.path === path;
@@ -70,6 +85,10 @@ function goProfile() {
 function goLogin() {
   router.push({ name: "login" });
 }
+
+function onToggleCollapsed() {
+  emit("toggle-collapsed");
+}
 </script>
 
 <style scoped>
@@ -79,6 +98,33 @@ function goLogin() {
   justify-content: space-between;
   gap: 12px;
   height: 100%;
+}
+
+.leftnav.collapsed {
+  align-items: center;
+  gap: 8px;
+}
+
+.collapse-toggle {
+  align-self: flex-end;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+
+.collapse-toggle:hover {
+  background: #fef2f2;
+  border-color: var(--brand);
+  transform: translateY(-1px);
 }
 
 .links {

@@ -9,13 +9,14 @@
       :highlightedAnchorId="highlightedAnchorId"
       :focusedReplyId="focusedReplyId"
       :paperId="paperId"
-      @replied="$emit('refresh')" />
+      @replied="$emit('refresh')"
+      @replyClicked="payload => emit('replyClicked', payload)"
+    />
   </ul>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { discussion } from '@/api/endpoints';
+import { computed } from 'vue';
 import ReplyNode from './ReplyNode.vue';
 
 const props = defineProps<{
@@ -25,7 +26,11 @@ const props = defineProps<{
   focusedReplyId?: string | null;
   paperId: string | null;
 }>();
-defineEmits<{ (e: 'refresh'): void }>();
+
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+  (e: 'replyClicked', payload: { anchorId?: string; replyId: string; threadId: string }): void;
+}>();
 
 // Reorder replies: if an anchor or a specific reply is highlighted, move that reply to top
 const sortedNodes = computed(() => {
