@@ -114,6 +114,9 @@
             :active-color="selectedColor"
             :zoom="zoom"
             :highlight-visibility="highlightVisibility"
+            :highlight-click-mode="true"
+            :highlighted-anchor-id="highlightedAnchorId"
+            @highlight-clicked="onHighlightClicked"
           />
         </div>
         <!-- arXiv PDFs can be displayed inline via proxy -->
@@ -143,6 +146,9 @@
             :active-color="selectedColor"
             :zoom="zoom"
             :highlight-visibility="highlightVisibility"
+            :highlight-click-mode="true"
+            :highlighted-anchor-id="highlightedAnchorId"
+            @highlight-clicked="onHighlightClicked"
           />
         </div>
       </section>
@@ -240,6 +246,7 @@ const colors = [
 const selectedColor = ref(colors[0].value);
 
 const activeAnchorId = ref<string | null>(null);
+const highlightedAnchorId = ref<string | null>(null);
 const highlightVisibility = computed<
   Record<string, "self" | "ancestor" | "descendant" | "other">
 >(() => {
@@ -247,9 +254,42 @@ const highlightVisibility = computed<
   return idVal ? { [idVal]: "self" } : {};
 });
 
+function onHighlightPdfAnchors(e: Event) {
+  const custom = e as CustomEvent<string>;
+  const anchorId = custom.detail;
+  highlightedAnchorId.value = anchorId;
+  activeAnchorId.value = anchorId;
+}
+
 function onAnchorFocus(e: Event) {
   const custom = e as CustomEvent<string>;
   activeAnchorId.value = custom.detail || null;
+}
+
+function onHighlightClicked(highlightId: string) {
+  // Set highlighted anchor for PDF visual feedback
+  highlightedAnchorId.value = highlightId;
+  activeAnchorId.value = highlightId;
+  
+  // Dispatch event to DiscussionPanel to highlight and reorder thread/reply
+  try {
+    window.dispatchEvent(
+      new CustomEvent('anchor-highlight-clicked', { detail: highlightId })
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function onClickOutside() {
+  // Clear highlights when clicking outside
+  highlightedAnchorId.value = null;
+  activeAnchorId.value = null;
+  try {
+    window.dispatchEvent(new CustomEvent('anchor-highlight-cleared'));
+  } catch {
+    // ignore
+  }
 }
 
 // Check if ID is a valid paper ID pattern (arXiv or bioRxiv)
@@ -281,6 +321,9 @@ onMounted(async () => {
     }
   } catch {}
   window.addEventListener("anchor-focus", onAnchorFocus);
+  window.addEventListener("highlight-pdf-anchors", onHighlightPdfAnchors);
+  // Handle clicks outside to clear highlights
+  document.addEventListener('click', onDocumentClick);
 
   // Auto-ensure paper exists in local index so we can attach discussions
   // This also gives us the internal _id which we need for PdfHighlighter operations
@@ -331,11 +374,22 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("anchor-focus", onAnchorFocus);
+  window.removeEventListener("highlight-pdf-anchors", onHighlightPdfAnchors);
+  document.removeEventListener('click', onDocumentClick);
   // Revoke blob URL to free memory
   if (localPdfUrl.value) {
     URL.revokeObjectURL(localPdfUrl.value);
   }
 });
+
+function onDocumentClick(e: MouseEvent) {
+  // Don't clear if clicking on PDF highlights or discussion panel
+  const target = e.target as HTMLElement;
+  if (target.closest('.pdf-annotator') || target.closest('.panel')) {
+    return;
+  }
+  onClickOutside();
+}
 
 const id = computed(() => externalPaperId.value);
 

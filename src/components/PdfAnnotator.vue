@@ -70,6 +70,10 @@ const props = defineProps<{
    * annotate-test right now, but kept for future.)
    */
   highlightClickMode?: boolean;
+  /**
+   * Currently highlighted anchor ID (for visual feedback)
+   */
+  highlightedAnchorId?: string | null;
 }>();
 
 interface HighlightRect {
@@ -110,6 +114,8 @@ const highlights = ref<Highlight[]>([]);
 const deletedAnchorIds = reactive(new Set<string>());
 // Track the current parent anchor for nesting additional prompts
 let currentParentAnchor: string | null = null;
+// Track whether user is selecting text (to avoid intercepting selection)
+let isSelectingText = false;
 const sessionStore = useSessionStore();
 
 // Selection state
@@ -385,7 +391,7 @@ function drawHighlightsForPage(pageIndex: number) {
   }
 
   // Toggle clickability for highlight selection mode
-  if (props.highlightClickMode) {
+  if (props.highlightClickMode && !isSelectingText) {
     overlay.classList.add("clickable");
     overlay.style.pointerEvents = "auto";
   } else {
@@ -428,16 +434,26 @@ function drawHighlightsForPage(pageIndex: number) {
     const vis =
       (props.highlightVisibility && props.highlightVisibility[h.id]) || "other";
 
-    let alpha = 0.2;
-    if (vis === "self") alpha = 0.6;
-    else if (vis === "ancestor") alpha = 0.4;
-    else if (vis === "descendant") alpha = 0.3;
+    // Softer base alpha
+    let alpha = 0.15;
+    if (vis === "self") alpha = 0.35;
+    else if (vis === "ancestor") alpha = 0.25;
+    else if (vis === "descendant") alpha = 0.2;
     // Pending highlights are more visible
-    if (h.pending) alpha = 0.4;
+    if (h.pending) alpha = 0.35;
+    
+    // Make clicked highlight brighter, using the same base color
+    const isHighlighted = props.highlightedAnchorId === h.id;
+    if (isHighlighted) {
+      alpha = 0.5;
+    }
 
     for (const r of h.rects) {
       const div = document.createElement("div");
       div.className = "hl";
+      if (isHighlighted) {
+        div.classList.add("hl-highlighted");
+      }
       div.style.left = `${Math.round(r.x * w)}px`;
       div.style.top = `${Math.round(r.y * hPx)}px`;
       div.style.width = `${Math.round(r.w * w)}px`;
@@ -445,6 +461,11 @@ function drawHighlightsForPage(pageIndex: number) {
       div.style.backgroundColor = withAlpha(h.color, alpha);
       div.style.border = `1px solid ${darken(h.color)}`;
       div.style.boxSizing = "border-box";
+      if (isHighlighted) {
+        div.style.boxShadow = `0 0 12px ${withAlpha(h.color, 0.4)}`;
+        div.style.borderWidth = "2px";
+        div.style.borderColor = darken(h.color);
+      }
 
       // Add dashed border for pending highlights
       if (h.pending) {
@@ -880,6 +901,27 @@ async function confirmPrompt() {
   pendingSelection = null;
 }
 
+// Track text selection to allow normal text selection while still supporting highlight clicks
+function onGlobalMouseDown(e: MouseEvent) {
+  isSelectingText = true;
+  // Temporarily disable overlay hit-testing to allow text selection
+  for (const wrapper of pageWrappers) {
+    const overlay = wrapper?.querySelector(".overlay") as HTMLElement | null;
+    if (overlay) overlay.style.pointerEvents = "none";
+  }
+}
+
+function onGlobalMouseUp(e: MouseEvent) {
+  // Re-enable overlay hit-testing after mouseup (if highlightClickMode is on)
+  isSelectingText = false;
+  for (const wrapper of pageWrappers) {
+    const overlay = wrapper?.querySelector(".overlay") as HTMLElement | null;
+    if (overlay) {
+      overlay.style.pointerEvents = props.highlightClickMode ? "auto" : "none";
+    }
+  }
+}
+
 function cleanupPendingHighlight() {
   if (pendingSelection?.tempHighlightId) {
     deletePendingHighlight(pendingSelection.tempHighlightId);
@@ -951,6 +993,8 @@ onMounted(() => {
   );
   window.addEventListener("current-parent-anchor", onCurrentParentAnchor);
   window.addEventListener("clear-parent-anchor", onClearParentAnchor);
+  document.addEventListener("mousedown", onGlobalMouseDown, true);
+  document.addEventListener("mouseup", onGlobalMouseUp, true);
   // Request current status in case we mounted after the initial event
   try {
     window.dispatchEvent(new Event("request-deleted-anchors-status"));
@@ -969,19 +1013,29 @@ onBeforeUnmount(() => {
   );
   window.removeEventListener("current-parent-anchor", onCurrentParentAnchor);
   window.removeEventListener("clear-parent-anchor", onClearParentAnchor);
+  document.removeEventListener("mousedown", onGlobalMouseDown, true);
+  document.removeEventListener("mouseup", onGlobalMouseUp, true);
 });
 
 watch(
   () => [
     props.src,
     props.zoom,
-    props.highlightVisibility,
-    props.highlightClickMode,
     props.paperId,
   ],
   () => {
     cancelled = false;
     loadPdf();
+  }
+);
+
+// Redraw highlights (no PDF reload) when visibility or highlighted anchor changes
+watch(
+  () => [props.highlightVisibility, props.highlightClickMode, props.highlightedAnchorId],
+  () => {
+    for (let i = 0; i < pageWrappers.length; i++) {
+      drawHighlightsForPage(i);
+    }
   }
 );
 </script>
@@ -1035,6 +1089,12 @@ watch(
   outline: 1px solid rgba(255, 200, 0, 0.9);
   border-radius: 2px;
   pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+:global(.hl-highlighted) {
+  pointer-events: auto;
+  z-index: 10;
 }
 :global(.hl-delete-btn) {
   position: absolute;

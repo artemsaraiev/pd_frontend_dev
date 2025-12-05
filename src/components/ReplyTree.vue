@@ -1,23 +1,34 @@
 <template>
   <ul class="replies">
     <ReplyNode
-      v-for="node in nodes"
+      v-for="node in sortedNodes"
       :key="node._id"
       :node="node"
       :threadId="threadId"
       :depth="0"
+      :highlightedAnchorId="highlightedAnchorId"
       @replied="$emit('refresh')" />
   </ul>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { discussion } from '@/api/endpoints';
 import { useSessionStore } from '@/stores/session';
 import ReplyNode from './ReplyNode.vue';
 
-defineProps<{ nodes: any[]; threadId: string }>();
+const props = defineProps<{ nodes: any[]; threadId: string; highlightedAnchorId?: string | null }>();
 defineEmits<{ (e: 'refresh'): void }>();
+
+// Reorder replies: if an anchor is highlighted, move matching reply to top
+const sortedNodes = computed(() => {
+  if (!props.highlightedAnchorId) return props.nodes;
+  const highlighted = props.nodes.find(n => n.anchorId === props.highlightedAnchorId);
+  if (highlighted) {
+    return [highlighted, ...props.nodes.filter(n => n._id !== highlighted._id)];
+  }
+  return props.nodes;
+});
 </script>
 
 <style scoped>

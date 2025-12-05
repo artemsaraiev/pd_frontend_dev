@@ -134,8 +134,15 @@
         </div>
       </div>
       <ul class="threads" v-if="filteredThreads.length">
-        <li v-for="t in filteredThreads" :key="t.id" class="card">
-          <div class="vote-section">
+        <li 
+          v-for="t in filteredThreads" 
+          :key="t.id" 
+          class="card"
+          :class="{ 'highlighted-thread': highlightedAnchorId === t.anchorId }"
+          :data-thread-id="t.id"
+          @click="(e) => onThreadClick(e, t.anchorId)"
+        >
+          <div class="vote-section" @click.stop>
             <button 
               class="vote-btn upvote" 
               :class="{ active: threadVotes[t.id] === 1 }"
@@ -153,7 +160,7 @@
             >▼</button>
           </div>
           <div class="content-section">
-          <div class="meta">
+          <div class="meta" @click.stop>
             <strong>{{ t.authorName || t.author }}</strong>
             <span
               v-if="t.anchorId"
@@ -177,11 +184,11 @@
               Delete
             </a>
           </div>
-          <div class="body" :class="{ deleted: t.deleted }">
+          <div class="body" :class="{ deleted: t.deleted }" @click.stop>
             <div v-if="t.deleted" class="deleted-message">[deleted]</div>
             <div v-else v-html="renderBody(t.body)" @click="handleBodyClick"></div>
           </div>
-          <div v-if="replyThreadId === t.id" class="compose-thread-reply">
+          <div v-if="replyThreadId === t.id" class="compose-thread-reply" @click.stop>
             <div class="editor-toolbar">
               <button class="icon-btn" type="button" @click="formatReply('bold')"><strong>B</strong></button>
               <button class="icon-btn" type="button" @click="formatReply('italic')"><em>I</em></button>
@@ -224,7 +231,13 @@
             </div>
           </div>
           <p v-if="!t.replies || t.replies.length === 0" class="hint">No replies yet.</p>
-          <ReplyTree v-if="expanded[t.id]" :nodes="t.replies" :threadId="t.id" @refresh="loadThreads" />
+          <ReplyTree 
+            v-if="expanded[t.id]" 
+            :nodes="t.replies" 
+            :threadId="t.id" 
+            :highlightedAnchorId="highlightedAnchorId"
+            @refresh="loadThreads" 
+          />
           </div>
         </li>
       </ul>
@@ -308,10 +321,19 @@ const threadSortBy = ref<string>('createdAt'); // Default to 'createdAt' for "Ne
 const showSortDropdown = ref(false);
 const expanded = ref<Record<string, boolean>>({});
 const threadVotes = ref<Record<string, 1 | -1 | null>>({});
+const highlightedAnchorId = ref<string | null>(null);
 const filteredThreads = computed(() => {
   let filtered = (props.anchorFilterProp ?? anchorFilter.value)
     ? threads.value.filter(t => t.anchorId === (props.anchorFilterProp ?? anchorFilter.value))
     : threads.value;
+  
+  // If an anchor is highlighted, move matching thread/reply to top
+  if (highlightedAnchorId.value) {
+    const highlighted = filtered.find(t => t.anchorId === highlightedAnchorId.value);
+    if (highlighted) {
+      filtered = [highlighted, ...filtered.filter(t => t.id !== highlighted.id)];
+    }
+  }
   
   // Sort threads
   if (threadSortBy.value === 'oldest') {
@@ -320,6 +342,14 @@ const filteredThreads = computed(() => {
   } else {
     // Recent: most recent first (descending createdAt)
     filtered = [...filtered].sort((a, b) => b.createdAt - a.createdAt);
+  }
+  
+  // Re-apply highlighted thread to top after sorting
+  if (highlightedAnchorId.value) {
+    const highlighted = filtered.find(t => t.anchorId === highlightedAnchorId.value);
+    if (highlighted) {
+      filtered = [highlighted, ...filtered.filter(t => t.id !== highlighted.id)];
+    }
   }
   
   return filtered;
@@ -924,6 +954,45 @@ function onRequestDeletedAnchorsStatus() {
   }
 }
 
+function onThreadClick(e: MouseEvent, anchorId?: string) {
+  // Don't trigger if clicking on buttons, links, or interactive elements
+  const target = e.target as HTMLElement;
+  if (target.closest('button') || target.closest('a') || target.closest('.vote-section') || target.closest('.compose-thread-reply')) {
+    return;
+  }
+  
+  if (!anchorId) return;
+  highlightedAnchorId.value = anchorId;
+  // Dispatch event to highlight PDF anchors
+  try {
+    window.dispatchEvent(
+      new CustomEvent('highlight-pdf-anchors', { detail: anchorId })
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function onAnchorHighlightClicked(e: Event) {
+  const custom = e as CustomEvent<string>;
+  const anchorId = custom.detail;
+  highlightedAnchorId.value = anchorId;
+  // Scroll to the thread if it exists
+  nextTick(() => {
+    const thread = threads.value.find(t => t.anchorId === anchorId);
+    if (thread) {
+      const element = document.querySelector(`[data-thread-id="${thread.id}"]`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  });
+}
+
+function onAnchorHighlightCleared() {
+  highlightedAnchorId.value = null;
+}
+
 async function voteThread(threadId: string, vote: 1 | -1) {
   if (!session.token || !session.userId) return;
   try {
@@ -952,12 +1021,23 @@ function handleClickOutside(event: MouseEvent) {
   if (!target.closest('.sort-dropdown-container')) {
     showSortDropdown.value = false;
   }
+  // Clear highlights when clicking outside discussion panel
+  if (!target.closest('.panel') && !target.closest('.pdf-annotator')) {
+    highlightedAnchorId.value = null;
+    try {
+      window.dispatchEvent(new CustomEvent('anchor-highlight-cleared'));
+    } catch {
+      // ignore
+    }
+  }
 }
 
 onMounted(async () => {
   window.addEventListener('text-selected', onTextSelected);
   window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
   window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
+  window.addEventListener('anchor-highlight-clicked', onAnchorHighlightClicked);
+  window.addEventListener('anchor-highlight-cleared', onAnchorHighlightCleared);
   document.addEventListener('click', handleClickOutside);
   
   // Load groups if user is logged in
@@ -970,6 +1050,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('text-selected', onTextSelected);
   window.removeEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
   window.removeEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
+  window.removeEventListener('anchor-highlight-clicked', onAnchorHighlightClicked);
+  window.removeEventListener('anchor-highlight-cleared', onAnchorHighlightCleared);
   document.removeEventListener('click', handleClickOutside);
 });
 </script>
@@ -1032,6 +1114,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border-color: #d1d5db;
+}
+.highlighted-thread {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff 50%);
+  border-color: var(--brand);
+  border-width: 2px;
+  box-shadow: 0 4px 16px rgba(179, 27, 27, 0.2);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
 }
 .vote-section {
   display: flex;

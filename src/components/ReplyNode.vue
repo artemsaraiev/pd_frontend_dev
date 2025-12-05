@@ -1,6 +1,11 @@
 <template>
-  <li class="reply" :style="{ marginLeft: (depth * 16) + 'px' }">
-    <div class="vote-section">
+  <li 
+    class="reply" 
+    :class="{ 'highlighted-reply': highlightedAnchorId === node.anchorId }"
+    :style="{ marginLeft: (depth * 16) + 'px' }"
+    @click="(e) => onReplyClick(e, node.anchorId)"
+  >
+    <div class="vote-section" @click.stop>
       <button 
         class="vote-btn upvote" 
         :class="{ active: userVote === 1 }"
@@ -18,19 +23,19 @@
       >▼</button>
     </div>
     <div class="content-section">
-    <div class="meta">
+    <div class="meta" @click.stop>
       <strong v-if="!node.deleted">{{ node.authorName || node.author }}</strong>
       <span v-else class="deleted-author">[deleted]</span>
     </div>
-    <div class="body" :class="{ deleted: node.deleted }">
+    <div class="body" :class="{ deleted: node.deleted }" @click.stop>
       <div v-if="node.deleted" class="deleted-message">[deleted]</div>
       <div v-else v-html="renderBody(node.body)" @click="handleBodyClick"></div>
     </div>
-    <div class="actions">
+    <div class="actions" @click.stop>
       <button class="ghost small" @click="replying = !replying">Reply</button>
       <button v-if="sessionStore.userId === node.author && !node.deleted" class="ghost small delete" @click="deleteReply">Delete</button>
     </div>
-    <div v-if="replying" class="compose-area">
+    <div v-if="replying" class="compose-area" @click.stop>
       <div class="editor-toolbar">
         <button class="icon-btn" type="button" @click="formatReply('bold')"><strong>B</strong></button>
         <button class="icon-btn" type="button" @click="formatReply('italic')"><em>I</em></button>
@@ -79,6 +84,7 @@
         :node="child"
         :threadId="threadId"
         :depth="depth + 1"
+        :highlightedAnchorId="highlightedAnchorId"
         @replied="$emit('replied')" />
     </ul>
     </div>
@@ -113,6 +119,7 @@ const props = defineProps<{
   node: any;
   threadId: string;
   depth: number;
+  highlightedAnchorId?: string | null;
 }>();
 
 const emit = defineEmits<{ (e: 'replied'): void }>();
@@ -290,6 +297,27 @@ function onStartThreadWithHighlight(e: Event) {
   }, 100);
 }
 
+function onReplyClick(e: MouseEvent, anchorId?: string) {
+  // Don't trigger if clicking on buttons, links, or interactive elements
+  const target = e.target as HTMLElement;
+  if (target.closest('button') || target.closest('a') || target.closest('.vote-section') || target.closest('.compose-area')) {
+    return;
+  }
+  
+  if (!anchorId) return;
+  // Dispatch event to highlight PDF anchors and update DiscussionPanel state
+  try {
+    window.dispatchEvent(
+      new CustomEvent('highlight-pdf-anchors', { detail: anchorId })
+    );
+    window.dispatchEvent(
+      new CustomEvent('anchor-highlight-clicked', { detail: anchorId })
+    );
+  } catch {
+    // ignore
+  }
+}
+
 onMounted(() => {
   window.addEventListener('text-selected', onTextSelected);
   window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
@@ -398,7 +426,17 @@ async function voteReply(vote: 1 | -1) {
 </script>
 
 <style scoped>
-.reply { border-left: 2px solid var(--border); padding-left: 8px; display: flex; gap: 8px; }
+.reply { border-left: 2px solid var(--border); padding-left: 8px; display: flex; gap: 8px; cursor: pointer; transition: all 0.2s ease; }
+.reply:hover {
+  background: #fafafa;
+}
+.highlighted-reply {
+  background: linear-gradient(135deg, #fef2f2 0%, #fff 50%);
+  border-left-color: var(--brand);
+  border-left-width: 3px;
+  box-shadow: 0 2px 8px rgba(179, 27, 27, 0.15);
+  transform: translateX(-2px);
+}
 .vote-section {
   display: flex;
   flex-direction: column;
