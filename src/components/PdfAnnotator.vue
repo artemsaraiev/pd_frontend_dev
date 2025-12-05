@@ -821,45 +821,13 @@ async function confirmPrompt() {
 
   const { pageIndex, rects, text } = pendingSelection;
 
-  // If we know the paper + session, create a persistent anchor so
-  // highlights survive reloads and can be linked to threads.
-  let anchorId: string | null = null;
-  if (props.paperId && sessionStore.token) {
-    try {
-      console.log("[PdfAnnotator.confirmPrompt] starting with session", {
-        paperId: props.paperId,
-        hasSessionToken: !!sessionStore.token,
-        sessionTokenPrefix: sessionStore.token.slice(0, 8),
-      });
-      const rectsEncoded = rects
-        .map((r) =>
-          [r.x, r.y, r.w, r.h].map((n) => Number(n.toFixed(4))).join(",")
-        )
-        .join("|");
-      const ref = `p=${pageIndex + 1};rects=${rectsEncoded}`;
-      console.log("[PdfAnnotator.confirmPrompt] calling anchored.create", {
-        ref,
-        snippetPreview: (text || "").slice(0, 80),
-      });
-      console.time("[PdfAnnotator.confirmPrompt] anchored.create");
-      const res = await anchored.create({
-        paperId: props.paperId,
-        kind: "Lines",
-        ref,
-        snippet: (text || "").slice(0, 300),
-        session: sessionStore.token,
-        color: props.activeColor,
-        ...(currentParentAnchor && { parentContext: currentParentAnchor }),
-      });
-      console.timeEnd("[PdfAnnotator.confirmPrompt] anchored.create");
-      console.log("[PdfAnnotator.confirmPrompt] anchored.create success", res);
-      anchorId = res.anchorId;
-    } catch (e) {
-      console.error("PdfAnnotator: failed to create anchor for prompt", e);
-    }
-  }
+  // Create a temporary anchor id; actual persistence happens when the user posts a thread/reply
+  const rectsEncoded = rects
+    .map((r) => [r.x, r.y, r.w, r.h].map((n) => Number(n.toFixed(4))).join(","))
+    .join("|");
+  const ref = `p=${pageIndex + 1};rects=${rectsEncoded}`;
 
-  const id = anchorId ?? Date.now().toString(36);
+  const id = `temp-${Date.now().toString(36)}`;
 
   const highlight: Highlight = {
     id,
@@ -867,6 +835,7 @@ async function confirmPrompt() {
     rects,
     color: props.activeColor,
     text,
+    pending: true,
     ...(currentParentAnchor && { parentContext: currentParentAnchor }),
   };
   highlights.value.push(highlight);
@@ -882,6 +851,9 @@ async function confirmPrompt() {
     pageIndex,
     rects,
     isChild,
+    ref,
+    color: props.activeColor,
+    parentContext: currentParentAnchor,
   };
   try {
     window.dispatchEvent(
@@ -977,6 +949,20 @@ function onCurrentParentAnchor(e: Event) {
   );
 }
 
+function onReplaceTempAnchor(e: Event) {
+  const custom = e as CustomEvent<{ tempId: string; newId: string }>;
+  const { tempId, newId } = custom.detail || {};
+  if (!tempId || !newId) return;
+  for (const h of highlights.value) {
+    if (h.id === tempId) {
+      h.id = newId;
+      h.pending = false;
+    }
+  }
+  const pages = new Set(highlights.value.map((h) => h.pageIndex));
+  for (const pi of pages) drawHighlightsForPage(pi);
+}
+
 function onClearParentAnchor() {
   currentParentAnchor = null;
   console.log("[PdfAnnotator] Parent anchor cleared (thread created)");
@@ -993,6 +979,7 @@ onMounted(() => {
   );
   window.addEventListener("current-parent-anchor", onCurrentParentAnchor);
   window.addEventListener("clear-parent-anchor", onClearParentAnchor);
+  window.addEventListener("replace-temp-anchor", onReplaceTempAnchor);
   document.addEventListener("mousedown", onGlobalMouseDown, true);
   document.addEventListener("mouseup", onGlobalMouseUp, true);
   // Request current status in case we mounted after the initial event
@@ -1013,6 +1000,7 @@ onBeforeUnmount(() => {
   );
   window.removeEventListener("current-parent-anchor", onCurrentParentAnchor);
   window.removeEventListener("clear-parent-anchor", onClearParentAnchor);
+  window.removeEventListener("replace-temp-anchor", onReplaceTempAnchor);
   document.removeEventListener("mousedown", onGlobalMouseDown, true);
   document.removeEventListener("mouseup", onGlobalMouseUp, true);
 });

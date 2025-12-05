@@ -236,6 +236,7 @@
             :nodes="t.replies" 
             :threadId="t.id" 
             :highlightedAnchorId="highlightedAnchorId"
+            :paperId="props.paperId"
             @refresh="loadThreads" 
           />
           </div>
@@ -267,7 +268,7 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useSessionStore } from '@/stores/session';
 import { useGroupsStore } from '@/stores/groups';
-import { discussion } from '@/api/endpoints';
+import { discussion, anchored } from '@/api/endpoints';
 import { BASE_URL } from '@/api/client';
 import ReplyTree from '@/components/ReplyTree.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
@@ -322,14 +323,56 @@ const showSortDropdown = ref(false);
 const expanded = ref<Record<string, boolean>>({});
 const threadVotes = ref<Record<string, 1 | -1 | null>>({});
 const highlightedAnchorId = ref<string | null>(null);
+const pendingAnchors = ref<Record<string, { ref: string; snippet?: string; color?: string; parentContext?: string | null }>>({});
+function threadHasAnchor(t: Thread, anchorId: string): boolean {
+  if (t.anchorId === anchorId) return true;
+  function walk(nodes: ReplyNode[]) {
+    for (const n of nodes) {
+      if (n.anchorId === anchorId) return true;
+      if (n.children && n.children.length && walk(n.children)) return true;
+    }
+    return false;
+  }
+  return walk(t.replies || []);
+}
+
+async function ensureAnchor(anchorId?: string): Promise<string | undefined> {
+  if (!anchorId || !anchorId.startsWith('temp-')) return anchorId;
+  const pending = pendingAnchors.value[anchorId];
+  if (!pending) return anchorId;
+  if (!props.paperId || !session.token) return anchorId; // cannot persist; leave temp
+  try {
+    const res = await anchored.create({
+      paperId: props.paperId,
+      kind: 'Lines',
+      ref: pending.ref,
+      snippet: pending.snippet,
+      color: pending.color,
+      parentContext: pending.parentContext ?? undefined,
+      session: session.token,
+    });
+    const newAnchor = res.anchorId;
+    delete pendingAnchors.value[anchorId];
+    try {
+      window.dispatchEvent(new CustomEvent('replace-temp-anchor', { detail: { tempId: anchorId, newId: newAnchor } }));
+    } catch {
+      // ignore
+    }
+    return newAnchor;
+  } catch (e) {
+    console.error('Failed to persist anchor', e);
+    return anchorId;
+  }
+}
+
 const filteredThreads = computed(() => {
   let filtered = (props.anchorFilterProp ?? anchorFilter.value)
     ? threads.value.filter(t => t.anchorId === (props.anchorFilterProp ?? anchorFilter.value))
     : threads.value;
   
-  // If an anchor is highlighted, move matching thread/reply to top
+  // If an anchor is highlighted, move matching thread (thread anchor or any reply anchor) to top
   if (highlightedAnchorId.value) {
-    const highlighted = filtered.find(t => t.anchorId === highlightedAnchorId.value);
+    const highlighted = filtered.find(t => threadHasAnchor(t, highlightedAnchorId.value!));
     if (highlighted) {
       filtered = [highlighted, ...filtered.filter(t => t.id !== highlighted.id)];
     }
@@ -346,7 +389,7 @@ const filteredThreads = computed(() => {
   
   // Re-apply highlighted thread to top after sorting
   if (highlightedAnchorId.value) {
-    const highlighted = filtered.find(t => t.anchorId === highlightedAnchorId.value);
+    const highlighted = filtered.find(t => threadHasAnchor(t, highlightedAnchorId.value!));
     if (highlighted) {
       filtered = [highlighted, ...filtered.filter(t => t.id !== highlighted.id)];
     }
@@ -654,12 +697,13 @@ async function onStartThread() {
   busyThread.value = true; errorThread.value=''; threadMsg.value='';
   try {
     const finalBody = buildBodyWithImages(body.value, attachments.value);
+    const anchorToUse = await ensureAnchor(anchorId.value);
 
     const res = await discussion.startThread({
       pubId: pubId.value,
       author: session.userId || 'anonymous',
       body: finalBody,
-      anchorId: anchorId.value || undefined,
+      anchorId: anchorToUse || undefined,
       groupId: threadVisibility.value !== 'public' ? threadVisibility.value : undefined,
       session: session.token || undefined,
     });
@@ -690,13 +734,14 @@ async function onReply() {
   busyReply.value = true; errorReply.value=''; replyMsg.value='';
   try {
     const finalBody = buildBodyWithImages(replyBody.value, replyAttachments.value);
+    const anchorToUse = await ensureAnchor(replyAnchorId.value);
 
     // Use reply (not replyTo) for top-level replies to threads
     const res = await discussion.reply({ 
       threadId: replyThreadId.value, 
       author: session.userId || 'anonymous', 
       body: finalBody,
-      anchorId: replyAnchorId.value || undefined,
+      anchorId: anchorToUse || undefined,
       session: session.token || undefined 
     });
     replyMsg.value = `Reply created (id: ${res.replyId})`;
@@ -887,8 +932,16 @@ function onTextSelected(e: Event) {
 }
 
 function onStartThreadWithHighlight(e: Event) {
-  const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean }>;
-  const { anchorId: aid, text, isChild } = custom.detail;
+  const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean; ref?: string; color?: string; parentContext?: string | null }>;
+  const { anchorId: aid, text, isChild, ref, color, parentContext } = custom.detail;
+  if (aid && ref) {
+    pendingAnchors.value[aid] = {
+      ref,
+      snippet: text?.slice(0, 300),
+      color,
+      parentContext: parentContext ?? null,
+    };
+  }
   
   // If a reply box is open, set the anchorId for the reply instead of thread
   if (replyThreadId.value) {
@@ -963,10 +1016,13 @@ function onThreadClick(e: MouseEvent, anchorId?: string) {
   
   if (!anchorId) return;
   highlightedAnchorId.value = anchorId;
-  // Dispatch event to highlight PDF anchors
+  // Dispatch event to highlight PDF anchors and update panel state
   try {
     window.dispatchEvent(
       new CustomEvent('highlight-pdf-anchors', { detail: anchorId })
+    );
+    window.dispatchEvent(
+      new CustomEvent('anchor-highlight-clicked', { detail: anchorId })
     );
   } catch {
     // ignore
@@ -977,9 +1033,9 @@ function onAnchorHighlightClicked(e: Event) {
   const custom = e as CustomEvent<string>;
   const anchorId = custom.detail;
   highlightedAnchorId.value = anchorId;
-  // Scroll to the thread if it exists
+  // Scroll to the thread if it exists (thread anchor or any reply anchor)
   nextTick(() => {
-    const thread = threads.value.find(t => t.anchorId === anchorId);
+    const thread = threads.value.find(t => threadHasAnchor(t, anchorId));
     if (thread) {
       const element = document.querySelector(`[data-thread-id="${thread.id}"]`);
       if (element) {

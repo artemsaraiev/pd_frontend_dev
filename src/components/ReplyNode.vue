@@ -109,7 +109,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
-import { discussion } from '@/api/endpoints';
+import { discussion, anchored } from '@/api/endpoints';
 import { useSessionStore } from '@/stores/session';
 import { BASE_URL } from '@/api/client';
 import ImageViewer from '@/components/ImageViewer.vue';
@@ -120,6 +120,7 @@ const props = defineProps<{
   threadId: string;
   depth: number;
   highlightedAnchorId?: string | null;
+  paperId: string | null;
 }>();
 
 const emit = defineEmits<{ (e: 'replied'): void }>();
@@ -130,6 +131,36 @@ const anchorId = ref('');
 const sending = ref(false);
 const sessionStore = useSessionStore();
 const userVote = ref<1 | -1 | null>(null);
+const pendingAnchors = ref<Record<string, { ref: string; snippet?: string; color?: string; parentContext?: string | null }>>({});
+async function ensureAnchor(aid?: string): Promise<string | undefined> {
+  if (!aid || !aid.startsWith('temp-')) return aid;
+  const pending = pendingAnchors.value[aid];
+  if (!pending) return aid;
+  if (!props.paperId || !sessionStore.token) return aid;
+  try {
+    const res = await anchored.create({
+      paperId: props.paperId,
+      kind: 'Lines',
+      ref: pending.ref,
+      snippet: pending.snippet,
+      color: pending.color,
+      parentContext: pending.parentContext ?? undefined,
+      session: sessionStore.token,
+    });
+    const newAnchor = res.anchorId;
+    delete pendingAnchors.value[aid];
+    try {
+      window.dispatchEvent(new CustomEvent('replace-temp-anchor', { detail: { tempId: aid, newId: newAnchor } }));
+    } catch {
+      // ignore
+    }
+    return newAnchor;
+  } catch (e) {
+    console.error('ReplyNode: failed to persist anchor', e);
+    return aid;
+  }
+}
+
 
 const attachments = ref<string[]>([]);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -235,12 +266,14 @@ async function send() {
        finalBody += '\n\n' + attachments.value.map(url => `![image](${url})`).join('\n');
     }
 
+    const anchorToUse = await ensureAnchor(anchorId.value);
+
     await discussion.replyTo({
       threadId: props.threadId,
       parentId: props.node._id,
       author: sessionStore.userId || 'anonymous',
       body: finalBody,
-      anchorId: anchorId.value || undefined,
+      anchorId: anchorToUse || undefined,
       session: sessionStore.token || undefined,
     });
     body.value = '';
@@ -281,8 +314,17 @@ function onStartThreadWithHighlight(e: Event) {
   // Only handle if we're currently replying
   if (!replying.value) return;
   
-  const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean }>;
-  const { anchorId: aid } = custom.detail;
+  const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean; ref?: string; color?: string; parentContext?: string | null }>;
+  const { anchorId: aid, text, ref, color, parentContext } = custom.detail;
+  
+  if (aid && ref) {
+    pendingAnchors.value[aid] = {
+      ref,
+      snippet: text?.slice(0, 300),
+      color,
+      parentContext: parentContext ?? null,
+    };
+  }
   
   anchorId.value = aid;
   console.log('[ReplyNode] Set reply anchor:', aid);

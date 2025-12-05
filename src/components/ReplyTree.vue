@@ -7,6 +7,7 @@
       :threadId="threadId"
       :depth="0"
       :highlightedAnchorId="highlightedAnchorId"
+      :paperId="paperId"
       @replied="$emit('refresh')" />
   </ul>
 </template>
@@ -17,7 +18,7 @@ import { discussion } from '@/api/endpoints';
 import { useSessionStore } from '@/stores/session';
 import ReplyNode from './ReplyNode.vue';
 
-const props = defineProps<{ nodes: any[]; threadId: string; highlightedAnchorId?: string | null }>();
+const props = defineProps<{ nodes: any[]; threadId: string; highlightedAnchorId?: string | null; paperId: string | null }>();
 defineEmits<{ (e: 'refresh'): void }>();
 
 // Reorder replies: if an anchor is highlighted, move matching reply to top
