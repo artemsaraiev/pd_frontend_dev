@@ -1,5 +1,23 @@
 <template>
   <li class="reply" :style="{ marginLeft: (depth * 16) + 'px' }">
+    <div class="vote-section">
+      <button 
+        class="vote-btn upvote" 
+        :class="{ active: userVote === 1 }"
+        @click="voteReply(1)"
+        :disabled="!sessionStore.token"
+        title="Upvote"
+      >▲</button>
+      <span class="vote-count">{{ (node.upvotes ?? 0) - (node.downvotes ?? 0) }}</span>
+      <button 
+        class="vote-btn downvote" 
+        :class="{ active: userVote === -1 }"
+        @click="voteReply(-1)"
+        :disabled="!sessionStore.token"
+        title="Downvote"
+      >▼</button>
+    </div>
+    <div class="content-section">
     <div class="meta">
       <strong v-if="!node.deleted">{{ node.authorName || node.author }}</strong>
       <span v-else class="deleted-author">[deleted]</span>
@@ -63,6 +81,7 @@
         :depth="depth + 1"
         @replied="$emit('replied')" />
     </ul>
+    </div>
     <ImageViewer
       v-if="viewerImages.length"
       :images="viewerImages"
@@ -100,14 +119,28 @@ const emit = defineEmits<{ (e: 'replied'): void }>();
 
 const replying = ref(false);
 const body = ref('');
+const anchorId = ref('');
 const sending = ref(false);
 const sessionStore = useSessionStore();
+const userVote = ref<1 | -1 | null>(null);
 
 const attachments = ref<string[]>([]);
 const fileInput = ref<HTMLInputElement | null>(null);
 const viewerImages = ref<string[]>([]);
 const viewerIndex = ref(0);
 const showDeleteConfirm = ref(false);
+
+// Load user's vote when component mounts
+onMounted(async () => {
+  if (sessionStore.token && sessionStore.userId && props.node._id) {
+    try {
+      // Note: We'd need to add a getUserVote endpoint or fetch it differently
+      // For now, we'll load it when voting happens
+    } catch {
+      // Ignore
+    }
+  }
+});
 
 const renderBodyPreview = computed(() =>
   renderMarkdown(buildBodyWithImages(body.value, attachments.value)),
@@ -200,10 +233,12 @@ async function send() {
       parentId: props.node._id,
       author: sessionStore.userId || 'anonymous',
       body: finalBody,
+      anchorId: anchorId.value || undefined,
       session: sessionStore.token || undefined,
     });
     body.value = '';
     attachments.value = [];
+    anchorId.value = '';
     replying.value = false;
     emit('replied');
   } finally {
@@ -235,12 +270,34 @@ function onTextSelected(e: Event) {
   // Legacy quote-to-textarea behavior disabled; ignore.
 }
 
+function onStartThreadWithHighlight(e: Event) {
+  // Only handle if we're currently replying
+  if (!replying.value) return;
+  
+  const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean }>;
+  const { anchorId: aid } = custom.detail;
+  
+  anchorId.value = aid;
+  console.log('[ReplyNode] Set reply anchor:', aid);
+  
+  // Focus the reply textarea
+  setTimeout(() => {
+    const el = replyTextarea.value;
+    if (el) {
+      el.focus();
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
 onMounted(() => {
   window.addEventListener('text-selected', onTextSelected);
+  window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('text-selected', onTextSelected);
+  window.removeEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
 });
 
 const replyTextarea = ref<HTMLTextAreaElement | null>(null);
@@ -316,10 +373,82 @@ function applyFormat(kind: FormatKind, el: HTMLTextAreaElement | null, model: { 
 function formatReply(kind: FormatKind) {
   applyFormat(kind, replyTextarea.value, body);
 }
+
+async function voteReply(vote: 1 | -1) {
+  if (!sessionStore.token || !sessionStore.userId) return;
+  try {
+    const result = await discussion.voteReply({
+      replyId: props.node._id,
+      userId: sessionStore.userId,
+      vote,
+      session: sessionStore.token,
+    });
+    if (result.ok) {
+      userVote.value = result.userVote;
+      // Update node vote counts
+      props.node.upvotes = result.upvotes;
+      props.node.downvotes = result.downvotes;
+      // Emit refresh to reload tree
+      emit('replied');
+    }
+  } catch (e: any) {
+    console.error('Failed to vote:', e);
+  }
+}
 </script>
 
 <style scoped>
-.reply { border-left: 2px solid var(--border); padding-left: 8px; }
+.reply { border-left: 2px solid var(--border); padding-left: 8px; display: flex; gap: 8px; }
+.vote-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 32px;
+  padding-top: 4px;
+}
+.vote-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #888;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+.vote-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+.vote-btn.upvote:hover:not(:disabled) {
+  color: #ff4500;
+}
+.vote-btn.downvote:hover:not(:disabled) {
+  color: #7193ff;
+}
+.vote-btn.active.upvote {
+  color: #ff4500;
+}
+.vote-btn.active.downvote {
+  color: #7193ff;
+}
+.vote-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.vote-count {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.content-section {
+  flex: 1;
+}
 .meta { font-size: 12px; color: #444; }
 .body { margin: 4px 0 6px; }
 .body.deleted { opacity: 0.6; font-style: italic; }

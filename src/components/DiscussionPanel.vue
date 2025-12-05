@@ -102,8 +102,57 @@
           </select>
         </div>
       </div>
+      <div class="row">
+        <label>Sort by</label>
+        <div class="sort-dropdown-container">
+          <button 
+            class="sort-dropdown-btn" 
+            @click="showSortDropdown = !showSortDropdown"
+            :class="{ active: showSortDropdown }"
+          >
+            <span class="sort-label">{{ getSortLabel(threadSortBy) }}</span>
+            <span class="sort-chevron">▼</span>
+          </button>
+          <div v-if="showSortDropdown" class="sort-dropdown-menu" @click.stop>
+            <div 
+              class="sort-option" 
+              :class="{ selected: threadSortBy === 'createdAt' }"
+              @click="setSort('createdAt'); showSortDropdown = false"
+            >
+              <span class="sort-icon">🕐</span>
+              <span>Recent</span>
+            </div>
+            <div 
+              class="sort-option" 
+              :class="{ selected: threadSortBy === 'oldest' }"
+              @click="setSort('oldest'); showSortDropdown = false"
+            >
+              <span class="sort-icon">📅</span>
+              <span>Oldest</span>
+            </div>
+          </div>
+        </div>
+      </div>
       <ul class="threads" v-if="filteredThreads.length">
         <li v-for="t in filteredThreads" :key="t.id" class="card">
+          <div class="vote-section">
+            <button 
+              class="vote-btn upvote" 
+              :class="{ active: threadVotes[t.id] === 1 }"
+              @click="voteThread(t.id, 1)"
+              :disabled="!session.token"
+              title="Upvote"
+            >▲</button>
+            <span class="vote-count">{{ (t.upvotes ?? 0) - (t.downvotes ?? 0) }}</span>
+            <button 
+              class="vote-btn downvote" 
+              :class="{ active: threadVotes[t.id] === -1 }"
+              @click="voteThread(t.id, -1)"
+              :disabled="!session.token"
+              title="Downvote"
+            >▼</button>
+          </div>
+          <div class="content-section">
           <div class="meta">
             <strong>{{ t.authorName || t.author }}</strong>
             <span
@@ -176,6 +225,7 @@
           </div>
           <p v-if="!t.replies || t.replies.length === 0" class="hint">No replies yet.</p>
           <ReplyTree v-if="expanded[t.id]" :nodes="t.replies" :threadId="t.id" @refresh="loadThreads" />
+          </div>
         </li>
       </ul>
       <p v-else-if="threads.length && anchorFilter">No threads match this filter.</p>
@@ -242,6 +292,7 @@ const viewerIndex = ref(0);
 const replyThreadId = ref('');
 const replyBody = ref('');
 const replyAttachments = ref<string[]>([]);
+const replyAnchorId = ref('');
 const busyReply = ref(false);
 const errorReply = ref('');
 const replyMsg = ref('');
@@ -249,16 +300,42 @@ const showDeleteConfirm = ref(false);
 const pendingDeleteThreadId = ref<string | null>(null);
 
 const actions = ref<string[]>([]);
-type ReplyNode = { _id: string; author: string; authorName?: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean };
-type Thread = { id: string; author: string; authorName?: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean };
+type ReplyNode = { _id: string; author: string; authorName?: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number };
+type Thread = { id: string; author: string; authorName?: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number };
 const threads = ref<Thread[]>([]);
 const anchorFilter = ref('');
+const threadSortBy = ref<string>('createdAt'); // Default to 'createdAt' for "New"
+const showSortDropdown = ref(false);
 const expanded = ref<Record<string, boolean>>({});
-const filteredThreads = computed(() =>
-  (props.anchorFilterProp ?? anchorFilter.value)
+const threadVotes = ref<Record<string, 1 | -1 | null>>({});
+const filteredThreads = computed(() => {
+  let filtered = (props.anchorFilterProp ?? anchorFilter.value)
     ? threads.value.filter(t => t.anchorId === (props.anchorFilterProp ?? anchorFilter.value))
-    : threads.value
-);
+    : threads.value;
+  
+  // Sort threads
+  if (threadSortBy.value === 'oldest') {
+    // Oldest: oldest first (ascending createdAt)
+    filtered = [...filtered].sort((a, b) => a.createdAt - b.createdAt);
+  } else {
+    // Recent: most recent first (descending createdAt)
+    filtered = [...filtered].sort((a, b) => b.createdAt - a.createdAt);
+  }
+  
+  return filtered;
+});
+
+function getSortLabel(sortBy: string): string {
+  switch (sortBy) {
+    case 'oldest': return 'Oldest';
+    case 'createdAt': return 'Recent';
+    default: return 'Recent';
+  }
+}
+
+function setSort(sortBy: string) {
+  threadSortBy.value = sortBy;
+}
 
 const deletedAnchors = computed(() => {
   const deleted = new Set<string>();
@@ -370,6 +447,7 @@ async function loadThreads() {
     includeDeleted: true,
     session: session.token || '',
     groupFilter: visibilityFilter.value || 'all',
+    sortBy: threadSortBy.value || 'createdAt',
   });
   console.log('[DiscussionPanel] Loaded threads raw:', JSON.stringify(list, null, 2));
   console.log('[DiscussionPanel] Current user ID:', session.userId);
@@ -418,7 +496,17 @@ async function loadThreads() {
       await addAuthorNames(nodes);
     }
     const authorName = await getUsernameById(t.author);
-    built.push({ id: t._id, author: t.author, authorName, body: t.body, anchorId: t.anchorId, replies: nodes as any, deleted: t.deleted });
+    built.push({ 
+      id: t._id, 
+      author: t.author, 
+      authorName, 
+      body: t.body, 
+      anchorId: t.anchorId, 
+      replies: nodes as any, 
+      deleted: t.deleted,
+      upvotes: t.upvotes ?? 0,
+      downvotes: t.downvotes ?? 0,
+    });
   }
   threads.value = built;
   // Note: expanded state is preserved across reloads (not reset)
@@ -498,7 +586,7 @@ watch(() => props.paperId, () => {
 
 // Reload when filter changes and pub is present
 watch(
-  () => [props.anchorFilterProp, anchorFilter.value, visibilityFilter.value],
+  () => [props.anchorFilterProp, anchorFilter.value, visibilityFilter.value, threadSortBy.value],
   async () => { if (pubId.value) await loadThreads(); }
 );
 
@@ -574,11 +662,18 @@ async function onReply() {
     const finalBody = buildBodyWithImages(replyBody.value, replyAttachments.value);
 
     // Use reply (not replyTo) for top-level replies to threads
-    const res = await discussion.reply({ threadId: replyThreadId.value, author: session.userId || 'anonymous', body: finalBody, session: session.token || undefined });
+    const res = await discussion.reply({ 
+      threadId: replyThreadId.value, 
+      author: session.userId || 'anonymous', 
+      body: finalBody,
+      anchorId: replyAnchorId.value || undefined,
+      session: session.token || undefined 
+    });
     replyMsg.value = `Reply created (id: ${res.replyId})`;
     actions.value.unshift(`Reply ${res.replyId} added to ${replyThreadId.value}`);
     replyBody.value = '';
     replyAttachments.value = [];
+    replyAnchorId.value = '';
     replyThreadId.value = ''; // Close box after sending
     await loadThreads();
   } catch (e: any) {
@@ -693,9 +788,11 @@ function formatReply(kind: FormatKind) {
 function toggleReply(tid: string) {
   if (replyThreadId.value === tid) {
     replyThreadId.value = '';
+    replyAnchorId.value = '';
   } else {
     replyThreadId.value = tid;
     replyBody.value = '';
+    replyAnchorId.value = '';
   }
 }
 
@@ -763,6 +860,22 @@ function onStartThreadWithHighlight(e: Event) {
   const custom = e as CustomEvent<{ anchorId: string; text: string; isChild?: boolean }>;
   const { anchorId: aid, text, isChild } = custom.detail;
   
+  // If a reply box is open, set the anchorId for the reply instead of thread
+  if (replyThreadId.value) {
+    replyAnchorId.value = aid;
+    console.log('[DiscussionPanel] Set reply anchor:', aid);
+    // Focus the reply textarea
+    setTimeout(() => {
+      const el = document.querySelector('.compose-thread-reply textarea') as HTMLTextAreaElement | null;
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+    return;
+  }
+  
+  // Otherwise, handle for thread creation
   // If this is the first prompt OR it's a child of the current anchor, 
   // track it appropriately
   if (!anchorId.value) {
@@ -811,10 +924,41 @@ function onRequestDeletedAnchorsStatus() {
   }
 }
 
+async function voteThread(threadId: string, vote: 1 | -1) {
+  if (!session.token || !session.userId) return;
+  try {
+    const result = await discussion.voteThread({
+      threadId,
+      userId: session.userId,
+      vote,
+      session: session.token,
+    });
+    if (result.ok) {
+      threadVotes.value[threadId] = result.userVote;
+      // Update vote counts immediately without full reload
+      const thread = threads.value.find(t => t.id === threadId);
+      if (thread) {
+        thread.upvotes = result.upvotes;
+        thread.downvotes = result.downvotes;
+      }
+    }
+  } catch (e: any) {
+    console.error('Failed to vote:', e);
+  }
+}
+
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.sort-dropdown-container')) {
+    showSortDropdown.value = false;
+  }
+}
+
 onMounted(async () => {
   window.addEventListener('text-selected', onTextSelected);
   window.addEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
   window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
+  document.addEventListener('click', handleClickOutside);
   
   // Load groups if user is logged in
   if (session.token) {
@@ -826,6 +970,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('text-selected', onTextSelected);
   window.removeEventListener('start-thread-with-highlight', onStartThreadWithHighlight);
   window.removeEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -881,10 +1026,62 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
+  display: flex;
+  gap: 12px;
 }
 .card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border-color: #d1d5db;
+}
+.vote-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 40px;
+  padding-top: 4px;
+}
+.vote-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #888;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+.vote-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+.vote-btn.upvote:hover:not(:disabled) {
+  color: #ff4500;
+}
+.vote-btn.downvote:hover:not(:disabled) {
+  color: #7193ff;
+}
+.vote-btn.active.upvote {
+  color: #ff4500;
+}
+.vote-btn.active.downvote {
+  color: #7193ff;
+}
+.vote-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.vote-count {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.content-section {
+  flex: 1;
 }
 .meta { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .reply-link { margin-left: auto; font-size: 13px; color: var(--brand); font-weight: 500; }
@@ -1159,6 +1356,94 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
   transform: translateY(-1px);
 }
+
+.sort-dropdown-container {
+  position: relative;
+}
+
+.sort-dropdown-btn {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  justify-content: space-between;
+}
+
+.sort-dropdown-btn:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+}
+
+.sort-dropdown-btn.active {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
+}
+
+.sort-label {
+  flex: 1;
+  text-align: left;
+}
+
+.sort-chevron {
+  font-size: 10px;
+  transition: transform 0.2s ease;
+  color: var(--muted);
+}
+
+.sort-dropdown-btn.active .sort-chevron {
+  transform: rotate(180deg);
+}
+
+.sort-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+  overflow: hidden;
+}
+
+.sort-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 14px;
+}
+
+.sort-option:hover {
+  background: #fef2f2;
+}
+
+.sort-option.selected {
+  background: #fef2f2;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.sort-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
 </style>
 
  

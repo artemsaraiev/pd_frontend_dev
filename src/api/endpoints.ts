@@ -247,11 +247,11 @@ export const discussion = {
     const data = await post<{ result: string }>(endpoint, payload);
     return { threadId: data.result };
   },
-  async reply(args: { threadId: string; author: string; body: string; session?: string }): Promise<{ replyId: string }> {
+  async reply(args: { threadId: string; author: string; body: string; anchorId?: string; session?: string }): Promise<{ replyId: string }> {
     const data = await post<{ result: string }>(`/DiscussionPub/reply`, args);
     return { replyId: data.result };
   },
-  async replyTo(args: { threadId: string; author: string; body: string; parentId?: string; session?: string }): Promise<{ replyId: string }> {
+  async replyTo(args: { threadId: string; author: string; body: string; parentId?: string; anchorId?: string; session?: string }): Promise<{ replyId: string }> {
     const data = await post<{ result: string }>(`/DiscussionPub/replyTo`, args);
     return { replyId: data.result };
   },
@@ -269,6 +269,7 @@ export const discussion = {
       includeDeleted?: boolean;
       session?: string;
       groupFilter?: string; // 'all', 'public', or specific groupId
+      sortBy?: string; // 'createdAt', 'votes', 'upvotes', 'downvotes'
     },
   ): Promise<{
     threads: Array<{
@@ -280,6 +281,8 @@ export const discussion = {
       createdAt: number;
       editedAt?: number;
       deleted?: boolean;
+      upvotes: number;
+      downvotes: number;
     }>;
   }> {
     // Sync collects threads into { threads: [{ thread: ThreadDoc }, ...] } response
@@ -294,16 +297,27 @@ export const discussion = {
           createdAt: number;
           editedAt?: number;
           deleted?: boolean;
+          upvotes: number;
+          downvotes: number;
         };
       }>;
     }>(`/DiscussionPub/listThreads`, {
       ...args,
       includeDeleted: args.includeDeleted ?? true,
       groupFilter: args.groupFilter || 'all',
+      sortBy: args.sortBy || 'createdAt',
     });
     // Unwrap threads from { thread: ThreadDoc } format
     const threads = data.threads.map((t) => t.thread);
     return { threads };
+  },
+  async voteThread(args: { threadId: string; userId: string; vote: 1 | -1; session?: string }): Promise<{ ok: true; upvotes: number; downvotes: number; userVote: 1 | -1 | null }> {
+    const data = await post<{ ok: true; upvotes: number; downvotes: number; userVote: 1 | -1 | null }>(`/DiscussionPub/voteThread`, args);
+    return data;
+  },
+  async voteReply(args: { replyId: string; userId: string; vote: 1 | -1; session?: string }): Promise<{ ok: true; upvotes: number; downvotes: number; userVote: 1 | -1 | null }> {
+    const data = await post<{ ok: true; upvotes: number; downvotes: number; userVote: 1 | -1 | null }>(`/DiscussionPub/voteReply`, args);
+    return data;
   },
   async deleteThread(args: { threadId: string; session?: string }): Promise<{ ok: true }> {
     const data = await post<{ ok: true }>(`/DiscussionPub/deleteThread`, args);
@@ -314,7 +328,7 @@ export const discussion = {
     return data;
   },
   async listReplies(
-    args: { threadId: string; includeDeleted?: boolean },
+    args: { threadId: string; includeDeleted?: boolean; sortBy?: string },
   ): Promise<{
     replies: Array<{
       _id: string;
@@ -325,6 +339,8 @@ export const discussion = {
       createdAt: number;
       editedAt?: number;
       deleted?: boolean;
+      upvotes: number;
+      downvotes: number;
     }>;
   }> {
     // Sync collects replies into { replies: [{ reply: ReplyDoc }, ...] } response
@@ -339,18 +355,21 @@ export const discussion = {
           createdAt: number;
           editedAt?: number;
           deleted?: boolean;
+          upvotes: number;
+          downvotes: number;
         };
       }>;
     }>(`/DiscussionPub/listReplies`, {
       ...args,
       includeDeleted: args.includeDeleted ?? true,
+      sortBy: args.sortBy || 'createdAt',
     });
     // Unwrap replies from { reply: ReplyDoc } format
     const replies = data.replies.map((r) => r.reply);
     return { replies };
   },
   async listRepliesTree(
-    args: { threadId: string; includeDeleted?: boolean },
+    args: { threadId: string; includeDeleted?: boolean; sortBy?: string },
   ): Promise<{ replies: Array<any> }> {
     // Sync collects replies into { replies: [{ reply: ReplyTreeNode }, ...] } response
     const data = await post<{
@@ -358,6 +377,7 @@ export const discussion = {
     }>(`/DiscussionPub/listRepliesTree`, {
       ...args,
       includeDeleted: args.includeDeleted ?? true,
+      sortBy: args.sortBy || 'createdAt',
     });
     // Unwrap replies from { reply: ReplyTreeNode } format
     const replies = data.replies.map((r) => r.reply);
