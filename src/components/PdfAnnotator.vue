@@ -373,6 +373,10 @@ function drawHighlightsForPage(pageIndex: number) {
   const wrapper = pageWrappers[pageIndex];
   if (!wrapper) return;
 
+  // Find the textLayer for accurate positioning - coordinates are normalized
+  // against the textLayer during selection, so we must draw relative to it.
+  const textLayer = wrapper.querySelector(".textLayer") as HTMLElement | null;
+
   let overlay = wrapper.querySelector(".overlay") as HTMLElement | null;
   if (!overlay) {
     overlay = document.createElement("div");
@@ -389,8 +393,30 @@ function drawHighlightsForPage(pageIndex: number) {
     overlay.style.pointerEvents = "none";
   }
 
-  const w = wrapper.clientWidth;
-  const hPx = wrapper.clientHeight;
+  // Position overlay to match the textLayer exactly (not the wrapper)
+  // This ensures highlights align with text regardless of wrapper size
+  let w: number, hPx: number;
+  if (textLayer) {
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const tlRect = textLayer.getBoundingClientRect();
+    const offsetLeft = tlRect.left - wrapperRect.left;
+    const offsetTop = tlRect.top - wrapperRect.top;
+
+    overlay.style.left = `${offsetLeft}px`;
+    overlay.style.top = `${offsetTop}px`;
+    overlay.style.width = `${tlRect.width}px`;
+    overlay.style.height = `${tlRect.height}px`;
+    overlay.style.right = "auto";
+    overlay.style.bottom = "auto";
+
+    w = tlRect.width;
+    hPx = tlRect.height;
+  } else {
+    // Fallback to wrapper dimensions if textLayer not found
+    w = wrapper.clientWidth;
+    hPx = wrapper.clientHeight;
+  }
+
   overlay.innerHTML = "";
 
   const pageHighlights = highlights.value.filter(
@@ -617,7 +643,12 @@ function onBoxMouseMove(e: MouseEvent) {
   if (!boxDrawing) return;
   const { startX, startY, wrapper, preview } = boxDrawing;
 
-  const rect = wrapper.getBoundingClientRect();
+  // Use textLayer bounds for consistent coordinates with text selection
+  const textLayer = wrapper.querySelector(".textLayer") as HTMLElement | null;
+  const rect = textLayer
+    ? textLayer.getBoundingClientRect()
+    : wrapper.getBoundingClientRect();
+
   const x1 = Math.max(rect.left, Math.min(rect.right, startX));
   const y1 = Math.max(rect.top, Math.min(rect.bottom, startY));
   const x2 = Math.max(rect.left, Math.min(rect.right, e.clientX));
@@ -631,6 +662,7 @@ function onBoxMouseMove(e: MouseEvent) {
   const w = rect.width || 1;
   const h = rect.height || 1;
 
+  // Position preview relative to the overlay (which is now aligned with textLayer)
   preview.style.left = `${((left - rect.left) / w) * 100}%`;
   preview.style.top = `${((top - rect.top) / h) * 100}%`;
   preview.style.width = `${(width / w) * 100}%`;
@@ -644,7 +676,12 @@ function finishBoxDrawing(e: MouseEvent) {
 
   const { pageIndex, wrapper, preview } = boxDrawing;
   const rect = preview.getBoundingClientRect();
-  const base = wrapper.getBoundingClientRect();
+
+  // Normalize against the textLayer for consistency with text selection
+  const textLayer = wrapper.querySelector(".textLayer") as HTMLElement | null;
+  const base = textLayer
+    ? textLayer.getBoundingClientRect()
+    : wrapper.getBoundingClientRect();
 
   const w = base.width || 1;
   const h = base.height || 1;

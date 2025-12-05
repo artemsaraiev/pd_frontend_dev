@@ -81,14 +81,42 @@ async function tryLoad(url: string) {
 function drawHighlights(pageIndex: number, width: number, height: number) {
   const wrapper = pageWrappers[pageIndex];
   if (!wrapper) return;
+
+  // Find the textLayer for accurate positioning - coordinates are normalized
+  // against the textLayer during selection, so we must draw relative to it.
+  const textLayer = wrapper.querySelector(".textLayer") as HTMLElement | null;
+
   let overlay = wrapper.querySelector(".overlay") as HTMLElement | null;
   if (!overlay) {
     overlay = document.createElement("div");
     overlay.className = "overlay";
     wrapper.appendChild(overlay);
   }
-  const w = wrapper.clientWidth;
-  const h = wrapper.clientHeight;
+
+  // Position overlay to match the textLayer exactly (not the wrapper)
+  // This ensures highlights align with text regardless of wrapper size
+  let w: number, h: number;
+  if (textLayer) {
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const tlRect = textLayer.getBoundingClientRect();
+    const offsetLeft = tlRect.left - wrapperRect.left;
+    const offsetTop = tlRect.top - wrapperRect.top;
+
+    overlay.style.left = `${offsetLeft}px`;
+    overlay.style.top = `${offsetTop}px`;
+    overlay.style.width = `${tlRect.width}px`;
+    overlay.style.height = `${tlRect.height}px`;
+    overlay.style.right = "auto";
+    overlay.style.bottom = "auto";
+
+    w = tlRect.width;
+    h = tlRect.height;
+  } else {
+    // Fallback to wrapper dimensions if textLayer not found
+    w = wrapper.clientWidth;
+    h = wrapper.clientHeight;
+  }
+
   overlay.innerHTML = "";
   const list = highlights[pageIndex] || [];
   for (const r of list) {
