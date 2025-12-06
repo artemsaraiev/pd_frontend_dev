@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <TopNav :backendOk="backendOk" @search="onSearch" />
-    <div class="layout" :class="{ 'left-collapsed': leftCollapsed }">
+    <div class="layout" :class="{ 'left-collapsed': leftCollapsed, 'no-right-sidebar': !showRightSidebar }">
       <aside class="sidebar-left" :class="{ collapsed: leftCollapsed }">
         <LeftNav
           :collapsed="leftCollapsed"
@@ -11,7 +11,7 @@
       <main class="content">
         <router-view />
       </main>
-      <aside class="sidebar-right">
+      <aside v-if="showRightSidebar" class="sidebar-right">
         <RightSidebar />
       </aside>
     </div>
@@ -19,14 +19,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
+import { useRoute } from "vue-router";
 import { post } from "./api/client";
 import TopNav from "@/components/TopNav.vue";
 import LeftNav from "@/components/LeftNav.vue";
 import RightSidebar from "@/components/RightSidebar.vue";
 
+const route = useRoute();
 const backendOk = ref(true);
 const leftCollapsed = ref(false);
+
+// Only show right sidebar on paper pages
+const showRightSidebar = computed(() => {
+  return route.name === 'paper' || route.name === 'annotate_test';
+});
 
 onMounted(async () => {
   try {
@@ -62,6 +69,12 @@ function onSearch(q: string) {
 
 .layout.left-collapsed {
   grid-template-columns: 52px 1fr 500px;
+}
+.layout.no-right-sidebar {
+  grid-template-columns: 170px 1fr;
+}
+.layout.left-collapsed.no-right-sidebar {
+  grid-template-columns: 52px 1fr;
 }
 .sidebar-left {
   background: #ffffff;

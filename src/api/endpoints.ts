@@ -234,25 +234,30 @@ export const discussion = {
     const data = await post<{ result: string }>(`/DiscussionPub/open`, args);
     return { pubId: data.result };
   },
-  async startThread(args: { pubId: string; author: string; body: string; anchorId?: string; groupId?: string; session?: string }): Promise<{ threadId: string }> {
+  async startThread(args: { pubId: string; author: string; body: string; anchorId?: string; groupId?: string; session?: string; isAnonymous?: boolean }): Promise<{ threadId: string }> {
     // Use different endpoints for public vs private threads
     const endpoint = args.groupId 
       ? `/DiscussionPub/startPrivateThread` 
       : `/DiscussionPub/startThread`;
-    // Always send anchorId (empty string if not provided) so the sync pattern matches
+    // Always send anchorId and isAnonymous so the sync pattern matches
     const payload = {
       ...args,
       anchorId: args.anchorId || '',
+      isAnonymous: args.isAnonymous ?? false,
     };
     const data = await post<{ result: string }>(endpoint, payload);
     return { threadId: data.result };
   },
-  async reply(args: { threadId: string; author: string; body: string; anchorId?: string; session?: string }): Promise<{ replyId: string }> {
-    const data = await post<{ result: string }>(`/DiscussionPub/reply`, args);
+  async reply(args: { threadId: string; author: string; body: string; anchorId?: string; session?: string; isAnonymous?: boolean }): Promise<{ replyId: string }> {
+    // Always send anchorId and isAnonymous - backend sync requires it
+    const payload = { ...args, anchorId: args.anchorId || '', isAnonymous: args.isAnonymous ?? false };
+    const data = await post<{ result: string }>(`/DiscussionPub/reply`, payload);
     return { replyId: data.result };
   },
-  async replyTo(args: { threadId: string; author: string; body: string; parentId?: string; anchorId?: string; session?: string }): Promise<{ replyId: string }> {
-    const data = await post<{ result: string }>(`/DiscussionPub/replyTo`, args);
+  async replyTo(args: { threadId: string; author: string; body: string; parentId?: string; anchorId?: string; session?: string; isAnonymous?: boolean }): Promise<{ replyId: string }> {
+    // Always send anchorId and isAnonymous - backend sync requires it
+    const payload = { ...args, anchorId: args.anchorId || '', isAnonymous: args.isAnonymous ?? false };
+    const data = await post<{ result: string }>(`/DiscussionPub/replyTo`, payload);
     return { replyId: data.result };
   },
   async getPubIdByPaper(args: { paperId: string }): Promise<{ pubId: string | null }> {
@@ -283,6 +288,7 @@ export const discussion = {
       deleted?: boolean;
       upvotes: number;
       downvotes: number;
+      isAnonymous?: boolean;
     }>;
   }> {
     // Sync collects threads into { threads: [{ thread: ThreadDoc }, ...] } response
@@ -299,6 +305,7 @@ export const discussion = {
           deleted?: boolean;
           upvotes: number;
           downvotes: number;
+          isAnonymous?: boolean;
         };
       }>;
     }>(`/DiscussionPub/listThreads`, {
@@ -341,6 +348,7 @@ export const discussion = {
       deleted?: boolean;
       upvotes: number;
       downvotes: number;
+      isAnonymous?: boolean;
     }>;
   }> {
     // Sync collects replies into { replies: [{ reply: ReplyDoc }, ...] } response
@@ -382,6 +390,10 @@ export const discussion = {
     // Unwrap replies from { reply: ReplyTreeNode } format
     const replies = data.replies.map((r) => r.reply);
     return { replies };
+  },
+  async getAnonymousPseudonym(args: { userId: string; pubId: string }): Promise<{ pseudonym: string }> {
+    const data = await post<{ pseudonym: string }>(`/DiscussionPub/getAnonymousPseudonym`, args);
+    return data;
   },
 };
 

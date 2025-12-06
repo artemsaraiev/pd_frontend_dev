@@ -26,6 +26,7 @@
         <span class="icon">💬</span> Prompt
       </button>
     </div>
+
   </div>
 </template>
 
@@ -96,6 +97,7 @@ interface Highlight {
 const emit = defineEmits<{
   (e: "highlight", highlight: Highlight): void;
   (e: "highlightClicked", highlightId: string): void;
+  (e: "highlightsOverlapClicked", payload: { ids: string[]; x: number; y: number }): void;
 }>();
 
 const pagesContainer = ref<HTMLElement | null>(null);
@@ -136,9 +138,19 @@ let boxDrawing: {
   preview: HTMLElement;
 } | null = null;
 
+;
+
 // Hit-test utility: given a point in client coordinates, find the
 // top-most highlight (if any) under the cursor.
 function findHighlightAtPoint(clientX: number, clientY: number): string | null {
+  const all = findAllHighlightsAtPoint(clientX, clientY);
+  return all.length > 0 ? all[0].id : null;
+}
+
+// Find ALL highlights at a given point (for handling overlapping boxes)
+function findAllHighlightsAtPoint(clientX: number, clientY: number): Array<{ id: string; color: string; text?: string }> {
+  const found: Array<{ id: string; color: string; text?: string }> = [];
+  
   for (let pageIndex = 0; pageIndex < pageWrappers.length; pageIndex++) {
     const wrapper = pageWrappers[pageIndex];
     if (!wrapper) continue;
@@ -176,12 +188,16 @@ function findHighlightAtPoint(clientX: number, clientY: number): string | null {
           clientY >= top &&
           clientY <= bottom
         ) {
-          return h.id;
+          // Only add each highlight once (it might have multiple rects)
+          if (!found.some(f => f.id === h.id)) {
+            found.push({ id: h.id, color: h.color, text: h.text });
+          }
+          break; // Move to next highlight after finding a matching rect
         }
       }
     }
   }
-  return null;
+  return found;
 }
 
 function withAlpha(color: string, alpha: number): string {
@@ -906,11 +922,23 @@ function onGlobalMouseDown(e: MouseEvent) {
   // a text selection. We don't rely on overlay pointer events; instead
   // we hit-test against the known highlight rectangles.
   if (props.highlightClickMode && (e.metaKey || e.ctrlKey)) {
-    const id = findHighlightAtPoint(e.clientX, e.clientY);
-    if (id) {
+    const allHighlights = findAllHighlightsAtPoint(e.clientX, e.clientY);
+    
+    if (allHighlights.length === 1) {
+      // Single highlight: emit directly (existing behavior)
       e.preventDefault();
       e.stopPropagation();
-      emit("highlightClicked", id);
+      emit("highlightClicked", allHighlights[0].id);
+      return;
+    } else if (allHighlights.length > 1) {
+      // Multiple overlapping highlights: emit event with all IDs for parent to show picker
+      e.preventDefault();
+      e.stopPropagation();
+      emit("highlightsOverlapClicked", {
+        ids: allHighlights.map(h => h.id),
+        x: e.clientX,
+        y: e.clientY,
+      });
       return;
     }
   }
@@ -1182,4 +1210,5 @@ watch(
 .popup-btn .icon {
   font-size: 14px;
 }
+
 </style>

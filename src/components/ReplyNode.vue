@@ -28,8 +28,11 @@
     </div>
     <div class="content-section">
     <div class="meta" @click.stop>
-      <strong v-if="!node.deleted">{{ node.authorName || node.author }}</strong>
-      <span v-else class="deleted-author">[deleted]</span>
+      <strong v-if="!node.deleted">
+        {{ node.authorName || node.author }}
+      </strong>
+      <span v-if="node.isAnonymous && !node.deleted" class="anonymous-badge">anonymous</span>
+      <span v-if="node.deleted" class="deleted-author">[deleted]</span>
     </div>
     <div class="body" :class="{ deleted: node.deleted }" @click.stop>
       <div v-if="node.deleted" class="deleted-message">[deleted]</div>
@@ -77,6 +80,10 @@
            style="display: none"
            @change="handleFileSelect($event, attachments)"
          />
+         <label class="checkbox-label">
+           <input type="checkbox" v-model="isAnonymous" />
+           <span class="checkbox-text">Anonymous</span>
+         </label>
          <div class="spacer"></div>
          <button class="primary small" :disabled="(!body && !attachments.length) || !sessionStore.token || sending" @click="send">{{ !sessionStore.token ? 'Sign in to reply' : (sending ? 'Sending…' : 'Reply') }}</button>
       </div>
@@ -140,6 +147,7 @@ const replying = ref(false);
 const collapsed = ref(false);
 const body = ref('');
 const anchorId = ref('');
+const isAnonymous = ref(false);
 const sending = ref(false);
 const sessionStore = useSessionStore();
 const userVote = ref<1 | -1 | null>(null);
@@ -292,10 +300,12 @@ async function send() {
       body: finalBody,
       anchorId: anchorToUse || undefined,
       session: sessionStore.token || undefined,
+      isAnonymous: isAnonymous.value,
     });
     body.value = '';
     attachments.value = [];
     anchorId.value = '';
+    isAnonymous.value = false;
     replying.value = false;
     emit('replied');
   } finally {
@@ -719,5 +729,39 @@ async function voteReply(vote: 1 | -1) {
 .confirm-actions .delete:hover {
   background: #c82333;
   border-color: #c82333;
+}
+
+/* Anonymous styling */
+.anonymous-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-left: 6px;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  margin-left: 8px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.checkbox-text {
+  font-size: 12px;
+  color: var(--text);
 }
 </style>

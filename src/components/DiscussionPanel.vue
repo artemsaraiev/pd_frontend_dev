@@ -30,6 +30,12 @@
           </select>
         </div>
       </div>
+      <div v-if="session.token" class="anonymous-toggle">
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="threadIsAnonymous" />
+          <span class="checkbox-text">Post anonymously</span>
+        </label>
+      </div>
       <div v-if="attachments.length" class="attachments-preview">
         <div v-for="(url, i) in attachments" :key="url" class="attachment-thumb">
           <img :src="url" @click="openViewerFromAttachments(attachments, i)" />
@@ -168,7 +174,10 @@
           </div>
           <div class="content-section">
           <div class="meta" @click.stop>
-            <strong>{{ t.authorName || t.author }}</strong>
+            <strong>
+              {{ t.authorName || t.author }}
+            </strong>
+            <span v-if="t.isAnonymous" class="anonymous-badge">anonymous</span>
             <span class="count">{{ t.replies?.length ?? 0 }} replies</span>
             <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
             <a
@@ -222,6 +231,10 @@
                   @change="handleFileSelect($event, replyAttachments)"
                 />
               </label>
+              <label class="checkbox-label inline">
+                <input type="checkbox" v-model="replyIsAnonymous" />
+                <span class="checkbox-text">Anonymous</span>
+              </label>
               <button class="primary small" :disabled="(!replyBody && !replyAttachments.length) || !session.token || busyReply" @click="onReply">{{ !session.token ? 'Sign in' : (busyReply ? 'Sending…' : 'Reply') }}</button>
               <button class="ghost small" @click="replyThreadId = ''">Cancel</button>
             </div>
@@ -259,6 +272,34 @@
         </div>
       </div>
     </div>
+    <!-- Overlapping Highlights Picker -->
+    <div
+      v-if="showOverlapPicker"
+      class="overlap-picker-overlay"
+      @click="showOverlapPicker = false"
+    >
+      <div
+        class="overlap-picker"
+        :style="{ left: overlapPickerX + 'px', top: overlapPickerY + 'px' }"
+        @click.stop
+      >
+        <div class="picker-header">Select annotation</div>
+        <div class="picker-list">
+          <button
+            v-for="item in overlapPickerItems"
+            :key="item.anchorId"
+            class="picker-item"
+            @click="selectFromOverlapPicker(item.anchorId)"
+          >
+            <span class="picker-meta">
+              <strong>{{ item.authorName }}</strong>
+              <span class="picker-type">{{ item.type }}</span>
+            </span>
+            <span class="picker-body">{{ item.bodyPreview }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -292,6 +333,7 @@ const body = ref('');
 const anchorId = ref('');
 const threadVisibility = ref<string>('public');
 const visibilityFilter = ref<string>('all');
+const threadIsAnonymous = ref(false);
 const busyThread = ref(false);
 const errorThread = ref('');
 const threadMsg = ref('');
@@ -305,15 +347,27 @@ const replyThreadId = ref('');
 const replyBody = ref('');
 const replyAttachments = ref<string[]>([]);
 const replyAnchorId = ref('');
+const replyIsAnonymous = ref(false);
 const busyReply = ref(false);
 const errorReply = ref('');
 const replyMsg = ref('');
 const showDeleteConfirm = ref(false);
 const pendingDeleteThreadId = ref<string | null>(null);
 
+// Overlapping highlights picker state
+const showOverlapPicker = ref(false);
+const overlapPickerX = ref(0);
+const overlapPickerY = ref(0);
+const overlapPickerItems = ref<Array<{
+  anchorId: string;
+  type: 'thread' | 'reply';
+  authorName: string;
+  bodyPreview: string;
+}>>([]);
+
 const actions = ref<string[]>([]);
-type ReplyNode = { _id: string; author: string; authorName?: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number };
-type Thread = { id: string; author: string; authorName?: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number };
+type ReplyNode = { _id: string; author: string; authorName?: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number; isAnonymous?: boolean };
+type Thread = { id: string; author: string; authorName?: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number; isAnonymous?: boolean; createdAt: number };
 const threads = ref<Thread[]>([]);
 const anchorFilter = ref('');
 const threadSortBy = ref<string>('createdAt'); // Default to 'createdAt' for "New"
@@ -345,7 +399,7 @@ async function ensureAnchor(anchorId?: string): Promise<string | undefined> {
       paperId: props.paperId,
       kind: 'Lines',
       ref: pending.ref,
-      snippet: pending.snippet,
+      snippet: pending.snippet ?? '',
       color: pending.color,
       parentContext: pending.parentContext ?? undefined,
       session: session.token,
@@ -509,16 +563,39 @@ function toggleExpanded(id: string) {
   expanded.value = { ...expanded.value, [id]: current === false };
 }
 
+// Cache for anonymous pseudonyms
+const pseudonymCache = new Map<string, string>();
+
+async function getDisplayName(userId: string, isAnonymous: boolean, currentPubId: string): Promise<string> {
+  if (!isAnonymous) {
+    return await getUsernameById(userId);
+  }
+  // For anonymous posts, generate a pseudonym
+  const cacheKey = `${userId}:${currentPubId}`;
+  if (pseudonymCache.has(cacheKey)) {
+    return pseudonymCache.get(cacheKey)!;
+  }
+  try {
+    const { pseudonym } = await discussion.getAnonymousPseudonym({ userId, pubId: currentPubId });
+    pseudonymCache.set(cacheKey, pseudonym);
+    return pseudonym;
+  } catch (e) {
+    console.error('Failed to get pseudonym:', e);
+    return 'Anonymous';
+  }
+}
+
 async function loadThreads() {
   if (!pubId.value) { threads.value = []; return; }
   const activeFilter = (props.anchorFilterProp ?? anchorFilter.value) || undefined;
+  const currentPubId = pubId.value;
   // Use loose typing here to avoid TS friction; backend supports includeDeleted, session, and groupFilter.
   // Pass session for access control filtering on the backend
   // Always send session (even empty string) so the session-based sync matches
   // The backend will handle invalid/empty sessions by returning only public threads
   // Pass groupFilter to filter by visibility (all, public, or specific groupId)
   const { threads: list } = await (discussion as any).listThreads({ 
-    pubId: pubId.value, 
+    pubId: currentPubId, 
     anchorId: activeFilter, 
     includeDeleted: true,
     session: session.token || '',
@@ -529,24 +606,24 @@ async function loadThreads() {
   console.log('[DiscussionPanel] Current user ID:', session.userId);
   const built: Thread[] = [];
 
-  // Collect all unique author IDs for prefetching
+  // Collect all unique author IDs for prefetching (only non-anonymous ones)
   const authorIds = new Set<string>();
   for (const t of list) {
-    authorIds.add(t.author);
+    if (!t.isAnonymous) authorIds.add(t.author);
     const replies = (await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true })).replies as any[];
     function collectAuthors(nodes: any[]) {
       for (const node of nodes) {
-        authorIds.add(node.author);
+        if (!node.isAnonymous) authorIds.add(node.author);
         if (node.children) collectAuthors(node.children);
       }
     }
     collectAuthors(replies);
   }
 
-  // Prefetch all usernames
+  // Prefetch all usernames for non-anonymous users
   await prefetchUsernames(Array.from(authorIds));
 
-  // Build threads with usernames (already prefetched, so getUsernameById will return from cache)
+  // Build threads with usernames or pseudonyms
   for (const t of list) {
     // Prefer the tree API; fall back to flat list if tree is empty for any reason.
     const treeResponse = await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true });
@@ -557,23 +634,24 @@ async function loadThreads() {
       nodes = await Promise.all(flat.replies.map(async (r: any) => ({
         _id: r._id,
         author: r.author,
-        authorName: await getUsernameById(r.author),
+        authorName: await getDisplayName(r.author, r.isAnonymous ?? false, currentPubId),
         body: r.body,
         anchorId: r.anchorId,
         children: [] as any[],
-        deleted: r.deleted ?? false
+        deleted: r.deleted ?? false,
+        isAnonymous: r.isAnonymous ?? false,
       })));
     } else {
       // Add authorName to tree nodes recursively
       async function addAuthorNames(nodes: any[]) {
         for (const node of nodes) {
-          node.authorName = await getUsernameById(node.author);
+          node.authorName = await getDisplayName(node.author, node.isAnonymous ?? false, currentPubId);
           if (node.children) await addAuthorNames(node.children);
         }
       }
       await addAuthorNames(nodes);
     }
-    const authorName = await getUsernameById(t.author);
+    const authorName = await getDisplayName(t.author, t.isAnonymous ?? false, currentPubId);
     built.push({ 
       id: t._id, 
       author: t.author, 
@@ -584,6 +662,8 @@ async function loadThreads() {
       deleted: t.deleted,
       upvotes: t.upvotes ?? 0,
       downvotes: t.downvotes ?? 0,
+      isAnonymous: t.isAnonymous ?? false,
+      createdAt: t.createdAt,
     });
   }
   threads.value = built;
@@ -711,12 +791,14 @@ async function onStartThread() {
       anchorId: anchorToUse || undefined,
       groupId: threadVisibility.value !== 'public' ? threadVisibility.value : undefined,
       session: session.token || undefined,
+      isAnonymous: threadIsAnonymous.value,
     });
-    threadMsg.value = `Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}`;
+    threadMsg.value = `Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}${threadIsAnonymous.value ? ' (anonymous)' : ''}`;
     actions.value.unshift(`Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}`);
     body.value = '';
     attachments.value = [];
     anchorId.value = '';
+    threadIsAnonymous.value = false;
     // Clear parent anchor in PdfAnnotator so new prompts start fresh
     try {
       window.dispatchEvent(new Event('clear-parent-anchor'));
@@ -745,13 +827,15 @@ async function onReply() {
       author: session.userId || 'anonymous', 
       body: finalBody,
       anchorId: anchorToUse || undefined,
-      session: session.token || undefined 
+      session: session.token || undefined,
+      isAnonymous: replyIsAnonymous.value,
     });
     replyMsg.value = `Reply created (id: ${res.replyId})`;
     actions.value.unshift(`Reply ${res.replyId} added to ${replyThreadId.value}`);
     replyBody.value = '';
     replyAttachments.value = [];
     replyAnchorId.value = '';
+    replyIsAnonymous.value = false;
     replyThreadId.value = ''; // Close box after sending
     await loadThreads();
   } catch (e: any) {
@@ -1153,6 +1237,83 @@ function onAnchorHighlightCleared() {
   highlightedAnchorId.value = null;
 }
 
+function onHighlightsOverlapClicked(e: Event) {
+  const custom = e as CustomEvent<{ ids: string[]; x: number; y: number }>;
+  const { ids, x, y } = custom.detail;
+  
+  // Find all threads/replies that match these anchor IDs
+  const items: Array<{
+    anchorId: string;
+    type: 'thread' | 'reply';
+    authorName: string;
+    bodyPreview: string;
+  }> = [];
+  
+  for (const anchorId of ids) {
+    // Check threads
+    for (const thread of threads.value) {
+      if (thread.anchorId === anchorId) {
+        items.push({
+          anchorId,
+          type: 'thread',
+          authorName: thread.authorName || thread.author,
+          bodyPreview: (thread.body || '').slice(0, 40) + (thread.body && thread.body.length > 40 ? '…' : ''),
+        });
+      }
+      // Check replies recursively
+      function findRepliesWithAnchor(nodes: ReplyNode[]) {
+        for (const node of nodes) {
+          if (node.anchorId === anchorId) {
+            items.push({
+              anchorId,
+              type: 'reply',
+              authorName: node.authorName || node.author,
+              bodyPreview: (node.body || '').slice(0, 40) + (node.body && node.body.length > 40 ? '…' : ''),
+            });
+          }
+          if (node.children) findRepliesWithAnchor(node.children);
+        }
+      }
+      findRepliesWithAnchor(thread.replies || []);
+    }
+  }
+  
+  if (items.length === 0) {
+    // No matching threads/replies found, maybe just highlights without discussion
+    console.log('[DiscussionPanel] No threads/replies found for anchor IDs:', ids);
+    return;
+  }
+  
+  if (items.length === 1) {
+    // Only one item, select it directly
+    selectFromOverlapPicker(items[0].anchorId);
+    return;
+  }
+  
+  // Show the picker
+  overlapPickerItems.value = items;
+  overlapPickerX.value = x;
+  overlapPickerY.value = y + 10;
+  showOverlapPicker.value = true;
+}
+
+function selectFromOverlapPicker(anchorId: string) {
+  showOverlapPicker.value = false;
+  highlightedAnchorId.value = anchorId;
+  
+  // Trigger the same logic as clicking a single highlight
+  try {
+    window.dispatchEvent(
+      new CustomEvent('highlight-pdf-anchors', { detail: anchorId })
+    );
+    window.dispatchEvent(
+      new CustomEvent('anchor-highlight-clicked', { detail: anchorId })
+    );
+  } catch {
+    // ignore
+  }
+}
+
 async function voteThread(threadId: string, vote: 1 | -1) {
   if (!session.token || !session.userId) return;
   try {
@@ -1198,6 +1359,7 @@ onMounted(async () => {
   window.addEventListener('request-deleted-anchors-status', onRequestDeletedAnchorsStatus);
   window.addEventListener('anchor-highlight-clicked', onAnchorHighlightClicked);
   window.addEventListener('anchor-highlight-cleared', onAnchorHighlightCleared);
+  window.addEventListener('highlights-overlap-clicked', onHighlightsOverlapClicked);
   document.addEventListener('click', handleClickOutside);
   
   // Load groups if user is logged in
@@ -1213,6 +1375,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('anchor-highlight-clicked', onAnchorHighlightClicked);
   window.removeEventListener('anchor-highlight-cleared', onAnchorHighlightCleared);
   window.removeEventListener('reply-selected', onReplySelected);
+  window.removeEventListener('highlights-overlap-clicked', onHighlightsOverlapClicked);
   document.removeEventListener('click', handleClickOutside);
 });
 </script>
@@ -1708,6 +1871,139 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-size: 16px;
   width: 20px;
   text-align: center;
+}
+
+/* Overlapping highlights picker */
+.overlap-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: transparent;
+}
+.overlap-picker {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  min-width: 280px;
+  max-width: 360px;
+  overflow: hidden;
+  animation: pickerSlideIn 0.15s ease;
+}
+@keyframes pickerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.overlap-picker .picker-header {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+.overlap-picker .picker-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.overlap-picker .picker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f0f0f0;
+}
+.overlap-picker .picker-item:last-child {
+  border-bottom: none;
+}
+.overlap-picker .picker-item:hover {
+  background: #fef2f2;
+}
+.overlap-picker .picker-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.overlap-picker .picker-meta strong {
+  color: #333;
+}
+.overlap-picker .picker-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #888;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.overlap-picker .picker-body {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Anonymous posting styles */
+.anonymous-toggle {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label.inline {
+  display: inline-flex;
+  margin-right: 8px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.checkbox-text {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.anonymous-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-left: 6px;
 }
 
 </style>

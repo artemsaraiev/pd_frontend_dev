@@ -1,11 +1,10 @@
 <template>
   <div class="rs">
+    <!-- Only show discussion panel when viewing a paper -->
     <div v-if="paperId" class="card">
       <DiscussionPanel :paperId="paperId" :anchorFilterProp="anchorFilter" />
     </div>
-    <div v-else class="card">
-      <small>No paper selected.</small>
-    </div>
+    <!-- Hide right sidebar content on non-paper pages -->
   </div>
 </template>
 
@@ -19,8 +18,10 @@ const paperId = ref<string | null>(null);
 const anchorFilter = ref<string | null>(null);
 
 function sync() {
+  // Only show discussion panel on paper pages
+  const isPaperPage = route.name === 'paper' || route.name === 'annotate_test';
   const id = (route.params as any)?.id as string | undefined;
-  paperId.value = id ?? null;
+  paperId.value = isPaperPage && id ? id : null;
 }
 
 function onAnchorCreated(e: Event) {

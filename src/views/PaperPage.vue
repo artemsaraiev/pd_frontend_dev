@@ -121,6 +121,7 @@
             :highlight-click-mode="true"
             :highlighted-anchor-id="highlightedAnchorId"
             @highlight-clicked="onHighlightClicked"
+            @highlights-overlap-clicked="onHighlightsOverlapClicked"
           />
         </div>
         <!-- arXiv PDFs can be displayed inline via proxy -->
@@ -157,6 +158,7 @@
             :highlight-click-mode="true"
             :highlighted-anchor-id="highlightedAnchorId"
             @highlight-clicked="onHighlightClicked"
+            @highlights-overlap-clicked="onHighlightsOverlapClicked"
           />
         </div>
       </section>
@@ -284,6 +286,17 @@ function onHighlightClicked(highlightId: string) {
   try {
     window.dispatchEvent(
       new CustomEvent('anchor-highlight-clicked', { detail: highlightId })
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function onHighlightsOverlapClicked(payload: { ids: string[]; x: number; y: number }) {
+  // Dispatch event to DiscussionPanel to show picker for overlapping highlights
+  try {
+    window.dispatchEvent(
+      new CustomEvent('highlights-overlap-clicked', { detail: payload })
     );
   } catch {
     // ignore

@@ -37,16 +37,17 @@
       <div v-for="p in papers" :key="p.id" class="card">
         <h3 class="title">
           <a :href="`/paper/${encodeURIComponent(p.paperId)}`">{{
-            p.title || p.paperId
+            p.title || "Untitled Paper"
           }}</a>
         </h3>
         <div class="meta">
           {{ p.createdAt ? new Date(p.createdAt).toLocaleString() : "" }}
         </div>
-        <div class="ctas">
+        <div class="card-footer">
           <a class="primary" :href="`/paper/${encodeURIComponent(p.paperId)}`"
             >View discussion</a
           >
+          <span class="paper-id">{{ p.paperId }}</span>
         </div>
       </div>
       <p v-if="!loading && !papers.length" class="hint">
@@ -66,11 +67,44 @@ const papers = ref<
 >([]);
 const loading = ref(false);
 
+// Check if a paper ID looks like an arXiv ID
+function isArxivId(id: string): boolean {
+  return /^\d{4}\.\d{4,5}(v\d+)?$/.test(id);
+}
+
+// Fetch title from arxiv via backend (no CORS issues)
+async function fetchTitleViaBackend(arxivId: string): Promise<string | null> {
+  try {
+    // Use the backend's arxiv search with the paper ID as query
+    const { papers: results } = await paper.searchArxiv({ q: arxivId });
+    // Find the exact match
+    const match = results.find(r => r.id === arxivId || r.id.startsWith(arxivId));
+    return match?.title || null;
+  } catch {
+    return null;
+  }
+}
+
 onMounted(async () => {
   loading.value = true;
   try {
     const { papers: list } = await paper.listRecent({ limit: 20 });
     papers.value = list;
+
+    // Fetch missing titles from arxiv via backend (in background)
+    for (const p of papers.value) {
+      if (!p.title && isArxivId(p.paperId)) {
+        fetchTitleViaBackend(p.paperId).then((title) => {
+          if (title) {
+            p.title = title;
+            // Trigger reactivity
+            papers.value = [...papers.value];
+            // Also save to backend for future requests
+            paper.updateMeta({ id: p.paperId, title }).catch(() => {});
+          }
+        });
+      }
+    }
   } finally {
     loading.value = false;
   }
@@ -206,10 +240,18 @@ onMounted(async () => {
   margin-top: 8px;
   font-weight: 500;
 }
-.ctas {
+.card-footer {
   display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   gap: 10px;
   margin-top: 16px;
+}
+.paper-id {
+  font-size: 12px;
+  color: #9ca3af;
+  font-family: var(--font-mono, "SF Mono", "Fira Code", monospace);
+  white-space: nowrap;
 }
 .primary {
   background: var(--brand);
