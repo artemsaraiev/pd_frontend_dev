@@ -2,7 +2,7 @@
   <div class="page">
     <!-- Sign-in prompt for non-authenticated users -->
     <div v-if="!isLoggedIn" class="auth-guard">
-      <div class="auth-message">Sign in to view My Papers</div>
+      <div class="auth-message">Sign in to view Saved Papers</div>
       <button class="sign-in-button" @click="goLogin">Sign in</button>
     </div>
 
@@ -30,9 +30,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, computed } from 'vue';
-import { paper } from '@/api/endpoints';
-import { useSessionStore } from '@/stores/session';
+import { onMounted, ref, watch, computed } from "vue";
+import { paper } from "@/api/endpoints";
+import { useSessionStore } from "@/stores/session";
 
 const papers = ref<Array<{ id: string; paperId: string; title?: string }>>([]);
 const store = useSessionStore();
@@ -44,23 +44,32 @@ function goLogin() {
 }
 
 function load() {
-  if (!store.userId) { papers.value = []; return; }
+  if (!store.userId) {
+    papers.value = [];
+    return;
+  }
   const key = `library:${store.userId}`;
-  const ids: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+  const ids: string[] = JSON.parse(localStorage.getItem(key) || "[]");
   papers.value = [];
-  Promise.all(ids.map(async (id) => {
-    // id from localStorage is the external paperId
-    const result = await paper.get({ id });
-    papers.value.push({ id: result.id, paperId: result.paperId, title: result.title });
-  }));
+  Promise.all(
+    ids.map(async (id) => {
+      // id from localStorage is the external paperId
+      const result = await paper.get({ id });
+      papers.value.push({
+        id: result.id,
+        paperId: result.paperId,
+        title: result.title,
+      });
+    })
+  );
 }
 
 function remove(paperId: string) {
   if (!store.userId) return;
   const key = `library:${store.userId}`;
-  const ids: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+  const ids: string[] = JSON.parse(localStorage.getItem(key) || "[]");
   // Remove by external paperId (what's stored in localStorage)
-  const next = ids.filter(x => x !== paperId);
+  const next = ids.filter((x) => x !== paperId);
   localStorage.setItem(key, JSON.stringify(next));
   load();
 }
