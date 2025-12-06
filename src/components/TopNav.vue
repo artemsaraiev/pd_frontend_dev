@@ -26,7 +26,7 @@
         {{ backendOk ? "Connected" : "Offline" }}
       </div>
       <button v-if="!token" class="primary" @click="goLogin">Sign in</button>
-      <div v-else class="user-profile">
+      <div v-else class="user-profile" @click="goProfile">
         <img
           src="@/assets/images/profile.png"
           alt="Profile"
@@ -34,7 +34,7 @@
         />
         <div class="user-info">
           <div class="user-email">{{ displayName || "User" }}</div>
-          <a href="#" @click.prevent="logout" class="sign-out-link">Sign out</a>
+          <a href="#" @click.prevent.stop="logout" class="sign-out-link">Sign out</a>
         </div>
       </div>
     </div>
@@ -108,6 +108,9 @@ function goHome() {
 }
 function goLogin() {
   window.location.assign("/login");
+}
+function goProfile() {
+  window.location.assign("/profile");
 }
 async function logout() {
   if (store?.token) {
@@ -240,6 +243,7 @@ input:focus {
   border-radius: 999px;
   background: #fafafa;
   transition: background 0.2s ease;
+  cursor: pointer;
 }
 .user-profile:hover {
   background: #f4f4f5;

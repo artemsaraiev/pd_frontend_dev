@@ -1,9 +1,17 @@
 <template>
   <div class="page">
-    <h2>Groups & Invitations</h2>
+    <!-- Sign-in prompt for non-authenticated users -->
+    <div v-if="!isLoggedIn" class="auth-guard">
+      <div class="auth-message">Sign in to view Groups</div>
+      <button class="sign-in-button" @click="goLogin">Sign in</button>
+    </div>
 
-    <!-- Create Group Section -->
-    <section class="section">
+    <!-- Main content for authenticated users -->
+    <template v-else>
+      <h2>Groups & Invitations</h2>
+
+      <!-- Create Group Section -->
+      <section class="section">
       <h3>Create New Group</h3>
       <form @submit.prevent="handleCreateGroup" class="form">
         <input v-model="newGroupName" type="text" placeholder="Group name" required class="input" />
@@ -70,16 +78,23 @@
         <p v-if="inviteError" class="error">{{ inviteError }}</p>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useGroupsStore } from '@/stores/groups';
 import { useSessionStore } from '@/stores/session';
 
 const store = useGroupsStore();
 const sessionStore = useSessionStore();
+
+const isLoggedIn = computed(() => !!sessionStore.token);
+
+function goLogin() {
+  window.location.assign("/login");
+}
 
 const newGroupName = ref('');
 const newGroupDescription = ref('');
@@ -173,6 +188,43 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.auth-guard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 400px;
+  padding: 60px 20px;
+}
+
+.auth-message {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  font-family: var(--font-serif);
+  text-align: center;
+}
+
+.sign-in-button {
+  background: var(--brand);
+  color: #fff;
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sign-in-button:hover {
+  background: #9a1717;
+  border-color: #9a1717;
+  box-shadow: 0 4px 12px rgba(179, 27, 27, 0.3);
+  transform: translateY(-1px);
+}
+
 .page {
   max-width: 800px;
   margin: 0 auto;

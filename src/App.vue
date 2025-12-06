@@ -1,8 +1,8 @@
 <template>
   <div class="app">
     <TopNav :backendOk="backendOk" @search="onSearch" />
-    <div class="layout" :class="{ 'left-collapsed': leftCollapsed, 'no-right-sidebar': !showRightSidebar }">
-      <aside class="sidebar-left" :class="{ collapsed: leftCollapsed }">
+    <div class="layout" :class="{ 'left-collapsed': leftCollapsed, 'no-left-sidebar': !showLeftSidebar, 'no-right-sidebar': !showRightSidebar }">
+      <aside v-if="showLeftSidebar" class="sidebar-left" :class="{ collapsed: leftCollapsed }">
         <LeftNav
           :collapsed="leftCollapsed"
           @toggle-collapsed="leftCollapsed = !leftCollapsed"
@@ -25,10 +25,18 @@ import { post } from "./api/client";
 import TopNav from "@/components/TopNav.vue";
 import LeftNav from "@/components/LeftNav.vue";
 import RightSidebar from "@/components/RightSidebar.vue";
+import { useSessionStore } from "@/stores/session";
 
 const route = useRoute();
 const backendOk = ref(true);
 const leftCollapsed = ref(false);
+const session = useSessionStore();
+
+// Check if user is logged in
+const isLoggedIn = computed(() => !!session.token);
+
+// Only show left sidebar if user is logged in
+const showLeftSidebar = computed(() => isLoggedIn.value);
 
 // Only show right sidebar on paper pages
 const showRightSidebar = computed(() => {
@@ -70,8 +78,14 @@ function onSearch(q: string) {
 .layout.left-collapsed {
   grid-template-columns: 52px 1fr 500px;
 }
+.layout.no-left-sidebar {
+  grid-template-columns: 1fr 500px;
+}
 .layout.no-right-sidebar {
   grid-template-columns: 170px 1fr;
+}
+.layout.no-left-sidebar.no-right-sidebar {
+  grid-template-columns: 1fr;
 }
 .layout.left-collapsed.no-right-sidebar {
   grid-template-columns: 52px 1fr;

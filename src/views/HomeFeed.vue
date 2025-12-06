@@ -7,6 +7,9 @@
         class="hero-logo"
       />
       <p class="tagline">Collaborative academic paper discussions</p>
+      <button v-if="!isLoggedIn" class="hero-sign-in-button" @click="goLogin">
+        Sign in to get started
+      </button>
     </div>
 
     <div class="toolbar">
@@ -58,8 +61,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { paper } from "@/api/endpoints";
+import { useSessionStore } from "@/stores/session";
+
+const session = useSessionStore();
+
+const isLoggedIn = computed(() => !!session.token);
+
+function goLogin() {
+  window.location.assign("/login");
+}
 
 const tab = ref<"trending" | "new" | "discussed">("trending");
 const papers = ref<
@@ -142,6 +154,25 @@ onMounted(async () => {
   color: var(--muted);
   margin: 0;
   letter-spacing: 0.5px;
+}
+.hero-sign-in-button {
+  margin-top: 24px;
+  background: var(--brand);
+  color: #fff;
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(179, 27, 27, 0.2);
+}
+.hero-sign-in-button:hover {
+  background: #9a1717;
+  border-color: #9a1717;
+  box-shadow: 0 4px 12px rgba(179, 27, 27, 0.3);
+  transform: translateY(-2px);
 }
 
 /* Toolbar */

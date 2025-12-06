@@ -1,32 +1,47 @@
 <template>
   <div class="page">
-    <h2>My Papers</h2>
-    <div class="cards">
-      <div v-for="p in papers" :key="p.id" class="card">
-        <h3 class="title">
-          <a :href="`/paper/${encodeURIComponent(p.paperId)}`">{{
-            p.title || p.paperId
-          }}</a>
-        </h3>
-        <div class="ctas">
-          <a class="primary" :href="`/paper/${encodeURIComponent(p.paperId)}`"
-            >View discussion</a
-          >
-          <button class="ghost" @click="remove(p.paperId)">Remove</button>
-        </div>
-      </div>
-      <p v-if="!papers.length" class="hint">No saved papers yet.</p>
+    <!-- Sign-in prompt for non-authenticated users -->
+    <div v-if="!isLoggedIn" class="auth-guard">
+      <div class="auth-message">Sign in to view My Papers</div>
+      <button class="sign-in-button" @click="goLogin">Sign in</button>
     </div>
+
+    <!-- Main content for authenticated users -->
+    <template v-else>
+      <h2>My Papers</h2>
+      <div class="cards">
+        <div v-for="p in papers" :key="p.id" class="card">
+          <h3 class="title">
+            <a :href="`/paper/${encodeURIComponent(p.paperId)}`">{{
+              p.title || p.paperId
+            }}</a>
+          </h3>
+          <div class="ctas">
+            <a class="primary" :href="`/paper/${encodeURIComponent(p.paperId)}`"
+              >View discussion</a
+            >
+            <button class="ghost" @click="remove(p.paperId)">Remove</button>
+          </div>
+        </div>
+        <p v-if="!papers.length" class="hint">No saved papers yet.</p>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { paper } from '@/api/endpoints';
 import { useSessionStore } from '@/stores/session';
 
 const papers = ref<Array<{ id: string; paperId: string; title?: string }>>([]);
 const store = useSessionStore();
+
+const isLoggedIn = computed(() => !!store.token);
+
+function goLogin() {
+  window.location.assign("/login");
+}
 
 function load() {
   if (!store.userId) { papers.value = []; return; }
@@ -55,6 +70,43 @@ watch(() => store.userId, load);
 </script>
 
 <style scoped>
+.auth-guard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 400px;
+  padding: 60px 20px;
+}
+
+.auth-message {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  font-family: var(--font-serif);
+  text-align: center;
+}
+
+.sign-in-button {
+  background: var(--brand);
+  color: #fff;
+  border: 1.5px solid var(--brand);
+  border-radius: 8px;
+  padding: 14px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sign-in-button:hover {
+  background: #9a1717;
+  border-color: #9a1717;
+  box-shadow: 0 4px 12px rgba(179, 27, 27, 0.3);
+  transform: translateY(-1px);
+}
+
 h2 {
   font-family: var(--font-serif);
   font-size: 32px;

@@ -1,6 +1,12 @@
 <template>
   <div class="panel">
-    <h3 class="panel-title">Identity</h3>
+    <div class="panel-title">
+      <h3 class="title">Identity</h3>
+      <p class="description">
+        Manage how you appear in discussions. ORCID and badges are shown next
+        to your threads and replies.
+      </p>
+    </div>
     <div class="content">
       <!-- Display current ORCID if exists -->
       <div v-if="currentOrcid" class="section orcid-section">
@@ -317,12 +323,23 @@ async function onAddBadge() {
 }
 
 .panel-title {
-  font-size: 16px;
-  font-weight: 600;
   margin: 0 0 16px 0;
-  color: #111827;
   padding-bottom: 12px;
   border-bottom: 2px solid #e5e7eb;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  color: #111827;
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .content {
