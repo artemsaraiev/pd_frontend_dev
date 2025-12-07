@@ -19,16 +19,14 @@
         <button class="icon-btn" type="button" @click="formatThread('inlineMath')">\(x\)</button>
         <button class="icon-btn" type="button" @click="formatThread('blockMath')">∑</button>
       </div>
-      <div v-if="session.token" class="row">
-        <label>Visibility</label>
-        <div class="visibility-selector">
-          <select v-model="threadVisibility" class="input">
-            <option value="public">Public</option>
-            <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
-              {{ groupsStore.groups[groupId]?.name || 'Loading...' }}
-            </option>
-          </select>
-        </div>
+      <div v-if="session.token" class="visibility-row">
+        <label class="visibility-label">Visibility</label>
+        <select v-model="threadVisibility" class="visibility-select">
+          <option value="public">Public</option>
+          <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
+            {{ groupsStore.groups[groupId]?.name || 'Loading...' }}
+          </option>
+        </select>
       </div>
       <div v-if="session.token" class="anonymous-toggle">
         <label class="checkbox-label">
@@ -89,17 +87,17 @@
     <div v-if="!pubId && busyOpen" class="hint">Loading discussions…</div>
     <div v-if="!pubId && !busyOpen && errorOpen" class="hint">Failed to load discussions: {{ errorOpen }}</div>
     <div v-if="pubId">
-      <div class="row">
-        <label>Filter by anchor</label>
-        <div class="filter">
-          <input v-model.trim="anchorFilter" placeholder="anchorId (optional)" />
-          <button class="ghost" v-if="anchorFilter" @click="anchorFilter = ''">Clear</button>
+      <div class="filters-section">
+        <div class="filter-row">
+          <label class="filter-label">Filter by anchor</label>
+          <div class="filter">
+            <input v-model.trim="anchorFilter" placeholder="anchorId (optional)" />
+            <button class="ghost" v-if="anchorFilter" @click="anchorFilter = ''">Clear</button>
+          </div>
         </div>
-      </div>
-      <div v-if="session.token" class="row">
-        <label>Visibility filter</label>
-        <div class="filter">
-          <select v-model="visibilityFilter" class="input">
+        <div v-if="session.token" class="filter-row">
+          <label class="filter-label">Visibility filter</label>
+          <select v-model="visibilityFilter" class="visibility-filter-select">
             <option value="all">All threads</option>
             <option value="public">Public only</option>
             <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
@@ -107,10 +105,9 @@
             </option>
           </select>
         </div>
-      </div>
-      <div class="row">
-        <label>Sort by</label>
-        <div class="sort-dropdown-container">
+        <div class="filter-row">
+          <label class="filter-label">Sort by</label>
+          <div class="sort-dropdown-container">
           <button 
             class="sort-dropdown-btn" 
             @click="showSortDropdown = !showSortDropdown"
@@ -137,6 +134,7 @@
               <span>Oldest</span>
             </div>
           </div>
+        </div>
         </div>
       </div>
       <ul class="threads" v-if="filteredThreads.length">
@@ -1383,6 +1381,96 @@ onBeforeUnmount(() => {
 <style scoped>
 .panel { display: flex; flex-direction: column; gap: 12px; }
 .row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center; }
+
+/* Visibility row styles */
+.visibility-row {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.visibility-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 80px;
+}
+
+.visibility-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.visibility-select:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+}
+
+.visibility-select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
+}
+
+/* Filters section styles */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 120px;
+}
+
+.visibility-filter-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.visibility-filter-select:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+}
+
+.visibility-filter-select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
+}
 .filter { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
 input, textarea {
   padding: 10px 12px;
