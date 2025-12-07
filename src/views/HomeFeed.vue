@@ -90,7 +90,9 @@ async function fetchTitleViaBackend(arxivId: string): Promise<string | null> {
     // Use the backend's arxiv search with the paper ID as query
     const { papers: results } = await paper.searchArxiv({ q: arxivId });
     // Find the exact match
-    const match = results.find(r => r.id === arxivId || r.id.startsWith(arxivId));
+    const match = results.find(
+      (r) => r.id === arxivId || r.id.startsWith(arxivId)
+    );
     return match?.title || null;
   } catch {
     return null;
@@ -273,9 +275,9 @@ onMounted(async () => {
 }
 .card-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 16px;
 }
 .paper-id {
@@ -283,6 +285,7 @@ onMounted(async () => {
   color: #9ca3af;
   font-family: var(--font-mono, "SF Mono", "Fira Code", monospace);
   white-space: nowrap;
+  align-self: flex-end;
 }
 .primary {
   background: var(--brand);
