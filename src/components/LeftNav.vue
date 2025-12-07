@@ -7,7 +7,7 @@
 
     <div v-if="!collapsed" class="links">
       <router-link class="item" :class="{ active: at('/') }" to="/">Home</router-link>
-      <router-link class="item" :class="{ active: at('/my') }" to="/my">My Papers</router-link>
+      <router-link class="item" :class="{ active: at('/my') }" to="/my">Saved Library</router-link>
       <router-link class="item" :class="{ active: at('/groups') }" to="/groups">Groups</router-link>
       <router-link class="item" :class="{ active: at('/profile') }" to="/profile">Profile</router-link>
     </div>

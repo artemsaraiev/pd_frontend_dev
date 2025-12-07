@@ -11,7 +11,7 @@
             rel="noreferrer"
             >Open on {{ sourceName }}</a
           >
-          <button class="ghost" @click="saveToLibrary">Add to library</button>
+          <button class="ghost" @click="saveToLibrary">Save to Library</button>
           <button class="ghost" @click="$router.push('/')">Back to Feed</button>
         </div>
       </div>
@@ -25,8 +25,9 @@
       </div>
       <p v-if="banner" class="banner">{{ banner }}</p>
       <div v-if="showSuccessNotice" class="success-notice">
-        Added to library!
+        Saved to library!
       </div>
+      <div v-if="showErrorNotice" class="error-notice">Already in library!</div>
     </header>
 
     <div class="columns">
@@ -191,6 +192,7 @@ const session = useSessionStore();
 const banner = ref("");
 const discussionCount = ref(0);
 const showSuccessNotice = ref(false);
+const showErrorNotice = ref(false);
 
 // Local PDF upload state (for bioRxiv papers)
 const localPdfUrl = ref<string | null>(null);
@@ -267,7 +269,7 @@ const highlightVisibility = computed<
 function onHighlightPdfAnchors(e: Event) {
   const custom = e as CustomEvent<string>;
   const anchorId = custom.detail;
-  console.log('[PaperPage] onHighlightPdfAnchors received:', anchorId);
+  console.log("[PaperPage] onHighlightPdfAnchors received:", anchorId);
   highlightedAnchorId.value = anchorId;
   activeAnchorId.value = anchorId;
 }
@@ -281,22 +283,26 @@ function onHighlightClicked(highlightId: string) {
   // Set highlighted anchor for PDF visual feedback
   highlightedAnchorId.value = highlightId;
   activeAnchorId.value = highlightId;
-  
+
   // Dispatch event to DiscussionPanel to highlight and reorder thread/reply
   try {
     window.dispatchEvent(
-      new CustomEvent('anchor-highlight-clicked', { detail: highlightId })
+      new CustomEvent("anchor-highlight-clicked", { detail: highlightId })
     );
   } catch {
     // ignore
   }
 }
 
-function onHighlightsOverlapClicked(payload: { ids: string[]; x: number; y: number }) {
+function onHighlightsOverlapClicked(payload: {
+  ids: string[];
+  x: number;
+  y: number;
+}) {
   // Dispatch event to DiscussionPanel to show picker for overlapping highlights
   try {
     window.dispatchEvent(
-      new CustomEvent('highlights-overlap-clicked', { detail: payload })
+      new CustomEvent("highlights-overlap-clicked", { detail: payload })
     );
   } catch {
     // ignore
@@ -308,7 +314,7 @@ function onClickOutside() {
   highlightedAnchorId.value = null;
   activeAnchorId.value = null;
   try {
-    window.dispatchEvent(new CustomEvent('anchor-highlight-cleared'));
+    window.dispatchEvent(new CustomEvent("anchor-highlight-cleared"));
   } catch {
     // ignore
   }
@@ -345,7 +351,7 @@ onMounted(async () => {
   window.addEventListener("anchor-focus", onAnchorFocus);
   window.addEventListener("highlight-pdf-anchors", onHighlightPdfAnchors);
   // Handle clicks outside to clear highlights
-  document.addEventListener('click', onDocumentClick);
+  document.addEventListener("click", onDocumentClick);
 
   // Auto-ensure paper exists in local index so we can attach discussions
   // This also gives us the internal _id which we need for PdfHighlighter operations
@@ -397,7 +403,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener("anchor-focus", onAnchorFocus);
   window.removeEventListener("highlight-pdf-anchors", onHighlightPdfAnchors);
-  document.removeEventListener('click', onDocumentClick);
+  document.removeEventListener("click", onDocumentClick);
   // Revoke blob URL to free memory
   if (localPdfUrl.value) {
     URL.revokeObjectURL(localPdfUrl.value);
@@ -407,7 +413,7 @@ onBeforeUnmount(() => {
 function onDocumentClick(e: MouseEvent) {
   // Don't clear if clicking on PDF highlights or discussion panel
   const target = e.target as HTMLElement;
-  if (target.closest('.pdf-annotator') || target.closest('.panel')) {
+  if (target.closest(".pdf-annotator") || target.closest(".panel")) {
     return;
   }
   onClickOutside();
@@ -432,6 +438,12 @@ function saveToLibrary() {
     // Hide after 2 seconds
     setTimeout(() => {
       showSuccessNotice.value = false;
+    }, 2000);
+  } else {
+    // Paper already exists - show error notification
+    showErrorNotice.value = true;
+    setTimeout(() => {
+      showErrorNotice.value = false;
     }, 2000);
   }
 }
@@ -600,6 +612,16 @@ async function removePdf() {
   background: #d4edda;
   color: #155724;
   border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  font-weight: 500;
+  animation: fadeInOut 2s ease-in-out;
+}
+.error-notice {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
   border-radius: 8px;
   font-weight: 500;
   animation: fadeInOut 2s ease-in-out;

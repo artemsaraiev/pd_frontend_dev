@@ -8,7 +8,7 @@
 
     <!-- Main content for authenticated users -->
     <template v-else>
-      <h2>My Papers</h2>
+      <h2>Saved Library</h2>
       <div class="cards">
         <div v-for="p in papers" :key="p.id" class="card">
           <h3 class="title">
