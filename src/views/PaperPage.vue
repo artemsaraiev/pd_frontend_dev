@@ -2,7 +2,7 @@
   <div class="paper">
     <header class="card header">
       <div class="title-row">
-        <h2 class="title">{{ header.title || id }}</h2>
+        <h2 class="title">{{ header.title || externalPaperId }}</h2>
         <div class="actions">
           <a
             class="ghost"
@@ -30,8 +30,7 @@
       <div v-if="showErrorNotice" class="error-notice">Already in library!</div>
     </header>
 
-    <div class="columns">
-      <section class="center">
+    <div class="paper-content">
         <!-- bioRxiv: Try proxy first, fallback to upload if proxy fails -->
         <div
           v-if="paperSource === 'biorxiv' && !localPdfUrl && pdfLoadError"
@@ -165,7 +164,6 @@
             @highlights-overlap-clicked="onHighlightsOverlapClicked"
           />
         </div>
-      </section>
     </div>
   </div>
 </template>
@@ -344,12 +342,42 @@ onMounted(async () => {
       window.location.assign(`/search?q=${encodeURIComponent(props.id)}`);
       return;
     }
-    const { id, title } = await paper.get({ id: externalPaperId.value });
-    header.title = title;
-    header.doi = externalPaperId.value;
-    header.link = externalAbsLink.value;
-    if (!title) {
-      // banner.value = 'This paper is not yet in your index.';
+    
+    // Always try to get paper info and title
+    try {
+      const { id, title } = await paper.get({ id: externalPaperId.value });
+      if (title) {
+        header.title = title;
+      }
+      header.doi = externalPaperId.value;
+      header.link = externalAbsLink.value;
+    } catch (e) {
+      console.error("Failed to get paper:", e);
+    }
+    
+    // If title is still missing, try to fetch from source
+    if (!header.title) {
+      try {
+        if (paperSource.value === 'arxiv') {
+          const { papers } = await paper.searchArxiv({ q: externalPaperId.value });
+          const match = papers.find(p => p.id === externalPaperId.value);
+          if (match?.title) {
+            header.title = match.title;
+            // Update paper metadata
+            paper.updateMeta({ id: externalPaperId.value, title: match.title }).catch(() => {});
+          }
+        } else if (paperSource.value === 'biorxiv') {
+          const { papers } = await paper.searchBiorxiv({ q: externalPaperId.value });
+          const match = papers.find(p => p.id === externalPaperId.value || p.doi === externalPaperId.value);
+          if (match?.title) {
+            header.title = match.title;
+            // Update paper metadata
+            paper.updateMeta({ id: externalPaperId.value, title: match.title }).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch title from source:", e);
+      }
     }
   } catch {}
   window.addEventListener("anchor-focus", onAnchorFocus);
@@ -366,10 +394,14 @@ onMounted(async () => {
     });
     // Store internal _id for PdfHighlighter operations
     internalPaperId.value = ensured.id;
-    // Refresh title if it was missing
-    if (!header.title) {
+    // Always refresh title to ensure it's up to date
+    try {
       const { title } = await paper.get({ id: externalPaperId.value });
-      header.title = title;
+      if (title) {
+        header.title = title;
+      }
+    } catch (e) {
+      console.error("Failed to fetch paper title:", e);
     }
   } catch (e) {
     console.error("Failed to ensure paper:", e);
@@ -518,7 +550,7 @@ async function removePdf() {
 .paper {
   display: grid;
   gap: 16px;
-  max-width: 850px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 .header .title {
@@ -553,15 +585,9 @@ async function removePdf() {
 .inline {
   padding: 2px 8px;
 }
-.columns {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-.center {
+.paper-content {
   display: block;
-  min-width: 0;
-  overflow: hidden;
+  max-width: 100%;
 }
 .pdf-scroll {
   height: calc(100vh - 220px);

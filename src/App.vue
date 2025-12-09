@@ -35,10 +35,10 @@ const session = useSessionStore();
 // Check if user is logged in
 const isLoggedIn = computed(() => !!session.token);
 
-// Only show left sidebar if user is logged in
-const showLeftSidebar = computed(() => isLoggedIn.value);
+// Left sidebar nav was moved into the top bar, so we hide it
+const showLeftSidebar = computed(() => false);
 
-// Only show right sidebar on paper pages
+// Use the original right sidebar for the discussion panel on paper pages
 const showRightSidebar = computed(() => {
   return route.name === 'paper' || route.name === 'annotate_test';
 });

@@ -7,6 +7,13 @@
         class="logo"
       />
     </div>
+    <!-- Main navigation moved from left sidebar -->
+    <nav class="nav-links">
+      <router-link class="nav-link" :class="{ active: at('/') }" to="/">Home</router-link>
+      <router-link class="nav-link" :class="{ active: at('/my') }" to="/my">Saved Library</router-link>
+      <router-link class="nav-link" :class="{ active: at('/groups') }" to="/groups">Groups</router-link>
+      <router-link class="nav-link" :class="{ active: at('/profile') }" to="/profile">Profile</router-link>
+    </nav>
     <div v-if="!isSearchPage" class="search">
       <input
         v-model.trim="q"
@@ -42,8 +49,6 @@ import { session } from "@/api/endpoints";
 import { getUsernameById } from "@/utils/usernameCache";
 import { useRoute } from "vue-router";
 
-type PaperSource = "arxiv" | "biorxiv";
-
 const props = defineProps<{ backendOk: boolean }>();
 const emit = defineEmits<{ (e: "search", q: string): void }>();
 const q = ref("");
@@ -60,6 +65,10 @@ const token = computed(() => store?.token ?? null);
 // Check if we're on the search results page
 const route = useRoute();
 const isSearchPage = computed(() => route.path === '/search');
+
+function at(path: string) {
+  return route.path === path;
+}
 
 // Fetch and display the username
 onMounted(async () => {
@@ -145,6 +154,31 @@ async function logout() {
   width: auto;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
+.nav-links {
+  display: flex;
+  gap: 16px;
+  margin-left: 16px;
+}
+
+.nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  padding: 6px 4px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--brand);
+}
+
+.nav-link.active {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
 .search {
   display: grid;
   grid-template-columns: 1fr auto;
