@@ -32,13 +32,16 @@
 
     <div class="columns">
       <section class="center">
-        <!-- bioRxiv: User uploads their own PDF copy -->
+        <!-- bioRxiv: Try proxy first, fallback to upload if proxy fails -->
         <div
-          v-if="paperSource === 'biorxiv' && !localPdfUrl"
+          v-if="paperSource === 'biorxiv' && !localPdfUrl && pdfLoadError"
           class="upload-prompt card"
         >
           <div class="upload-icon">📄</div>
-          <h3>Upload Your PDF Copy</h3>
+          <h3>PDF Not Available</h3>
+          <p class="error-message">
+            Unable to load PDF automatically. You can upload your own copy:
+          </p>
           <ol class="upload-steps">
             <li>
               <a
@@ -76,7 +79,7 @@
             </p>
           </div>
         </div>
-        <!-- bioRxiv with uploaded PDF -->
+        <!-- bioRxiv with uploaded PDF (manual fallback) -->
         <div
           v-else-if="paperSource === 'biorxiv' && localPdfUrl"
           class="pdf-scroll"
@@ -125,7 +128,7 @@
             @highlights-overlap-clicked="onHighlightsOverlapClicked"
           />
         </div>
-        <!-- arXiv PDFs can be displayed inline via proxy -->
+        <!-- bioRxiv and arXiv PDFs via proxy (automatic) -->
         <div v-else class="pdf-scroll">
           <div class="toolbar">
             <div class="colors">
@@ -194,9 +197,10 @@ const discussionCount = ref(0);
 const showSuccessNotice = ref(false);
 const showErrorNotice = ref(false);
 
-// Local PDF upload state (for bioRxiv papers)
+// Local PDF upload state (for bioRxiv papers - fallback only)
 const localPdfUrl = ref<string | null>(null);
 const localPdfLoading = ref(false);
+const pdfLoadError = ref(false);
 
 // Detect paper source from ID format
 // bioRxiv DOIs: 10.1101/YYYY.MM.DD.NNNNNN or just the suffix
@@ -371,7 +375,8 @@ onMounted(async () => {
     console.error("Failed to ensure paper:", e);
   }
 
-  // For bioRxiv papers: load PDF from IndexedDB if available
+  // For bioRxiv papers: try loading from IndexedDB first (manual uploads)
+  // If not found, we'll use the proxy automatically (like arXiv)
   if (paperSource.value === "biorxiv") {
     localPdfLoading.value = true;
     try {
@@ -384,6 +389,10 @@ onMounted(async () => {
     } finally {
       localPdfLoading.value = false;
     }
+
+    // Note: We'll let PdfAnnotator try to load via proxy first
+    // If it fails, we can show the upload fallback
+    // pdfLoadError will be set by PdfAnnotator's error event if needed
 
     // Fetch discussion count
     try {
@@ -736,6 +745,11 @@ async function removePdf() {
   margin: 0 0 20px;
   font-size: 1.35rem;
   color: #333;
+}
+.error-message {
+  color: #d32f2f;
+  margin: 0 0 16px;
+  font-size: 0.95rem;
 }
 .upload-steps {
   text-align: left;

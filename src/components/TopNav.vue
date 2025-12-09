@@ -8,15 +8,9 @@
       />
     </div>
     <div v-if="!isSearchPage" class="search">
-      <select v-model="source" class="source-select">
-        <option value="arxiv">arXiv</option>
-        <option value="biorxiv">bioRxiv</option>
-      </select>
       <input
         v-model.trim="q"
-        :placeholder="
-          source === 'arxiv' ? 'Search arXiv papers' : 'Search bioRxiv papers'
-        "
+        placeholder="Search all papers (arXiv & bioRxiv)"
         @keyup.enter="emitSearch"
       />
       <button class="primary" @click="emitSearch">Search</button>
@@ -53,7 +47,6 @@ type PaperSource = "arxiv" | "biorxiv";
 const props = defineProps<{ backendOk: boolean }>();
 const emit = defineEmits<{ (e: "search", q: string): void }>();
 const q = ref("");
-const source = ref<PaperSource>("arxiv");
 const displayName = ref<string>("");
 
 let store: ReturnType<typeof useSessionStore>;
@@ -89,19 +82,19 @@ async function emitSearch() {
   // bioRxiv DOI pattern: 10.1101/... or just the suffix YYYY.MM.DD.NNNNNN
   const biorxivIdLike = /^(10\.1101\/)?(\d{4}\.\d{2}\.\d{2}\.\d+)$/;
 
-  if (source.value === "arxiv" && arxivIdLike.test(query)) {
+  // Try to detect paper ID format and go directly to paper page
+  if (arxivIdLike.test(query)) {
     window.location.assign(`/paper/${encodeURIComponent(query)}`);
     return;
   }
-  if (source.value === "biorxiv" && biorxivIdLike.test(query)) {
+  if (biorxivIdLike.test(query)) {
     // Normalize to full DOI format for bioRxiv
     const doi = query.startsWith("10.1101/") ? query : `10.1101/${query}`;
     window.location.assign(`/paper/${encodeURIComponent(doi)}`);
     return;
   }
-  window.location.assign(
-    `/search?q=${encodeURIComponent(query)}&source=${source.value}`
-  );
+  // Otherwise, search all sources
+  window.location.assign(`/search?q=${encodeURIComponent(query)}`);
 }
 function goHome() {
   window.location.assign("/");
@@ -154,7 +147,7 @@ async function logout() {
 }
 .search {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 10px;
   max-width: 700px;
   flex: 1;
@@ -162,24 +155,6 @@ async function logout() {
 .right {
   margin-left: auto;
   flex-shrink: 0;
-}
-.source-select {
-  padding: 10px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.source-select:hover {
-  border-color: var(--brand);
-}
-.source-select:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
 }
 input {
   padding: 10px 14px;

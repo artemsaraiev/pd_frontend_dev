@@ -3,27 +3,48 @@
     <header class="card">
       <h2>Search results</h2>
       <form class="bar" @submit.prevent="run">
-        <select v-model="source" class="source-select">
-          <option value="arxiv">arXiv</option>
-          <option value="biorxiv">bioRxiv</option>
-        </select>
         <input
           v-model="q"
-          :placeholder="source === 'arxiv' ? 'Search arXiv (e.g. Attention Is All You Need)' : 'Search bioRxiv (e.g. CRISPR gene editing)'"
+          placeholder="Search all papers (e.g. machine learning, CRISPR)"
         />
         <button class="primary" :disabled="loading">Search</button>
       </form>
       <p v-if="hint" class="hint">{{ hint }}</p>
+      
+      <!-- Source filter buttons - shown after search -->
+      <div v-if="allResults.length > 0" class="filters">
+        <span class="filter-label">Filter by source:</span>
+        <button
+          :class="['filter-btn', { active: sourceFilter === 'all' }]"
+          @click="sourceFilter = 'all'"
+        >
+          All ({{ allResults.length }})
+        </button>
+        <button
+          :class="['filter-btn', { active: sourceFilter === 'arxiv' }]"
+          @click="sourceFilter = 'arxiv'"
+        >
+          arXiv ({{ arxivResults.length }})
+        </button>
+        <button
+          :class="['filter-btn', { active: sourceFilter === 'biorxiv' }]"
+          @click="sourceFilter = 'biorxiv'"
+        >
+          bioRxiv ({{ biorxivResults.length }})
+        </button>
+      </div>
     </header>
 
     <div class="cards">
-      <div v-for="r in results" :key="r.id" class="card result">
+      <div v-for="r in filteredResults" :key="`${r.source}-${r.id}`" class="card result">
+        <div class="source-badge" :class="r.source">
+          {{ r.source === 'arxiv' ? 'arXiv' : 'bioRxiv' }}
+        </div>
         <h3 class="title">
           <a :href="getPaperUrl(r)">{{ r.title || r.id }}</a>
         </h3>
         <div class="meta">
-          <!-- Use resultSource (source when results were fetched) not source (current dropdown) -->
-          <template v-if="resultSource === 'arxiv'">
+          <template v-if="r.source === 'arxiv'">
             <a :href="`https://arxiv.org/abs/${encodeURIComponent(r.id)}`" target="_blank" rel="noreferrer">arXiv</a>
             <span> · </span>
             <a :href="`https://arxiv.org/pdf/${encodeURIComponent(r.id)}.pdf`" target="_blank" rel="noreferrer">PDF</a>
@@ -38,42 +59,57 @@
           <a class="primary" :href="getPaperUrl(r)">View discussion</a>
         </div>
       </div>
-      <p v-if="!loading && !results.length" class="hint">No results. Try a different query.</p>
+      <p v-if="!loading && filteredResults.length === 0 && allResults.length > 0" class="hint">
+        No {{ sourceFilter === 'all' ? '' : sourceFilter }} results match the current filter.
+      </p>
+      <p v-if="!loading && allResults.length === 0" class="hint">No results. Try a different query.</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { paper } from '@/api/endpoints';
 
 type PaperSource = 'arxiv' | 'biorxiv';
 
+interface ResultWithSource {
+  id: string;
+  title?: string;
+  doi?: string;
+  source: PaperSource;
+}
+
 const route = useRoute();
 const router = useRouter();
 const q = ref<string>((route.query.q as string) || '');
-const source = ref<PaperSource>((route.query.source as PaperSource) || 'arxiv');
-// Track what source was used for current results (so changing dropdown doesn't affect displayed results)
-const resultSource = ref<PaperSource>('arxiv');
-const results = ref<Array<{ id: string; title?: string; doi?: string }>>([]);
+const sourceFilter = ref<'all' | 'arxiv' | 'biorxiv'>((route.query.filter as 'all' | 'arxiv' | 'biorxiv') || 'all');
+const allResults = ref<ResultWithSource[]>([]);
 const loading = ref(false);
 const hint = ref('');
 
-function getPaperUrl(r: { id: string; doi?: string }) {
-  // Use resultSource, not source, for generating URLs
-  const paperId = resultSource.value === 'biorxiv' && r.doi ? r.doi : r.id;
+// Computed: filter results based on source filter
+const filteredResults = computed(() => {
+  if (sourceFilter.value === 'all') return allResults.value;
+  return allResults.value.filter(r => r.source === sourceFilter.value);
+});
+
+// Computed: count results by source
+const arxivResults = computed(() => allResults.value.filter(r => r.source === 'arxiv'));
+const biorxivResults = computed(() => allResults.value.filter(r => r.source === 'biorxiv'));
+
+function getPaperUrl(r: ResultWithSource) {
+  const paperId = r.source === 'biorxiv' && r.doi ? r.doi : r.id;
   return `/paper/${encodeURIComponent(paperId)}`;
 }
 
-function getBiorxivAbsUrl(r: { id: string; doi?: string }) {
-  // bioRxiv abstract URL: https://www.biorxiv.org/content/{doi}
+function getBiorxivAbsUrl(r: ResultWithSource) {
   const doi = r.doi || `10.1101/${r.id}`;
   return `https://www.biorxiv.org/content/${doi}`;
 }
 
-function getBiorxivPdfUrl(r: { id: string; doi?: string }) {
-  // bioRxiv PDF URL: https://www.biorxiv.org/content/{doi}.full.pdf
+function getBiorxivPdfUrl(r: ResultWithSource) {
   const doi = r.doi || `10.1101/${r.id}`;
   return `https://www.biorxiv.org/content/${doi}.full.pdf`;
 }
@@ -83,36 +119,46 @@ async function run() {
   if (!query) return;
   loading.value = true;
   hint.value = '';
-  results.value = [];
-  
-  // Capture the source at time of search
-  const searchSource = source.value;
+  allResults.value = [];
   
   try {
     // sync the URL so it's shareable
-    const newQuery = { q: query, source: searchSource };
-    if (route.query.q !== query || route.query.source !== searchSource) {
+    const newQuery: Record<string, string> = { q: query };
+    if (sourceFilter.value !== 'all') {
+      newQuery.filter = sourceFilter.value;
+    }
+    if (route.query.q !== query || route.query.filter !== newQuery.filter) {
       router.replace({ path: '/search', query: newQuery });
     }
 
-    // Call the appropriate search API based on source
-    let papers: Array<{ id: string; title?: string; doi?: string }>;
-    if (searchSource === 'biorxiv') {
-      const res = await paper.searchBiorxiv({ q: query });
-      papers = res.papers;
-    } else {
-      const res = await paper.searchArxiv({ q: query });
-      papers = res.papers;
+    // Search BOTH sources in parallel
+    const [arxivRes, biorxivRes] = await Promise.allSettled([
+      paper.searchArxiv({ q: query }),
+      paper.searchBiorxiv({ q: query }),
+    ]);
+
+    const results: ResultWithSource[] = [];
+
+    // Add arXiv results
+    if (arxivRes.status === 'fulfilled') {
+      results.push(...arxivRes.value.papers.map(p => ({ ...p, source: 'arxiv' as PaperSource })));
     }
 
-    results.value = papers;
-    resultSource.value = searchSource; // Store the source used for these results
+    // Add bioRxiv results
+    if (biorxivRes.status === 'fulfilled') {
+      results.push(...biorxivRes.value.papers.map(p => ({ ...p, source: 'biorxiv' as PaperSource })));
+    }
+
+    allResults.value = results;
     
-    const sourceName = searchSource === 'arxiv' ? 'arXiv' : 'bioRxiv';
-    if (papers.length > 0) {
-      hint.value = `Showing ${papers.length} ${sourceName} result${papers.length === 1 ? '' : 's'} for "${query}"`;
+    const arxivCount = arxivResults.value.length;
+    const biorxivCount = biorxivResults.value.length;
+    const total = results.length;
+    
+    if (total > 0) {
+      hint.value = `Found ${total} result${total === 1 ? '' : 's'}: ${arxivCount} from arXiv, ${biorxivCount} from bioRxiv`;
     } else {
-      hint.value = `No ${sourceName} results for "${query}"`;
+      hint.value = `No results found for "${query}"`;
     }
   } catch (e: any) {
     hint.value = String(e?.message ?? 'Search failed');
@@ -122,8 +168,6 @@ async function run() {
 }
 
 onMounted(() => {
-  // Initialize resultSource from URL if available
-  resultSource.value = (route.query.source as PaperSource) || 'arxiv';
   if (q.value) run();
 });
 
@@ -136,11 +180,10 @@ watch(() => route.query.q, (val) => {
   }
 });
 
-watch(() => route.query.source, (val) => {
-  const s = (val as PaperSource) || 'arxiv';
-  if (s !== source.value) {
-    source.value = s;
-    if (q.value) run();
+watch(() => route.query.filter, (val) => {
+  const filter = (val as 'all' | 'arxiv' | 'biorxiv') || 'all';
+  if (filter !== sourceFilter.value) {
+    sourceFilter.value = filter;
   }
 });
 </script>
@@ -153,30 +196,48 @@ watch(() => route.query.source, (val) => {
 
 .bar {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 8px;
   margin-top: 8px;
 }
 
-.source-select {
-  padding: 10px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.filter-label {
   font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.filter-btn {
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: var(--text);
 }
 
-.source-select:hover {
-  border-color: #d1d5db;
-}
-
-.source-select:focus {
-  outline: none;
+.filter-btn:hover {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
+  background: #fef2f2;
+}
+
+.filter-btn.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
 }
 
 input {
@@ -236,11 +297,38 @@ input:focus {
   opacity: 1;
 }
 
+.result {
+  position: relative;
+}
+
+.source-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.source-badge.arxiv {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.source-badge.biorxiv {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 .result .title {
   font-family: var(--font-serif);
   margin: 0 0 8px 0;
   font-size: 18px;
   line-height: 1.4;
+  padding-right: 80px; /* Make room for badge */
 }
 
 .title a {
