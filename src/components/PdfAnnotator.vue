@@ -1091,9 +1091,11 @@ watch(
   display: block;
   position: relative;
   height: 100%;
+  width: 100%;
 }
 .viewer {
   display: block;
+  width: 100%;
 }
 .loading {
   color: #666;
@@ -1109,6 +1111,7 @@ watch(
 }
 .pages {
   display: block;
+  width: 100%;
 }
 .page-wrapper {
   position: relative;
@@ -1119,6 +1122,13 @@ watch(
 :global(.page) {
   max-width: 100%;
   height: auto !important;
+}
+:global(.page-wrapper canvas) {
+  max-width: 100%;
+  height: auto !important;
+}
+:global(.page-wrapper .textLayer) {
+  max-width: 100%;
 }
 :global(.overlay) {
   position: absolute;

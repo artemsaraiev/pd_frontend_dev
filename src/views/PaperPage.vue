@@ -82,6 +82,7 @@
         <div
           v-else-if="paperSource === 'biorxiv' && localPdfUrl"
           class="pdf-scroll"
+          @wheel="onPdfWheel"
         >
           <div class="toolbar">
             <div class="colors">
@@ -104,11 +105,18 @@
               >
                 Remove PDF
               </button>
-              <div class="zoom">
-                <button class="ghost" @click="zoomOut">-</button>
-                <span class="z">{{ Math.round(zoom * 100) }}%</span>
-                <button class="ghost" @click="zoomIn">+</button>
-              </div>
+            <div class="zoom">
+              <button class="ghost" @click="zoomOut">-</button>
+              <input
+                class="z-input"
+                type="number"
+                :value="Math.round(zoom * 100)"
+                min="30"
+                max="300"
+                @change="onZoomInput"
+              />
+              <button class="ghost" @click="zoomIn">+</button>
+            </div>
             </div>
             <div class="toolbar-hint">
               <span>Option/Alt + drag: create a box highlight.</span>
@@ -128,7 +136,7 @@
           />
         </div>
         <!-- bioRxiv and arXiv PDFs via proxy (automatic) -->
-        <div v-else class="pdf-scroll">
+        <div v-else class="pdf-scroll" @wheel="onPdfWheel">
           <div class="toolbar">
             <div class="colors">
               <button
@@ -144,7 +152,14 @@
             </div>
             <div class="zoom">
               <button class="ghost" @click="zoomOut">-</button>
-              <span class="z">{{ Math.round(zoom * 100) }}%</span>
+              <input
+                class="z-input"
+                type="number"
+                :value="Math.round(zoom * 100)"
+                min="30"
+                max="300"
+                @change="onZoomInput"
+              />
               <button class="ghost" @click="zoomIn">+</button>
             </div>
             <div class="toolbar-hint">
@@ -496,6 +511,27 @@ function zoomOut() {
   zoom.value = Math.max(zoom.value - 0.1, 0.3);
 }
 
+function onZoomInput(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const val = Number(input.value);
+  if (Number.isNaN(val)) return;
+  const clamped = Math.min(300, Math.max(30, val));
+  zoom.value = clamped / 100;
+}
+
+function onPdfWheel(e: WheelEvent) {
+  // Only treat Cmd/Ctrl + wheel as zoom; plain wheel still scrolls.
+  if (!(e.metaKey || e.ctrlKey)) return;
+  e.preventDefault();
+  const delta = e.deltaY;
+  const step = 0.05;
+  if (delta > 0) {
+    zoom.value = Math.max(0.3, zoom.value - step);
+  } else if (delta < 0) {
+    zoom.value = Math.min(3, zoom.value + step);
+  }
+}
+
 // Handle PDF file upload (bioRxiv)
 async function onPdfUpload(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -557,6 +593,14 @@ async function removePdf() {
   font-family: var(--font-serif);
   margin: 0;
   font-size: 24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 .title-row {
   display: flex;
@@ -590,6 +634,7 @@ async function removePdf() {
   max-width: 100%;
 }
 .pdf-scroll {
+  width: 100%;
   height: calc(100vh - 220px);
   overflow: auto;
   position: relative;
@@ -597,6 +642,13 @@ async function removePdf() {
   border: 1px solid var(--border);
   background: #fff;
   max-width: 100%;
+  box-sizing: border-box;
+}
+.pdf-scroll :deep(.pdf-annotator),
+.pdf-scroll :deep(.viewer),
+.pdf-scroll :deep(.pages) {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .card {
   border: 1px solid var(--border);

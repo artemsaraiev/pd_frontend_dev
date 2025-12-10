@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <TopNav :backendOk="backendOk" @search="onSearch" />
-    <div class="layout" :class="{ 'left-collapsed': leftCollapsed, 'no-left-sidebar': !showLeftSidebar, 'no-right-sidebar': !showRightSidebar }">
+    <div class="layout" :class="{ 'left-collapsed': leftCollapsed, 'no-left-sidebar': !showLeftSidebar, 'no-right-sidebar': !showRightSidebar }" :style="layoutStyles">
       <aside v-if="showLeftSidebar" class="sidebar-left" :class="{ collapsed: leftCollapsed }">
         <LeftNav
           :collapsed="leftCollapsed"
@@ -11,6 +11,7 @@
       <main class="content">
         <router-view />
       </main>
+      <div v-if="showRightSidebar" class="divider" @mousedown="startDrag"></div>
       <aside v-if="showRightSidebar" class="sidebar-right">
         <RightSidebar />
       </aside>
@@ -32,6 +33,10 @@ const backendOk = ref(true);
 const leftCollapsed = ref(false);
 const session = useSessionStore();
 
+// Resizable divider state
+const rightSidebarWidth = ref(500); // Default width in pixels
+const isDragging = ref(false);
+
 // Check if user is logged in
 const isLoggedIn = computed(() => !!session.token);
 
@@ -41,6 +46,14 @@ const showLeftSidebar = computed(() => false);
 // Use the original right sidebar for the discussion panel on paper pages
 const showRightSidebar = computed(() => {
   return route.name === 'paper' || route.name === 'annotate_test';
+});
+
+// Dynamic layout styles for resizable sidebar
+const layoutStyles = computed(() => {
+  if (!showRightSidebar.value) return {};
+  return {
+    '--right-sidebar-width': `${rightSidebarWidth.value}px`
+  };
 });
 
 onMounted(async () => {
@@ -57,6 +70,34 @@ function onSearch(q: string) {
   // heuristics: treat as id/doi
   window.location.assign(`/paper/${encodeURIComponent(q)}`);
 }
+
+// Resizable divider handlers
+function startDrag(e: MouseEvent) {
+  e.preventDefault();
+  isDragging.value = true;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+}
+
+function onDrag(e: MouseEvent) {
+  if (!isDragging.value) return;
+  
+  const windowWidth = window.innerWidth;
+  const newWidth = windowWidth - e.clientX - 20; // 20px for padding
+  
+  // Constrain width between 300px and 800px
+  rightSidebarWidth.value = Math.max(300, Math.min(800, newWidth));
+}
+
+function stopDrag() {
+  isDragging.value = false;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+}
 </script>
 
 <style scoped>
@@ -68,7 +109,7 @@ function onSearch(q: string) {
 }
 .layout {
   display: grid;
-  grid-template-columns: 170px 1fr 500px;
+  grid-template-columns: 170px minmax(0, 1fr) 500px;
   gap: 10px;
   padding: 20px;
   flex: 1;
@@ -76,19 +117,47 @@ function onSearch(q: string) {
 }
 
 .layout.left-collapsed {
-  grid-template-columns: 52px 1fr 500px;
+  grid-template-columns: 52px minmax(0, 1fr) 500px;
 }
 .layout.no-left-sidebar {
-  grid-template-columns: 1fr 500px;
+  grid-template-columns: minmax(0, 1fr) 0px var(--right-sidebar-width, 500px);
+  gap: 0;
 }
 .layout.no-right-sidebar {
-  grid-template-columns: 170px 1fr;
+  grid-template-columns: 170px minmax(0, 1fr);
 }
 .layout.no-left-sidebar.no-right-sidebar {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 .layout.left-collapsed.no-right-sidebar {
-  grid-template-columns: 52px 1fr;
+  grid-template-columns: 52px minmax(0, 1fr);
+}
+.divider {
+  width: 8px;
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+.divider:hover {
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+}
+.divider::before {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.divider:hover::before {
+  opacity: 1;
 }
 .sidebar-left {
   background: #ffffff;
@@ -123,7 +192,11 @@ function onSearch(q: string) {
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
-  overflow: auto;
+  /* Allow the grid column to shrink even if PDF pages are very wide */
+  min-width: 0;
+  /* Keep scrolling inside the paper area, not the whole column */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 @media (max-width: 1100px) {
   .layout {
