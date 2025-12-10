@@ -33,6 +33,12 @@
       </strong>
       <span v-if="node.isAnonymous && !node.deleted" class="anonymous-badge">anonymous</span>
       <span v-if="node.deleted" class="deleted-author">[deleted]</span>
+      <span
+        v-if="node.createdAt"
+        class="timestamp"
+      >
+        • {{ formatTimestamp(node.createdAt) }}
+      </span>
     </div>
     <div class="body" :class="{ deleted: node.deleted }" @click.stop>
       <div v-if="node.deleted" class="deleted-message">[deleted]</div>
@@ -71,7 +77,7 @@
         <div class="preview-body" v-html="renderBodyPreview" @click="handleBodyClick"></div>
       </div>
       <div class="toolbar">
-         <button class="icon-btn" title="Add Image" @click="openReplyFilePicker">📷</button>
+         <button class="icon-btn" title="Add attachment" @click="openReplyFilePicker">📎</button>
          <input
            ref="fileInput"
            type="file"
@@ -162,6 +168,17 @@ const sending = ref(false);
 const sessionStore = useSessionStore();
 const groupsStore = useGroupsStore();
 const userVote = ref<1 | -1 | null>(null);
+
+function formatTimestamp(ts: number): string {
+  const d = new Date(ts);
+  const day = String(d.getDate()).padStart(2, '0');
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const month = monthNames[d.getMonth()] ?? '';
+  const year = String(d.getFullYear()).slice(-2);
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day} ${month} ${year}, ${hours}:${minutes}`;
+}
 
 // Inherit parent thread's privacy - disable public replies in private threads
 const isPrivateThread = computed(() => !!props.threadGroupId);
@@ -601,11 +618,12 @@ async function voteReply(vote: 1 | -1) {
 .content-section {
   flex: 1;
 }
-.meta { font-size: 12px; color: #444; }
+.meta { font-size: 12px; color: #444; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .body { margin: 4px 0 6px; }
 .body.deleted { opacity: 0.6; font-style: italic; }
 .deleted-message { color: #888; font-size: 12px; }
 .deleted-author { color: #888; font-style: italic; }
+.timestamp { color: #888; font-size: 11px; }
 .actions { display: flex; gap: 6px; }
 .small { padding: 4px 8px; font-size: 12px; }
 .primary { background: var(--brand); color: #fff; border: 1px solid var(--brand); border-radius: 6px; }

@@ -50,14 +50,85 @@
             <h4>{{ store.groups[groupId]?.name || 'Loading...' }}</h4>
             <p class="description">{{ store.groups[groupId]?.description || '' }}</p>
             <p class="meta">
-              Admin: {{ store.groups[groupId]?.admin || '' }}
+              Admin:
+              <span class="admin-name">
+                {{ getAdminName(groupId) }}
+              </span>
               <span v-if="isAdmin(groupId)" class="badge">Admin</span>
             </p>
+            <div
+              v-if="isAdmin(groupId) && showMembers[groupId]"
+              class="members-panel"
+            >
+              <div class="members-header">
+                <span class="members-title">Members</span>
+                <span class="members-count">
+                  ({{ (store as any).groupMembers?.[groupId]?.length || 0 }})
+                </span>
+              </div>
+              <ul class="members-list">
+                <li
+                  v-for="m in ((store as any).groupMembers?.[groupId] || [])"
+                  :key="m._id"
+                  class="member-row"
+                >
+                  <div class="member-main">
+                    <span class="member-name">
+                      {{ getUsername(m.user) }}
+                    </span>
+                    <span
+                      v-if="m.isAdmin"
+                      class="member-badge"
+                    >
+                      Admin
+                    </span>
+                    <span
+                      v-else
+                      class="member-role"
+                    >
+                      Member
+                    </span>
+                  </div>
+                  <button
+                    v-if="!m.isAdmin"
+                    class="button button-ghost member-remove"
+                    @click="handleRemoveMember(m._id, getUsername(m.user))"
+                  >
+                    Remove
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
           <div class="card-actions">
-            <button @click="handleInviteUser(groupId)" class="button button-primary">Invite User</button>
-            <button v-if="!isAdmin(groupId)" @click="handleLeaveGroup(groupId)" class="button button-ghost">Leave Group</button>
-            <button v-if="isAdmin(groupId)" @click="handleRemoveGroup(groupId)" class="button button-danger">Delete Group</button>
+            <button
+              v-if="isAdmin(groupId)"
+              @click="handleInviteUser(groupId)"
+              class="button button-primary"
+            >
+              Invite User
+            </button>
+            <button
+              v-if="isAdmin(groupId)"
+              @click="toggleMembers(groupId)"
+              class="button button-ghost"
+            >
+              {{ showMembers[groupId] ? 'Hide members' : 'Manage members' }}
+            </button>
+            <button
+              v-if="!isAdmin(groupId)"
+              @click="handleLeaveGroup(groupId)"
+              class="button button-ghost"
+            >
+              Leave Group
+            </button>
+            <button
+              v-if="isAdmin(groupId)"
+              @click="handleRemoveGroup(groupId)"
+              class="button button-danger"
+            >
+              Delete Group
+            </button>
           </div>
         </div>
       </div>
@@ -106,9 +177,30 @@ const inviteUsername = ref('');
 const inviteMessage = ref('');
 const inviteError = ref('');
 
+const showMembers = ref<Record<string, boolean>>({});
+
 function isAdmin(groupId: string): boolean {
   const membership = store.memberships.find(m => m.groupId === groupId);
   return membership?.isAdmin ?? false;
+}
+
+function getUsername(userId: string): string {
+  const map = (store as any).usernames as Record<string, string> | undefined;
+  if (!map) return userId;
+  return map[userId] || userId;
+}
+
+function getAdminName(groupId: string): string {
+  const group = store.groups[groupId];
+  if (!group?.admin) return '';
+  return getUsername(group.admin);
+}
+
+async function toggleMembers(groupId: string) {
+  showMembers.value[groupId] = !showMembers.value[groupId];
+  if (showMembers.value[groupId]) {
+    await store.loadGroupMembers(groupId);
+  }
 }
 
 async function handleCreateGroup() {
@@ -177,6 +269,15 @@ async function handleLeaveGroup(groupId: string) {
     await store.leaveGroup(membership._id);
   } catch (error: any) {
     alert(error.message || 'Failed to leave group');
+  }
+}
+
+async function handleRemoveMember(membershipId: string, username: string) {
+  if (!confirm(`Remove ${username} from this group?`)) return;
+  try {
+    await store.leaveGroup(membershipId);
+  } catch (error: any) {
+    alert(error.message || 'Failed to remove member');
   }
 }
 
@@ -283,9 +384,9 @@ onMounted(async () => {
 }
 
 .button-danger {
-  background: #dc3545;
+  background: #111827;
   color: #fff;
-  border-color: #dc3545;
+  border-color: #111827;
 }
 
 .button:hover {
@@ -348,6 +449,75 @@ onMounted(async () => {
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
+}
+
+.members-panel {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, #eee);
+}
+
+.members-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.members-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.members-count {
+  font-size: 12px;
+  color: var(--text-secondary, #777);
+}
+
+.members-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.member-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.member-name {
+  font-weight: 500;
+}
+
+.member-badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.member-role {
+  font-size: 11px;
+  color: var(--text-secondary, #777);
+}
+
+.member-remove {
+  padding: 4px 10px;
+  font-size: 12px;
 }
 
 .card-actions {

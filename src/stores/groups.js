@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { groups as groupsApi } from '@/api/endpoints';
+import { groups as groupsApi, session as sessionApi } from '@/api/endpoints';
 import { useSessionStore } from './session';
 export const useGroupsStore = defineStore('groups', {
     state: () => ({
@@ -7,8 +7,33 @@ export const useGroupsStore = defineStore('groups', {
         groups: {},
         memberships: [],
         invitations: [],
+        groupMembers: {},
+        usernames: {},
     }),
     actions: {
+        async ensureUsername(userId) {
+            if (this.usernames[userId]) {
+                return this.usernames[userId];
+            }
+            const sessionStore = useSessionStore();
+            if (!sessionStore.token) {
+                return userId;
+            }
+            try {
+                const { username } = await sessionApi.getUsernameById({
+                    session: sessionStore.token,
+                    user: userId,
+                });
+                if (username) {
+                    this.usernames[userId] = username;
+                    return username;
+                }
+            }
+            catch (error) {
+                console.error('Failed to load username for', userId, error);
+            }
+            return userId;
+        },
         async loadMyGroups() {
             const sessionStore = useSessionStore();
             if (!sessionStore.token)
@@ -22,6 +47,9 @@ export const useGroupsStore = defineStore('groups', {
                         const groupData = await groupsApi.getGroup({ group: groupId });
                         if (groupData.group) {
                             this.groups[groupId] = groupData.group;
+                            if (groupData.group.admin) {
+                                await this.ensureUsername(groupData.group.admin);
+                            }
                         }
                     }
                 }));
@@ -55,6 +83,9 @@ export const useGroupsStore = defineStore('groups', {
                         const groupData = await groupsApi.getGroup({ group: inv.groupId });
                         if (groupData.group) {
                             this.groups[inv.groupId] = groupData.group;
+                            if (groupData.group.admin) {
+                                await this.ensureUsername(groupData.group.admin);
+                            }
                         }
                     }
                 }));
@@ -112,6 +143,16 @@ export const useGroupsStore = defineStore('groups', {
                 throw new Error('Not authenticated');
             await groupsApi.revokeMembership({ session: sessionStore.token, membership: membershipId });
             await this.refresh();
+        },
+        async loadGroupMembers(groupId) {
+            try {
+                const { memberships } = await groupsApi.getMembershipsByGroup({ group: groupId });
+                this.groupMembers[groupId] = memberships;
+                await Promise.all(memberships.map((m) => this.ensureUsername(m.user)));
+            }
+            catch (error) {
+                console.error('Failed to load group members:', error);
+            }
         },
     },
 });

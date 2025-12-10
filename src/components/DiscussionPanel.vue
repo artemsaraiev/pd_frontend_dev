@@ -196,6 +196,12 @@
               #{{ getThreadGroupName(t) }}
             </span>
             <span v-if="t.isAnonymous" class="anonymous-badge">anonymous</span>
+            <span
+              v-if="t.createdAt"
+              class="timestamp"
+            >
+              • {{ formatTimestamp(t.createdAt) }}
+            </span>
             <span class="count">{{ t.replies?.length ?? 0 }} replies</span>
             <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
             <a
@@ -577,6 +583,17 @@ function getThreadGroupName(t: Thread): string | null {
   if (!t.groupId) return null;
   const g = groupsStore.groups[t.groupId];
   return g?.name ?? null;
+}
+
+function formatTimestamp(ts: number): string {
+  const d = new Date(ts);
+  const day = String(d.getDate()).padStart(2, '0');
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const month = monthNames[d.getMonth()] ?? '';
+  const year = String(d.getFullYear()).slice(-2);
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day} ${month} ${year}, ${hours}:${minutes}`;
 }
 
 function renderBody(text: string) {
@@ -1736,7 +1753,16 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .content-section {
   flex: 1;
 }
-.meta { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.timestamp {
+  color: #888;
+  font-size: 11px;
+}
 .reply-link { margin-left: auto; font-size: 13px; color: var(--brand); font-weight: 500; }
 .reply-link:hover { color: #9a1717; }
 .delete-link { font-size: 13px; color: var(--error); font-weight: 500; }
