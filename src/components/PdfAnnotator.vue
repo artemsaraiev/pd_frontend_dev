@@ -138,7 +138,9 @@ let boxDrawing: {
   preview: HTMLElement;
 } | null = null;
 
-;
+// Periodic refresh of anchors so other users' highlights appear without reload
+const REFRESH_INTERVAL_MS = 15000;
+let refreshTimer: number | null = null;
 
 // Hit-test utility: given a point in client coordinates, find the
 // top-most highlight (if any) under the cursor.
@@ -346,12 +348,24 @@ async function loadExistingAnchors() {
         parentContext: a.parentContext,
       });
     }
-    if (loaded.length) {
-      highlights.value = [...highlights.value, ...loaded];
-      const pages = new Set(loaded.map((h) => h.pageIndex));
-      for (const pi of pages) {
-        drawHighlightsForPage(pi);
+    // Merge server-loaded anchors with any local pending highlights.
+    const pendingLocal = highlights.value.filter((h) => h.pending);
+    const byId = new Map<string, Highlight>();
+
+    for (const h of loaded) {
+      byId.set(h.id, h);
+    }
+    // Keep local pending highlights that don't yet exist on the server
+    for (const h of pendingLocal) {
+      if (!byId.has(h.id)) {
+        byId.set(h.id, h);
       }
+    }
+
+    highlights.value = Array.from(byId.values());
+    const pages = new Set(highlights.value.map((h) => h.pageIndex));
+    for (const pi of pages) {
+      drawHighlightsForPage(pi);
     }
   } catch (e) {
     console.error("PdfAnnotator: failed to load existing anchors", e);
@@ -1046,6 +1060,13 @@ onMounted(() => {
   } catch {
     // ignore
   }
+
+  // Periodically refresh anchors so highlights created on other clients appear
+  if (props.paperId) {
+    refreshTimer = window.setInterval(() => {
+      loadExistingAnchors();
+    }, REFRESH_INTERVAL_MS);
+  }
 });
 
 onBeforeUnmount(() => {
@@ -1061,6 +1082,10 @@ onBeforeUnmount(() => {
   window.removeEventListener("replace-temp-anchor", onReplaceTempAnchor);
   document.removeEventListener("mousedown", onGlobalMouseDown, true);
   document.removeEventListener("mouseup", onGlobalMouseUp, true);
+  if (refreshTimer !== null) {
+    window.clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
 });
 
 watch(

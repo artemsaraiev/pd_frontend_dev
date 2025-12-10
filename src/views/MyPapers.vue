@@ -43,6 +43,43 @@ function goLogin() {
   window.location.assign("/login");
 }
 
+// Helpers to detect arXiv / bioRxiv IDs (mirroring HomeFeed)
+function isArxivId(id: string): boolean {
+  return /^\d{4}\.\d{4,5}(v\d+)?$/.test(id);
+}
+
+function isBiorxivId(id: string): boolean {
+  if (id.startsWith("10.1101/")) return true;
+  return /^\d{4}\.\d{2}\.\d{2}\.\d+$/.test(id);
+}
+
+async function fetchArxivTitle(id: string): Promise<string | null> {
+  try {
+    const { papers: results } = await paper.searchArxiv({ q: id });
+    const match = results.find(
+      (r) => r.id === id || r.id.startsWith(id)
+    );
+    return match?.title || null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchBiorxivTitle(idOrDoi: string): Promise<string | null> {
+  try {
+    const query = idOrDoi.startsWith("10.1101/")
+      ? idOrDoi.slice("10.1101/".length)
+      : idOrDoi;
+    const { papers: results } = await paper.searchBiorxiv({ q: query });
+    const match = results.find(
+      (r) => r.id === query || r.doi === idOrDoi || r.doi === `10.1101/${query}`
+    );
+    return match?.title || null;
+  } catch {
+    return null;
+  }
+}
+
 function load() {
   if (!store.userId) {
     papers.value = [];
@@ -53,12 +90,27 @@ function load() {
   papers.value = [];
   Promise.all(
     ids.map(async (id) => {
-      // id from localStorage is the external paperId
+      // id from localStorage is the external paperId (arXiv ID or bioRxiv DOI/suffix)
       const result = await paper.get({ id });
+      let title = result.title;
+
+      // If title is missing, try to fetch it from the appropriate source
+      if (!title) {
+        if (isArxivId(result.paperId)) {
+          title = await fetchArxivTitle(result.paperId);
+        } else if (isBiorxivId(result.paperId)) {
+          title = await fetchBiorxivTitle(result.paperId);
+        }
+        if (title) {
+          // Persist for future loads, but don't block UI
+          paper.updateMeta({ id: result.paperId, title }).catch(() => {});
+        }
+      }
+
       papers.value.push({
         id: result.id,
         paperId: result.paperId,
-        title: result.title,
+        title,
       });
     })
   );

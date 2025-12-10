@@ -382,12 +382,24 @@ onMounted(async () => {
             paper.updateMeta({ id: externalPaperId.value, title: match.title }).catch(() => {});
           }
         } else if (paperSource.value === 'biorxiv') {
-          const { papers } = await paper.searchBiorxiv({ q: externalPaperId.value });
-          const match = papers.find(p => p.id === externalPaperId.value || p.doi === externalPaperId.value);
+          // For bioRxiv, the paperId may be a full DOI (10.1101/...) or just the suffix.
+          // The backend search is more reliable if we query by suffix, so strip the prefix.
+          const query = externalPaperId.value.startsWith("10.1101/")
+            ? externalPaperId.value.slice("10.1101/".length)
+            : externalPaperId.value;
+          const { papers } = await paper.searchBiorxiv({ q: query });
+          const match = papers.find(
+            (p) =>
+              p.id === query ||
+              p.doi === externalPaperId.value ||
+              p.doi === `10.1101/${query}`
+          );
           if (match?.title) {
             header.title = match.title;
-            // Update paper metadata
-            paper.updateMeta({ id: externalPaperId.value, title: match.title }).catch(() => {});
+            // Update paper metadata for future loads (paperId is the external id/DOI)
+            paper
+              .updateMeta({ id: externalPaperId.value, title: match.title })
+              .catch(() => {});
           }
         }
       } catch (e) {

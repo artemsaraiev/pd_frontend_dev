@@ -84,7 +84,14 @@ function isArxivId(id: string): boolean {
   return /^\d{4}\.\d{4,5}(v\d+)?$/.test(id);
 }
 
-// Fetch title from arxiv via backend (no CORS issues)
+// Check if a paper ID looks like a bioRxiv DOI or suffix
+function isBiorxivId(id: string): boolean {
+  if (id.startsWith("10.1101/")) return true;
+  // Suffix pattern: YYYY.MM.DD.NNNNNN
+  return /^\d{4}\.\d{2}\.\d{2}\.\d+$/.test(id);
+}
+
+// Fetch title from arXiv via backend (no CORS issues)
 async function fetchTitleViaBackend(arxivId: string): Promise<string | null> {
   try {
     // Use the backend's arxiv search with the paper ID as query
@@ -99,24 +106,54 @@ async function fetchTitleViaBackend(arxivId: string): Promise<string | null> {
   }
 }
 
+// Fetch title from bioRxiv via backend (using DOI or suffix)
+async function fetchBiorxivTitleViaBackend(
+  idOrDoi: string
+): Promise<string | null> {
+  try {
+    // Try both full DOI and suffix; backend search is flexible, but we help by
+    // stripping the prefix when needed.
+    const query = idOrDoi.startsWith("10.1101/")
+      ? idOrDoi.slice("10.1101/".length)
+      : idOrDoi;
+    const { papers: results } = await paper.searchBiorxiv({ q: query });
+    const match = results.find(
+      (r) => r.id === query || r.doi === idOrDoi || r.doi === `10.1101/${query}`
+    );
+    return match?.title || null;
+  } catch {
+    return null;
+  }
+}
+
 onMounted(async () => {
   loading.value = true;
   try {
     const { papers: list } = await paper.listRecent({ limit: 20 });
     papers.value = list;
 
-    // Fetch missing titles from arxiv via backend (in background)
+    // Fetch missing titles from arXiv / bioRxiv via backend (in background)
     for (const p of papers.value) {
-      if (!p.title && isArxivId(p.paperId)) {
-        fetchTitleViaBackend(p.paperId).then((title) => {
-          if (title) {
-            p.title = title;
-            // Trigger reactivity
-            papers.value = [...papers.value];
-            // Also save to backend for future requests
-            paper.updateMeta({ id: p.paperId, title }).catch(() => {});
-          }
-        });
+      if (!p.title) {
+        if (isArxivId(p.paperId)) {
+          fetchTitleViaBackend(p.paperId).then((title) => {
+            if (title) {
+              p.title = title;
+              // Trigger reactivity
+              papers.value = [...papers.value];
+              // Also save to backend for future requests
+              paper.updateMeta({ id: p.paperId, title }).catch(() => {});
+            }
+          });
+        } else if (isBiorxivId(p.paperId)) {
+          fetchBiorxivTitleViaBackend(p.paperId).then((title) => {
+            if (title) {
+              p.title = title;
+              papers.value = [...papers.value];
+              paper.updateMeta({ id: p.paperId, title }).catch(() => {});
+            }
+          });
+        }
       }
     }
   } finally {
