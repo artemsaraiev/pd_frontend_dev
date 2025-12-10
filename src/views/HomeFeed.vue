@@ -14,26 +14,17 @@
 
     <div class="toolbar">
       <button
-        :class="{ tab: true, active: tab === 'trending' }"
-        @click="tab = 'trending'"
-      >
-        Trending
-      </button>
-      <button
-        :class="{ tab: true, active: tab === 'new' }"
-        @click="tab = 'new'"
-      >
-        New
-      </button>
-      <button
-        :class="{ tab: true, active: tab === 'discussed' }"
-        @click="tab = 'discussed'"
+        :class="{ tab: true, active: tab === 'mostDiscussed' }"
+        @click="tab = 'mostDiscussed'"
       >
         Most discussed
       </button>
-      <select class="topic">
-        <option>All topics</option>
-      </select>
+      <button
+        :class="{ tab: true, active: tab === 'recentlyDiscussed' }"
+        @click="tab = 'recentlyDiscussed'"
+      >
+        Recently discussed
+      </button>
     </div>
 
     <div class="cards">
@@ -44,7 +35,17 @@
           }}</a>
         </h3>
         <div class="meta">
-          {{ p.createdAt ? new Date(p.createdAt).toLocaleString() : "" }}
+          <span v-if="p.lastActivityAt">
+            Last activity:
+            {{ new Date(p.lastActivityAt).toLocaleString() }}
+          </span>
+          <span v-else-if="p.createdAt">
+            Added:
+            {{ new Date(p.createdAt).toLocaleString() }}
+          </span>
+          <span v-if="p.threads !== undefined && p.replies !== undefined" class="discussion-stats">
+            • {{ p.threads }} threads, {{ p.replies }} replies
+          </span>
         </div>
         <div class="card-footer">
           <a class="primary" :href="`/paper/${encodeURIComponent(p.paperId)}`"
@@ -61,8 +62,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { paper } from "@/api/endpoints";
+import { discussion } from "@/api/endpoints";
 import { useSessionStore } from "@/stores/session";
 
 const session = useSessionStore();
@@ -73,9 +75,18 @@ function goLogin() {
   window.location.assign("/login");
 }
 
-const tab = ref<"trending" | "new" | "discussed">("trending");
+const tab = ref<"mostDiscussed" | "recentlyDiscussed">("mostDiscussed");
 const papers = ref<
-  Array<{ id: string; paperId: string; title?: string; createdAt?: number }>
+  Array<{
+    id: string;
+    paperId: string;
+    title?: string;
+    createdAt?: number;
+    lastActivityAt?: number;
+    threads?: number;
+    replies?: number;
+    totalMessages?: number;
+  }>
 >([]);
 const loading = ref(false);
 
@@ -126,11 +137,27 @@ async function fetchBiorxivTitleViaBackend(
   }
 }
 
-onMounted(async () => {
+async function loadPapers() {
   loading.value = true;
   try {
-    const { papers: list } = await paper.listRecent({ limit: 20 });
-    papers.value = list;
+    const sortBy =
+      tab.value === "mostDiscussed" ? "mostDiscussed" : "recentlyDiscussed";
+    const { stats } = await discussion.listPaperStats({
+      sortBy,
+      order: "desc",
+      limit: 20,
+    });
+
+    papers.value = stats.map((s) => ({
+      id: s.pubId,
+      paperId: s.paperId,
+      title: s.title,
+      createdAt: undefined,
+      lastActivityAt: s.lastActivityAt,
+      threads: s.threads,
+      replies: s.replies,
+      totalMessages: s.totalMessages,
+    }));
 
     // Fetch missing titles from arXiv / bioRxiv via backend (in background)
     for (const p of papers.value) {
@@ -159,6 +186,12 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+}
+
+onMounted(loadPapers);
+
+watch(tab, () => {
+  void loadPapers();
 });
 </script>
 
@@ -241,19 +274,6 @@ onMounted(async () => {
   color: #fff;
   box-shadow: 0 2px 8px rgba(179, 27, 27, 0.2);
 }
-.topic {
-  margin-left: auto;
-  padding: 8px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-.topic:hover {
-  border-color: var(--brand);
-}
 
 /* Cards Grid */
 .cards {
@@ -309,6 +329,9 @@ onMounted(async () => {
   font-size: 13px;
   margin-top: 8px;
   font-weight: 500;
+}
+.meta .discussion-stats {
+  margin-left: 4px;
 }
 .card-footer {
   display: flex;

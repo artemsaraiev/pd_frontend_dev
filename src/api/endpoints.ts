@@ -267,6 +267,37 @@ export const discussion = {
     );
     return { pubId: data.result };
   },
+  async listPaperStats(args: {
+    sortBy: "mostDiscussed" | "recentlyDiscussed";
+    order?: "asc" | "desc";
+    limit?: number;
+  }): Promise<{
+    stats: Array<{
+      paperId: string;
+      pubId: string;
+      threads: number;
+      replies: number;
+      totalMessages: number;
+      lastReplyAt?: number;
+      lastActivityAt: number;
+    }>;
+  }> {
+    const data = await post<
+      Array<{
+        result: {
+          paperId: string;
+          pubId: string;
+          threads: number;
+          replies: number;
+          totalMessages: number;
+          lastReplyAt?: number;
+          lastActivityAt: number;
+        };
+      }>
+    >(`/DiscussionPub/_listPaperDiscussionStats`, args);
+    const stats = data.map((r) => r.result);
+    return { stats };
+  },
   async listThreads(
     args: {
       pubId: string;

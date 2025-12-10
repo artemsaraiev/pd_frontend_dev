@@ -197,6 +197,11 @@ export const discussion = {
         const data = await post(`/DiscussionPub/getPubIdByPaper`, args);
         return { pubId: data.result };
     },
+    async listPaperStats(args) {
+        const data = await post(`/DiscussionPub/_listPaperDiscussionStats`, args);
+        const stats = data.map((r) => r.result);
+        return { stats };
+    },
     async listThreads(args) {
         // Sync collects threads into { threads: [{ thread: ThreadDoc }, ...] } response
         const data = await post(`/DiscussionPub/listThreads`, {

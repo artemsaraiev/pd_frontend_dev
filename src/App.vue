@@ -132,6 +132,10 @@ function stopDrag() {
 .layout.left-collapsed.no-right-sidebar {
   grid-template-columns: 52px minmax(0, 1fr);
 }
+.layout.no-right-sidebar {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 .divider {
   width: 8px;
   background: transparent;
@@ -194,9 +198,14 @@ function stopDrag() {
   width: 100%;
   /* Allow the grid column to shrink even if PDF pages are very wide */
   min-width: 0;
-  /* Keep scrolling inside the paper area, not the whole column */
+  /* Keep scrolling inside the paper area, not the whole column by default */
   overflow-y: auto;
   overflow-x: hidden;
+}
+.layout.no-right-sidebar .content {
+  /* For pages without the right sidebar (e.g., home), let the whole layout scroll
+     so the scrollbar is aligned with the right edge of the window. */
+  overflow-y: visible;
 }
 @media (max-width: 1100px) {
   .layout {
