@@ -39,7 +39,7 @@
       <div v-else v-html="renderBody(node.body)" @click="handleBodyClick"></div>
     </div>
     <div class="actions" @click.stop>
-      <button class="ghost small" @click="replying = !replying">Reply</button>
+      <button class="ghost small" @click="openReplyBox">Reply</button>
       <button v-if="sessionStore.userId === node.author && !node.deleted" class="ghost small delete" @click="deleteReply">Delete</button>
     </div>
     <div v-if="replying" class="compose-area" @click.stop>
@@ -80,6 +80,12 @@
            style="display: none"
            @change="handleFileSelect($event, attachments)"
          />
+         <select v-model="replyVisibility" class="visibility-select-inline" :disabled="isPrivateThread">
+           <option value="public" :disabled="isPrivateThread">{{ isPrivateThread ? 'Private thread' : 'Public' }}</option>
+           <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
+             #{{ groupsStore.groups[groupId]?.name || 'Loading...' }}
+           </option>
+         </select>
          <label class="checkbox-label">
            <input type="checkbox" v-model="isAnonymous" />
            <span class="checkbox-text">Anonymous</span>
@@ -98,6 +104,7 @@
         :highlightedAnchorId="highlightedAnchorId"
         :focusedReplyId="focusedReplyId"
         :paperId="paperId"
+        :threadGroupId="threadGroupId"
         @replied="$emit('replied')"
         @replyClicked="payload => $emit('replyClicked', payload)" />
     </ul>
@@ -125,6 +132,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import { discussion, anchored } from '@/api/endpoints';
 import { useSessionStore } from '@/stores/session';
+import { useGroupsStore } from '@/stores/groups';
 import { BASE_URL } from '@/api/client';
 import ImageViewer from '@/components/ImageViewer.vue';
 import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
@@ -136,6 +144,7 @@ const props = defineProps<{
   highlightedAnchorId?: string | null;
   focusedReplyId?: string | null;
   paperId: string | null;
+  threadGroupId?: string | null; // Group ID of parent thread for privacy inheritance
 }>();
 
 const emit = defineEmits<{
@@ -148,9 +157,22 @@ const collapsed = ref(false);
 const body = ref('');
 const anchorId = ref('');
 const isAnonymous = ref(false);
+const replyVisibility = ref<string>('public');
 const sending = ref(false);
 const sessionStore = useSessionStore();
+const groupsStore = useGroupsStore();
 const userVote = ref<1 | -1 | null>(null);
+
+// Inherit parent thread's privacy - disable public replies in private threads
+const isPrivateThread = computed(() => !!props.threadGroupId);
+
+// When reply box opens, inherit parent thread's privacy
+function openReplyBox() {
+  replying.value = !replying.value;
+  if (replying.value && props.threadGroupId) {
+    replyVisibility.value = props.threadGroupId;
+  }
+}
 const pendingAnchors = ref<Record<string, { ref: string; snippet?: string; color?: string; parentContext?: string | null }>>({});
 async function ensureAnchor(aid?: string): Promise<string | undefined> {
   if (!aid || !aid.startsWith('temp-')) return aid;
@@ -293,7 +315,7 @@ async function send() {
 
     const anchorToUse = await ensureAnchor(anchorId.value);
 
-    await discussion.replyTo({
+    const replyPayload: any = {
       threadId: props.threadId,
       parentId: props.node._id,
       author: sessionStore.userId || 'anonymous',
@@ -301,10 +323,16 @@ async function send() {
       anchorId: anchorToUse || undefined,
       session: sessionStore.token || undefined,
       isAnonymous: isAnonymous.value,
-    });
+    };
+    // Add groupId if reply is private (not public)
+    if (replyVisibility.value && replyVisibility.value !== 'public') {
+      replyPayload.groupId = replyVisibility.value;
+    }
+    await discussion.replyTo(replyPayload);
     body.value = '';
     attachments.value = [];
     anchorId.value = '';
+    replyVisibility.value = 'public';
     isAnonymous.value = false;
     replying.value = false;
     emit('replied');
@@ -742,6 +770,30 @@ async function voteReply(vote: 1 | -1) {
   font-weight: 600;
   letter-spacing: 0.3px;
   margin-left: 6px;
+}
+
+.visibility-select-inline {
+  padding: 6px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.visibility-select-inline:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+}
+
+.visibility-select-inline:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
 }
 
 .checkbox-label {

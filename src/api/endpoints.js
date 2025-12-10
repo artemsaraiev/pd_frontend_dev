@@ -174,15 +174,23 @@ export const discussion = {
         return { threadId: data.result };
     },
     async reply(args) {
+        // Use different endpoints for public vs private replies
+        const endpoint = args.groupId
+            ? `/DiscussionPub/replyPrivate`
+            : `/DiscussionPub/reply`;
         // Always send anchorId and isAnonymous - backend sync requires it
         const payload = { ...args, anchorId: args.anchorId || '', isAnonymous: args.isAnonymous ?? false };
-        const data = await post(`/DiscussionPub/reply`, payload);
+        const data = await post(endpoint, payload);
         return { replyId: data.result };
     },
     async replyTo(args) {
+        // Use different endpoints for public vs private replies
+        const endpoint = args.groupId
+            ? `/DiscussionPub/replyToPrivate`
+            : `/DiscussionPub/replyTo`;
         // Always send anchorId and isAnonymous - backend sync requires it
         const payload = { ...args, anchorId: args.anchorId || '', isAnonymous: args.isAnonymous ?? false };
-        const data = await post(`/DiscussionPub/replyTo`, payload);
+        const data = await post(endpoint, payload);
         return { replyId: data.result };
     },
     async getPubIdByPaper(args) {
@@ -353,5 +361,17 @@ export const groups = {
     async revokeMembership(args) {
         const data = await post(`/AccessControl/revokeMembership`, args);
         return data;
+    },
+};
+
+// Lightweight wrapper for AccessControl visibility query (used for UI badges)
+export const accessControl = {
+    async getResourceVisibility(args) {
+        const data = await post(`/AccessControl/_getResourceVisibility`, args);
+        const vis = (data[0] && data[0].visibility) || {};
+        return {
+            isPublic: vis.isPublic ?? false,
+            groupId: vis.groupId ?? null,
+        };
     },
 };

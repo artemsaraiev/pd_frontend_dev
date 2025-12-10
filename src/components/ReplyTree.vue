@@ -9,6 +9,7 @@
       :highlightedAnchorId="highlightedAnchorId"
       :focusedReplyId="focusedReplyId"
       :paperId="paperId"
+      :threadGroupId="threadGroupId"
       @replied="$emit('refresh')"
       @replyClicked="payload => emit('replyClicked', payload)"
     />
@@ -25,6 +26,7 @@ const props = defineProps<{
   highlightedAnchorId?: string | null;
   focusedReplyId?: string | null;
   paperId: string | null;
+  threadGroupId?: string | null;
 }>();
 
 const emit = defineEmits<{

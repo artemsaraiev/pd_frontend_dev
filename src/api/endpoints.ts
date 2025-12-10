@@ -511,4 +511,20 @@ export const groups = {
   },
 };
 
+// Lightweight wrapper for AccessControl visibility query (used for UI badges)
+export const accessControl = {
+  async getResourceVisibility(args: {
+    resource: string;
+  }): Promise<{ isPublic: boolean; groupId?: string | null }> {
+    const data = await post<
+      Array<{ visibility: { isPublic: boolean; groupId?: string } }>
+    >(`/AccessControl/_getResourceVisibility`, args);
+    const vis = data[0]?.visibility;
+    return {
+      isPublic: vis?.isPublic ?? false,
+      groupId: vis?.groupId ?? null,
+    };
+  },
+};
+
 

@@ -97,15 +97,8 @@
     <h3>Threads</h3>
     <div v-if="!pubId && busyOpen" class="hint">Loading discussions…</div>
     <div v-if="!pubId && !busyOpen && errorOpen" class="hint">Failed to load discussions: {{ errorOpen }}</div>
-    <div v-if="pubId">
+      <div v-if="pubId">
       <div class="filters-section">
-        <div class="filter-row">
-          <label class="filter-label">Filter by anchor</label>
-          <div class="filter">
-            <input v-model.trim="anchorFilter" placeholder="anchorId (optional)" />
-            <button class="ghost" v-if="anchorFilter" @click="anchorFilter = ''">Clear</button>
-          </div>
-        </div>
         <div v-if="session.token" class="filter-row">
           <label class="filter-label">Visibility filter</label>
           <select v-model="visibilityFilter" class="visibility-filter-select">
@@ -161,7 +154,9 @@
           v-for="t in filteredThreads" 
           :key="t.id" 
           class="card"
-          :class="{ 'highlighted-thread': highlightedAnchorId === t.anchorId }"
+          :class="{
+            'highlighted-thread': highlightedAnchorId === t.anchorId
+          }"
           :data-thread-id="t.id"
           @click="(e) => onThreadClick(e, t.anchorId)"
         >
@@ -194,6 +189,12 @@
             <strong>
               {{ t.authorName || t.author }}
             </strong>
+            <span
+              v-if="getThreadGroupName(t)"
+              class="group-badge"
+            >
+              #{{ getThreadGroupName(t) }}
+            </span>
             <span v-if="t.isAnonymous" class="anonymous-badge">anonymous</span>
             <span class="count">{{ t.replies?.length ?? 0 }} replies</span>
             <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
@@ -248,6 +249,12 @@
                   @change="handleFileSelect($event, replyAttachments)"
                 />
               </label>
+              <select v-model="replyVisibility" class="visibility-select-inline" :disabled="replyingToPrivateThread">
+                <option value="public" :disabled="replyingToPrivateThread">{{ replyingToPrivateThread ? 'Private thread' : 'Public reply' }}</option>
+                <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
+                  #{{ groupsStore.groups[groupId]?.name || 'Loading...' }}
+                </option>
+              </select>
               <label class="checkbox-label inline">
                 <input type="checkbox" v-model="replyIsAnonymous" />
                 <span class="checkbox-text">Anonymous</span>
@@ -264,13 +271,13 @@
             :highlightedAnchorId="highlightedAnchorId"
             :focusedReplyId="focusedReplyId"
             :paperId="props.paperId"
+            :threadGroupId="t.groupId"
             @refresh="loadThreads"
             @replyClicked="onReplyClicked"
           />
           </div>
         </li>
       </ul>
-      <p v-else-if="threads.length && anchorFilter">No threads match this filter.</p>
       <p v-else>No threads yet.</p>
     </div>
     <ImageViewer
@@ -324,7 +331,7 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useSessionStore } from '@/stores/session';
 import { useGroupsStore } from '@/stores/groups';
-import { discussion, anchored } from '@/api/endpoints';
+import { discussion, anchored, accessControl } from '@/api/endpoints';
 import { BASE_URL } from '@/api/client';
 import ReplyTree from '@/components/ReplyTree.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
@@ -366,12 +373,29 @@ const replyThreadId = ref('');
 const replyBody = ref('');
 const replyAttachments = ref<string[]>([]);
 const replyAnchorId = ref('');
+const replyVisibility = ref<string>('public');
 const replyIsAnonymous = ref(false);
 const busyReply = ref(false);
 const errorReply = ref('');
 const replyMsg = ref('');
 const showDeleteConfirm = ref(false);
 const pendingDeleteThreadId = ref<string | null>(null);
+
+// Watch replyThreadId to inherit parent thread's privacy
+watch(replyThreadId, () => {
+  if (replyThreadId.value) {
+    const parentThread = threads.value.find(t => t.id === replyThreadId.value);
+    if (parentThread?.groupId) {
+      // Inherit parent's group - don't allow public replies to private threads
+      replyVisibility.value = parentThread.groupId;
+    } else {
+      // Parent is public, reset to public
+      replyVisibility.value = 'public';
+    }
+  } else {
+    replyVisibility.value = 'public';
+  }
+});
 
 // Overlapping highlights picker state
 const showOverlapPicker = ref(false);
@@ -386,9 +410,21 @@ const overlapPickerItems = ref<Array<{
 
 const actions = ref<string[]>([]);
 type ReplyNode = { _id: string; author: string; authorName?: string; body: string; anchorId?: string; children?: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number; isAnonymous?: boolean };
-type Thread = { id: string; author: string; authorName?: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number; isAnonymous?: boolean; createdAt: number };
+type Thread = {
+  id: string;
+  author: string;
+  authorName?: string;
+  body: string;
+  anchorId?: string;
+  replies: ReplyNode[];
+  deleted?: boolean;
+  upvotes?: number;
+  downvotes?: number;
+  isAnonymous?: boolean;
+  createdAt: number;
+  groupId?: string | null; // Group ID if thread is group-private
+};
 const threads = ref<Thread[]>([]);
-const anchorFilter = ref('');
 const threadSortBy = ref<string>('upvotes'); // Default to 'upvotes' for "Most Upvoted"
 const showSortDropdown = ref(false);
 const expanded = ref<Record<string, boolean>>({});
@@ -438,9 +474,7 @@ async function ensureAnchor(anchorId?: string): Promise<string | undefined> {
 }
 
 const filteredThreads = computed(() => {
-  let filtered = (props.anchorFilterProp ?? anchorFilter.value)
-    ? threads.value.filter(t => t.anchorId === (props.anchorFilterProp ?? anchorFilter.value))
-    : threads.value;
+  let filtered = threads.value;
   
   // If an anchor is highlighted, move matching thread (thread anchor or any reply anchor) to top
   if (highlightedAnchorId.value) {
@@ -532,6 +566,19 @@ const renderReplyPreview = computed(() =>
   renderMarkdown(buildBodyWithImages(replyBody.value, replyAttachments.value)),
 );
 
+// Check if we're replying to a private thread (to disable public option)
+const replyingToPrivateThread = computed(() => {
+  if (!replyThreadId.value) return false;
+  const parentThread = threads.value.find(t => t.id === replyThreadId.value);
+  return !!parentThread?.groupId;
+});
+
+function getThreadGroupName(t: Thread): string | null {
+  if (!t.groupId) return null;
+  const g = groupsStore.groups[t.groupId];
+  return g?.name ?? null;
+}
+
 function renderBody(text: string) {
   return renderMarkdown(text);
 }
@@ -615,7 +662,7 @@ async function getDisplayName(userId: string, isAnonymous: boolean, currentPubId
 
 async function loadThreads() {
   if (!pubId.value) { threads.value = []; return; }
-  const activeFilter = (props.anchorFilterProp ?? anchorFilter.value) || undefined;
+  const activeFilter = props.anchorFilterProp || undefined;
   const currentPubId = pubId.value;
   // Use loose typing here to avoid TS friction; backend supports includeDeleted, session, and groupFilter.
   // Pass session for access control filtering on the backend
@@ -685,6 +732,7 @@ async function loadThreads() {
       await addAuthorNames(nodes);
     }
     const authorName = await getDisplayName(t.author, t.isAnonymous ?? false, currentPubId);
+
     built.push({ 
       id: t._id, 
       author: t.author, 
@@ -697,6 +745,7 @@ async function loadThreads() {
       downvotes: t.downvotes ?? 0,
       isAnonymous: t.isAnonymous ?? false,
       createdAt: t.createdAt,
+      groupId: (t as any).groupId ?? null, // Backend will include this
     });
   }
   threads.value = built;
@@ -777,7 +826,7 @@ watch(() => props.paperId, () => {
 
 // Reload when filter changes and pub is present
 watch(
-  () => [props.anchorFilterProp, anchorFilter.value, visibilityFilter.value, threadSortBy.value],
+  () => [props.anchorFilterProp, visibilityFilter.value, threadSortBy.value],
   async () => { if (pubId.value) await loadThreads(); }
 );
 
@@ -868,19 +917,25 @@ async function onReply() {
     const anchorToUse = await ensureAnchor(replyAnchorId.value);
 
     // Use reply (not replyTo) for top-level replies to threads
-    const res = await discussion.reply({ 
+    const replyPayload: any = { 
       threadId: replyThreadId.value, 
       author: session.userId || 'anonymous', 
       body: finalBody,
       anchorId: anchorToUse || undefined,
       session: session.token || undefined,
       isAnonymous: replyIsAnonymous.value,
-    });
+    };
+    // Add groupId if reply is private (not public)
+    if (replyVisibility.value && replyVisibility.value !== 'public') {
+      replyPayload.groupId = replyVisibility.value;
+    }
+    const res = await discussion.reply(replyPayload);
     replyMsg.value = `Reply created (id: ${res.replyId})`;
     actions.value.unshift(`Reply ${res.replyId} added to ${replyThreadId.value}`);
     replyBody.value = '';
     replyAttachments.value = [];
     replyAnchorId.value = '';
+    replyVisibility.value = 'public';
     replyIsAnonymous.value = false;
     replyThreadId.value = ''; // Close box after sending
     await loadThreads();
@@ -1481,6 +1536,29 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
 }
 
+.visibility-select-inline {
+  padding: 6px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.visibility-select-inline:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+}
+
+.visibility-select-inline:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
+}
+
 /* Filters section styles */
 .filters-section {
   display: flex;
@@ -1687,6 +1765,15 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   font-size: 12px;
   color: var(--muted);
   font-weight: 500;
+}
+.group-badge {
+  font-size: 11px;
+  color: #4b5563;
+  background: #e5e7eb;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 6px;
+  font-weight: 600;
 }
 .body { margin: 10px 0; line-height: 1.6; }
 .body.deleted { opacity: 0.6; font-style: italic; }
