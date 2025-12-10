@@ -11,7 +11,49 @@
             rel="noreferrer"
             >Open on {{ sourceName }}</a
           >
-          <button class="ghost" @click="saveToLibrary">Save to Library</button>
+          <div class="save-wrapper">
+            <button class="ghost" @click.stop="toggleFolderPicker">
+              <span v-if="isAlreadyInLibrary">In Library</span>
+              <span v-else>Save to Library</span>
+            </button>
+            <div v-if="folderPickerOpen" class="folder-picker" @click.stop>
+              <div class="folder-picker-header">Add tags</div>
+              <div class="folder-picker-body">
+                <div
+                  v-if="allTags.length"
+                  class="folder-picker-list"
+                >
+                  <button
+                    v-for="tag in allTags"
+                    :key="tag.id"
+                    type="button"
+                    class="tag-toggle"
+                    @click="toggleFolderSelection(tag.id)"
+                  >
+                    <span
+                      class="tag-circle"
+                      :class="{ active: selectedFolderIds.includes(tag.id) }"
+                    ></span>
+                    <span class="tag-label">{{ tag.name }}</span>
+                  </button>
+                </div>
+                <p v-else class="folder-empty">
+                  No tags yet. Save without a tag or create one below.
+                </p>
+                <form class="new-tag-inline" @submit.prevent="createInlineTag">
+                  <input
+                    v-model="inlineTagName"
+                    type="text"
+                    placeholder="New tag name"
+                  />
+                  <button class="primary small" type="submit">Add</button>
+                </form>
+              </div>
+              <button class="primary full-width" @click="saveToLibrary">
+                Save
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="meta">
@@ -21,6 +63,9 @@
           }}</a></span
         >
         <span v-if="header.authors"> · {{ header.authors }}</span>
+        <span v-if="currentFolderNames.length" class="in-library-pill">
+          · Tags: {{ currentFolderNames.join(", ") }}
+        </span>
       </div>
       <p v-if="banner" class="banner">{{ banner }}</p>
       <div v-if="showSuccessNotice" class="success-notice">
@@ -188,6 +233,16 @@ import PdfAnnotator from "@/components/PdfAnnotator.vue";
 import { paper, discussion } from "@/api/endpoints";
 import { BASE_URL } from "@/api/client";
 import { storePdf, getPdf, deletePdf } from "@/utils/pdfStorage";
+import {
+  ensureLibrary,
+  saveLibrary,
+  listTags,
+  assignPaperToTags,
+  getTagsForPaper,
+  isPaperInLibrary,
+  type LibraryTag,
+  type LibraryData,
+} from "@/utils/library";
 
 type PaperSource = "arxiv" | "biorxiv";
 
@@ -208,6 +263,11 @@ const banner = ref("");
 const discussionCount = ref(0);
 const showSuccessNotice = ref(false);
 const showErrorNotice = ref(false);
+const library = ref<LibraryData | null>(null);
+const allTags = ref<LibraryTag[]>([]);
+const folderPickerOpen = ref(false);
+const selectedFolderIds = ref<string[]>([]);
+const inlineTagName = ref("");
 
 // Local PDF upload state (for bioRxiv papers - fallback only)
 const localPdfUrl = ref<string | null>(null);
@@ -349,6 +409,20 @@ function isValidPaperId(id: string): boolean {
   );
 }
 
+function loadLibraryState() {
+  if (!session.userId) {
+    library.value = null;
+    allTags.value = [];
+    selectedFolderIds.value = [];
+    return;
+  }
+  const lib = ensureLibrary(session.userId);
+  library.value = lib;
+  allTags.value = listTags(lib);
+  const entryTags = getTagsForPaper(lib, externalPaperId.value);
+  selectedFolderIds.value = entryTags.map((t) => t.id);
+}
+
 onMounted(async () => {
   try {
     if (!isValidPaperId(props.id)) {
@@ -410,6 +484,8 @@ onMounted(async () => {
   window.addEventListener("highlight-pdf-anchors", onHighlightPdfAnchors);
   // Handle clicks outside to clear highlights
   document.addEventListener("click", onDocumentClick);
+
+  loadLibraryState();
 
   // Auto-ensure paper exists in local index so we can attach discussions
   // This also gives us the internal _id which we need for PdfHighlighter operations
@@ -488,31 +564,85 @@ function onDocumentClick(e: MouseEvent) {
 
 const id = computed(() => externalPaperId.value);
 
+const isAlreadyInLibrary = computed(() =>
+  library.value
+    ? isPaperInLibrary(library.value, externalPaperId.value)
+    : false
+);
+
+const currentFolderNames = computed(() => {
+  if (!library.value) return [];
+  const tags = getTagsForPaper(library.value, externalPaperId.value);
+  return tags.map((t) => t.name);
+});
+
+function toggleFolderPicker() {
+  if (!session.userId) {
+    alert("Please sign in first.");
+    return;
+  }
+  if (!library.value) {
+    loadLibraryState();
+  }
+  folderPickerOpen.value = !folderPickerOpen.value;
+}
+
+function toggleFolderSelection(folderId: string) {
+  const idx = selectedFolderIds.value.indexOf(folderId);
+  if (idx === -1) {
+    selectedFolderIds.value.push(folderId);
+  } else {
+    selectedFolderIds.value.splice(idx, 1);
+  }
+}
+
+function createInlineTag() {
+  const name = inlineTagName.value.trim();
+  if (!name || !session.userId) return;
+  if (!library.value) {
+    library.value = ensureLibrary(session.userId);
+  }
+  const lib = library.value;
+  if (!lib.tags) {
+    lib.tags = [];
+  }
+  const existing = lib.tags.find(
+    (t) => t.name.toLowerCase() === name.toLowerCase()
+  );
+  const tag = existing ?? {
+    id: crypto.randomUUID(),
+    name,
+    parentId: null,
+  } as LibraryTag;
+  if (!existing) {
+    lib.tags.push(tag);
+    saveLibrary(session.userId, lib);
+  }
+  if (!selectedFolderIds.value.includes(tag.id)) {
+    selectedFolderIds.value.push(tag.id);
+  }
+  allTags.value = listTags(lib);
+  inlineTagName.value = "";
+}
+
 function saveToLibrary() {
   if (!session.userId) {
     alert("Please sign in first.");
     return;
   }
-  const key = `library:${session.userId}`;
-  const ids: string[] = JSON.parse(localStorage.getItem(key) || "[]");
-  // Store external paperId in localStorage (for URLs and display)
-  if (!ids.includes(externalPaperId.value)) {
-    ids.push(externalPaperId.value);
-    localStorage.setItem(key, JSON.stringify(ids));
-
-    // Show success notification
-    showSuccessNotice.value = true;
-    // Hide after 2 seconds
-    setTimeout(() => {
-      showSuccessNotice.value = false;
-    }, 2000);
-  } else {
-    // Paper already exists - show error notification
-    showErrorNotice.value = true;
-    setTimeout(() => {
-      showErrorNotice.value = false;
-    }, 2000);
+  if (!library.value) {
+    library.value = ensureLibrary(session.userId);
   }
+  const lib = library.value;
+  assignPaperToTags(lib, externalPaperId.value, selectedFolderIds.value);
+  saveLibrary(session.userId, lib);
+  showSuccessNotice.value = true;
+  showErrorNotice.value = false;
+  folderPickerOpen.value = false;
+  setTimeout(() => {
+    showSuccessNotice.value = false;
+  }, 2000);
+  loadLibraryState();
 }
 
 function zoomIn() {
@@ -625,6 +755,87 @@ async function removePdf() {
   gap: 10px;
   flex-wrap: wrap;
 }
+.save-wrapper {
+  position: relative;
+}
+.folder-picker {
+  position: absolute;
+  right: 0;
+  top: 110%;
+  z-index: 20;
+  width: 260px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.folder-picker-header {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.folder-picker-body {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.folder-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.folder-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.folder-empty {
+  font-size: 13px;
+  color: var(--muted);
+}
+.tag-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: left;
+}
+.tag-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.tag-circle.active {
+  border-color: var(--brand);
+  background: radial-gradient(circle, var(--brand) 40%, transparent 41%);
+}
+.tag-label {
+  font-size: 13px;
+  color: var(--text);
+}
+.new-tag-inline {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.new-tag-inline input {
+  flex: 1;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  font-size: 13px;
+}
 .meta {
   margin-top: 12px;
   color: var(--muted);
@@ -636,6 +847,14 @@ async function removePdf() {
 }
 .meta a:hover {
   text-decoration: underline;
+}
+.in-library-pill {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  font-size: 12px;
 }
 .inline {
   padding: 2px 8px;

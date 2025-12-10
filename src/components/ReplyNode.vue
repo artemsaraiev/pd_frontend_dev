@@ -142,6 +142,7 @@ import { useGroupsStore } from '@/stores/groups';
 import { BASE_URL } from '@/api/client';
 import ImageViewer from '@/components/ImageViewer.vue';
 import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
+import { markPaperAsDiscussed } from '@/utils/library';
 
 const props = defineProps<{
   node: any;
@@ -346,6 +347,10 @@ async function send() {
       replyPayload.groupId = replyVisibility.value;
     }
     await discussion.replyTo(replyPayload);
+    // Mark paper as discussed by this user (local tracking)
+    if (props.paperId && sessionStore.userId) {
+      markPaperAsDiscussed(sessionStore.userId, props.paperId);
+    }
     body.value = '';
     attachments.value = [];
     anchorId.value = '';

@@ -26,6 +26,21 @@
         Recently discussed
       </button>
     </div>
+    <div v-if="isLoggedIn" class="secondary-filters">
+      <span class="filter-label">Show:</span>
+      <button
+        :class="['filter-btn', { active: filter === 'all' }]"
+        @click="setFilter('all')"
+      >
+        All papers
+      </button>
+      <button
+        :class="['filter-btn', { active: filter === 'discussed' }]"
+        @click="setFilter('discussed')"
+      >
+        Discussed by you
+      </button>
+    </div>
 
     <div class="cards">
       <div v-for="p in papers" :key="p.id" class="card">
@@ -66,6 +81,7 @@ import { onMounted, ref, computed, watch } from "vue";
 import { paper } from "@/api/endpoints";
 import { discussion } from "@/api/endpoints";
 import { useSessionStore } from "@/stores/session";
+import { getDiscussedPaperIds } from "@/utils/library";
 
 const session = useSessionStore();
 
@@ -76,6 +92,8 @@ function goLogin() {
 }
 
 const tab = ref<"mostDiscussed" | "recentlyDiscussed">("mostDiscussed");
+const filter = ref<"all" | "discussed">("all");
+const discussedPaperIds = ref<string[]>([]);
 const papers = ref<
   Array<{
     id: string;
@@ -142,13 +160,22 @@ async function loadPapers() {
   try {
     const sortBy =
       tab.value === "mostDiscussed" ? "mostDiscussed" : "recentlyDiscussed";
-    const { stats } = await discussion.listPaperStats({
+    const args: {
+      sortBy: "mostDiscussed" | "recentlyDiscussed";
+      order: "asc" | "desc";
+      limit?: number;
+    } = {
       sortBy,
       order: "desc",
-      limit: 20,
-    });
+    };
+    if (filter.value !== "discussed") {
+      args.limit = 20;
+    }
+    const { stats } = await discussion.listPaperStats(args);
 
-    papers.value = stats.map((s) => ({
+    const discussedSet = new Set(discussedPaperIds.value);
+
+    let mapped = stats.map((s) => ({
       id: s.pubId,
       paperId: s.paperId,
       title: s.title,
@@ -157,7 +184,14 @@ async function loadPapers() {
       threads: s.threads,
       replies: s.replies,
       totalMessages: s.totalMessages,
+      discussedByYou: discussedSet.has(s.paperId),
     }));
+
+    if (filter.value === "discussed") {
+      mapped = mapped.filter((p) => p.discussedByYou);
+    }
+
+    papers.value = mapped;
 
     // Fetch missing titles from arXiv / bioRxiv via backend (in background)
     for (const p of papers.value) {
@@ -188,11 +222,50 @@ async function loadPapers() {
   }
 }
 
-onMounted(loadPapers);
+async function loadDiscussed() {
+  if (!session.userId) {
+    discussedPaperIds.value = [];
+    return;
+  }
+  // First, get locally-tracked discussed papers (reliable)
+  const localIds = getDiscussedPaperIds(session.userId);
+  
+  // Also try to get from backend (may have older data)
+  let backendIds: string[] = [];
+  try {
+    const { paperIds } = await discussion.listPapersDiscussedByUser({
+      userId: session.userId,
+    });
+    backendIds = paperIds;
+  } catch {
+    // Ignore backend errors
+  }
+  
+  // Merge both sources (deduplicate)
+  discussedPaperIds.value = Array.from(new Set([...localIds, ...backendIds]));
+}
+
+onMounted(async () => {
+  await loadDiscussed();
+  await loadPapers();
+});
 
 watch(tab, () => {
   void loadPapers();
 });
+
+watch(
+  () => session.userId,
+  async () => {
+    await loadDiscussed();
+    await loadPapers();
+  },
+);
+
+function setFilter(next: "all" | "discussed") {
+  filter.value = next;
+  void loadPapers();
+}
 </script>
 
 <style scoped>
@@ -253,6 +326,37 @@ watch(tab, () => {
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+}
+.secondary-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.filter-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.filter-btn {
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text);
+}
+.filter-btn:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+}
+.filter-btn.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
 }
 .tab {
   padding: 8px 16px;

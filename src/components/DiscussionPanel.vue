@@ -343,6 +343,7 @@ import ReplyTree from '@/components/ReplyTree.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
 import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
 import { getUsernameById, prefetchUsernames } from '@/utils/usernameCache';
+import { markPaperAsDiscussed } from '@/utils/library';
 
 const props = defineProps<{ paperId: string | null; anchorFilterProp?: string | null }>();
 
@@ -894,6 +895,10 @@ async function onStartThread() {
     });
     threadMsg.value = `Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}${threadIsAnonymous.value ? ' (anonymous)' : ''}`;
     actions.value.unshift(`Thread created${anchorId.value ? ` (anchor: ${anchorId.value})` : ''}`);
+    // Mark paper as discussed by this user (local tracking)
+    if (props.paperId && session.userId) {
+      markPaperAsDiscussed(session.userId, props.paperId);
+    }
     body.value = '';
     attachments.value = [];
     anchorId.value = '';
@@ -949,6 +954,10 @@ async function onReply() {
     const res = await discussion.reply(replyPayload);
     replyMsg.value = `Reply created (id: ${res.replyId})`;
     actions.value.unshift(`Reply ${res.replyId} added to ${replyThreadId.value}`);
+    // Mark paper as discussed by this user (local tracking)
+    if (props.paperId && session.userId) {
+      markPaperAsDiscussed(session.userId, props.paperId);
+    }
     replyBody.value = '';
     replyAttachments.value = [];
     replyAnchorId.value = '';

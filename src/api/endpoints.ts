@@ -298,6 +298,17 @@ export const discussion = {
     const stats = data.map((r) => r.result);
     return { stats };
   },
+  async listPapersDiscussedByUser(args: {
+    userId: string;
+  }): Promise<{ paperIds: string[] }> {
+    const data = await post<
+      Array<{
+        result: { paperId: string };
+      }>
+    >(`/DiscussionPub/_listPapersDiscussedByUser`, { user: args.userId });
+    const paperIds = data.map((r) => r.result.paperId);
+    return { paperIds };
+  },
   async listThreads(
     args: {
       pubId: string;
