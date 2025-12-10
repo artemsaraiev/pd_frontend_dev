@@ -12,7 +12,6 @@
             >Open on {{ sourceName }}</a
           >
           <button class="ghost" @click="saveToLibrary">Save to Library</button>
-          <button class="ghost" @click="$router.push('/')">Back to Feed</button>
         </div>
       </div>
       <div class="meta">

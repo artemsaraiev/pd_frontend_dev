@@ -8,7 +8,18 @@
       <label>Author</label>
       <input disabled placeholder="Sign in to post" />
     </div>
-    <div class="compose-area">
+    <!-- Collapsed composer (Reddit-style) -->
+    <div
+      v-if="!composerExpanded"
+      class="collapsed-composer"
+      @click="onExpandComposer"
+    >
+      <span class="collapsed-placeholder">
+        {{ session.token ? 'Share your insights…' : 'Sign in to start a discussion' }}
+      </span>
+    </div>
+    <!-- Full composer (shown once user clicks / starts typing) -->
+    <div v-else class="compose-area">
       <div class="editor-toolbar">
         <button class="icon-btn" type="button" @click="formatThread('bold')"><strong>B</strong></button>
         <button class="icon-btn" type="button" @click="formatThread('italic')"><em>I</em></button>
@@ -48,8 +59,8 @@
         placeholder="Start a discussion... (Paste images or click icon)"
       />
       <div class="toolbar">
-         <button class="icon-btn" title="Add Image" @click="openThreadFilePicker">
-           📷
+         <button class="icon-btn" title="Add attachment" @click="openThreadFilePicker">
+           📎
          </button>
          <input
            ref="fileInput"
@@ -77,7 +88,7 @@
       :disabled="busyThread || !pubId || (!body && !attachments.length) || !session.token"
       @click="onStartThread"
     >
-      {{ !session.token ? 'Sign in to post' : (busyThread ? 'Posting…' : 'Start Thread') }}
+      {{ !session.token ? 'Sign in to post' : (busyThread ? 'Posting…' : 'Post Thread') }}
     </button>
     <small v-if="busyThread">Loading…</small>
     <p v-if="threadMsg" class="msg ok">{{ threadMsg }}</p>
@@ -227,8 +238,8 @@
               <div class="preview-body" v-html="renderReplyPreview" @click="handleBodyClick"></div>
             </div>
             <div class="actions-row">
-              <label class="icon-btn" title="Add Image">
-                📷
+              <label class="icon-btn" title="Add attachment">
+                📎
                 <input
                   type="file"
                   accept="image/*"
@@ -343,6 +354,8 @@ const threadIsAnonymous = ref(false);
 const busyThread = ref(false);
 const errorThread = ref('');
 const threadMsg = ref('');
+// Controls whether the full thread composer is expanded (Reddit-style)
+const composerExpanded = ref(false);
 
 const attachments = ref<string[]>([]);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -819,6 +832,7 @@ async function onStartThread() {
     attachments.value = [];
     anchorId.value = '';
     threadIsAnonymous.value = false;
+    composerExpanded.value = false;
     // Clear parent anchor in PdfAnnotator so new prompts start fresh
     try {
       window.dispatchEvent(new Event('clear-parent-anchor'));
@@ -832,6 +846,18 @@ async function onStartThread() {
   } finally {
     busyThread.value = false;
   }
+}
+
+function onExpandComposer() {
+  if (!session.token) {
+    // If not signed in, redirect to login (or you could emit an event instead)
+    window.location.assign('/login');
+    return;
+  }
+  composerExpanded.value = true;
+  nextTick(() => {
+    threadTextarea.value?.focus();
+  });
 }
 
 async function onReply() {
@@ -1362,6 +1388,16 @@ function handleClickOutside(event: MouseEvent) {
   if (!target.closest('.sort-dropdown-container')) {
     showSortDropdown.value = false;
   }
+  // Auto-collapse composer if user clicked away without typing anything
+  if (
+    composerExpanded.value &&
+    !body.value &&
+    !attachments.value.length &&
+    !target.closest('.compose-area') &&
+    !target.closest('.collapsed-composer')
+  ) {
+    composerExpanded.value = false;
+  }
   // Clear highlights when clicking outside discussion panel
   if (!target.closest('.panel') && !target.closest('.pdf-annotator')) {
     highlightedAnchorId.value = null;
@@ -1707,6 +1743,23 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .compose-area:focus-within {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.1);
+}
+.collapsed-composer {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fafafa;
+  cursor: text;
+  transition: all 0.2s ease;
+}
+.collapsed-composer:hover {
+  border-color: var(--brand);
+  background: #fef2f2;
+  box-shadow: 0 0 0 3px rgba(179, 27, 27, 0.06);
+}
+.collapsed-placeholder {
+  font-size: 14px;
+  color: var(--muted);
 }
 .compose-area textarea {
   border: none;
