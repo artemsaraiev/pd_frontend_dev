@@ -1,6 +1,26 @@
 <template>
   <div class="panel">
-    <h3>Discussion</h3>
+    <div class="panel-header">
+      <h3>Discussion</h3>
+      <HelpPopover label="How this works" title="Highlights, threads, and replies">
+        <p><strong>Linking paper and discussion</strong></p>
+        <ul>
+          <li>Click a thread card or reply to jump to its highlight in the paper.</li>
+          <li>Click a highlight box in the paper to scroll the sidebar to the matching thread or reply.</li>
+        </ul>
+        <p><strong>Replies and nested conversations</strong></p>
+        <ul>
+          <li>Use <em>Reply</em> on a thread or reply to continue that specific line of discussion.</li>
+          <li>When a reply is tied to a highlight, clicking the reply or the box moves you between the two.</li>
+        </ul>
+        <p><strong>Privacy, groups, and anonymity</strong></p>
+        <ul>
+          <li><em>Visibility</em> lets you choose between public threads and threads visible only to a specific group.</li>
+          <li>Replies to a group-only thread also stay within that group.</li>
+          <li><em>Post anonymously</em> hides your account name from other readers and shows a stable pseudonym for this paper instead.</li>
+        </ul>
+      </HelpPopover>
+    </div>
     <p class="hint" v-if="!paperId">Set a current paper first.</p>
     <div v-if="errorOpen" class="msg err">{{ errorOpen }}</div>
 
@@ -31,7 +51,14 @@
         <button class="icon-btn" type="button" @click="formatThread('blockMath')">∑</button>
       </div>
       <div v-if="session.token" class="visibility-row">
-        <label class="visibility-label">Visibility</label>
+        <label class="visibility-label">
+          Visibility
+          <HelpPopover label="?" title="Visibility: public vs groups" align="left">
+            <p><strong>Public</strong>: anyone using PubDiscuss can see this thread.</p>
+            <p><strong>Group</strong>: only members of the selected group see the thread and its replies.</p>
+            <p>Replies to a group-only thread stay in that same group; you can’t reply publicly to a private thread.</p>
+          </HelpPopover>
+        </label>
         <select v-model="threadVisibility" class="visibility-select">
           <option value="public">Public</option>
           <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
@@ -43,6 +70,10 @@
         <label class="checkbox-label">
           <input type="checkbox" v-model="threadIsAnonymous" />
           <span class="checkbox-text">Post anonymously</span>
+          <HelpPopover label="?" title="Anonymous posting" align="left">
+            <p>When this is on, other readers see a pseudonym (like “Curious Finch”) instead of your account name on this paper.</p>
+            <p>Your posts are still tied to your account internally so we can keep your experience consistent and safe.</p>
+          </HelpPopover>
         </label>
       </div>
       <div v-if="attachments.length" class="attachments-preview">
@@ -94,11 +125,12 @@
     <p v-if="threadMsg" class="msg ok">{{ threadMsg }}</p>
     <p v-if="errorThread" class="msg err">{{ errorThread }}</p>
 
-    <h3>Threads</h3>
-    <div v-if="!pubId && busyOpen" class="hint">Loading discussions…</div>
-    <div v-if="!pubId && !busyOpen && errorOpen" class="hint">Failed to load discussions: {{ errorOpen }}</div>
-      <div v-if="pubId">
-      <div class="filters-section">
+    <div class="threads-section">
+      <h3>Threads</h3>
+      <div v-if="!pubId && busyOpen" class="hint">Loading discussions…</div>
+      <div v-if="!pubId && !busyOpen && errorOpen" class="hint">Failed to load discussions: {{ errorOpen }}</div>
+      <div v-if="pubId" class="threads-content">
+        <div class="filters-section">
         <div v-if="session.token" class="filter-row">
           <label class="filter-label">Visibility filter</label>
           <select v-model="visibilityFilter" class="visibility-filter-select">
@@ -149,142 +181,147 @@
         </div>
         </div>
       </div>
-      <ul class="threads" v-if="filteredThreads.length">
-        <li 
-          v-for="t in filteredThreads" 
-          :key="t.id" 
-          class="card"
-          :class="{
-            'highlighted-thread': highlightedAnchorId === t.anchorId
-          }"
-          :data-thread-id="t.id"
-          @click="(e) => onThreadClick(e, t.anchorId)"
-        >
-          <div 
-            class="collapse-toggle" 
-            v-if="t.replies && t.replies.length" 
-            @click.stop="toggleExpanded(t.id)"
+        <ul class="threads" v-if="filteredThreads.length">
+          <li 
+            v-for="t in filteredThreads" 
+            :key="t.id" 
+            class="card"
+            :class="{
+              'highlighted-thread': highlightedAnchorId === t.anchorId
+            }"
+            :data-thread-id="t.id"
+            @click="(e) => onThreadClick(e, t.anchorId)"
           >
-            <span class="toggle-icon">{{ expanded[t.id] === false ? '+' : '−' }}</span>
-          </div>
-          <div class="vote-section" @click.stop>
-            <button 
-              class="vote-btn upvote" 
-              :class="{ active: threadVotes[t.id] === 1 }"
-              @click="voteThread(t.id, 1)"
-              :disabled="!session.token"
-              title="Upvote"
-            >▲</button>
-            <span class="vote-count">{{ (t.upvotes ?? 0) - (t.downvotes ?? 0) }}</span>
-            <button 
-              class="vote-btn downvote" 
-              :class="{ active: threadVotes[t.id] === -1 }"
-              @click="voteThread(t.id, -1)"
-              :disabled="!session.token"
-              title="Downvote"
-            >▼</button>
-          </div>
-          <div class="content-section">
-          <div class="meta" @click.stop>
-            <strong>
-              {{ t.authorName || t.author }}
-            </strong>
-            <span
-              v-if="getThreadGroupName(t)"
-              class="group-badge"
+            <div 
+              class="collapse-toggle" 
+              v-if="t.replies && t.replies.length" 
+              @click.stop="toggleExpanded(t.id)"
             >
-              #{{ getThreadGroupName(t) }}
-            </span>
-            <span v-if="t.isAnonymous" class="anonymous-badge">anonymous</span>
-            <span
-              v-if="t.createdAt"
-              class="timestamp"
-            >
-              • {{ formatTimestamp(t.createdAt) }}
-            </span>
-            <span class="count">{{ t.replies?.length ?? 0 }} replies</span>
-            <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
-            <a
-              v-if="session.userId === t.author && !t.deleted"
-              href="#"
-              class="delete-link"
-              @click.prevent="deleteThread(t.id)"
-            >
-              Delete
-            </a>
-          </div>
-          <div class="body" :class="{ deleted: t.deleted }" @click.stop>
-            <div v-if="t.deleted" class="deleted-message">[deleted]</div>
-            <div v-else v-html="renderBody(t.body)" @click="handleBodyClick"></div>
-          </div>
-          <div v-if="replyThreadId === t.id" class="compose-thread-reply" @click.stop>
-            <div class="editor-toolbar">
-              <button class="icon-btn" type="button" @click="formatReply('bold')"><strong>B</strong></button>
-              <button class="icon-btn" type="button" @click="formatReply('italic')"><em>I</em></button>
-              <button class="icon-btn" type="button" @click="formatReply('code')">{ }</button>
-              <button class="icon-btn" type="button" @click="formatReply('blockquote')">“”</button>
-              <button class="icon-btn" type="button" @click="formatReply('olist')">1.</button>
-              <button class="icon-btn" type="button" @click="formatReply('ulist')">•</button>
-              <button class="icon-btn" type="button" @click="formatReply('inlineMath')">\(x\)</button>
-              <button class="icon-btn" type="button" @click="formatReply('blockMath')">∑</button>
+              <span class="toggle-icon">{{ expanded[t.id] === false ? '+' : '−' }}</span>
             </div>
-            <div v-if="replyAttachments.length" class="attachments-preview">
-              <div v-for="(url, i) in replyAttachments" :key="url" class="attachment-thumb">
-                <img :src="url" @click="openViewerFromAttachments(replyAttachments, i)" />
-                <button class="remove-btn" @click="removeAttachment(i, replyAttachments)">×</button>
+            <div class="vote-section" @click.stop>
+              <button 
+                class="vote-btn upvote" 
+                :class="{ active: threadVotes[t.id] === 1 }"
+                @click="voteThread(t.id, 1)"
+                :disabled="!session.token"
+                title="Upvote"
+              >▲</button>
+              <span class="vote-count">{{ (t.upvotes ?? 0) - (t.downvotes ?? 0) }}</span>
+              <button 
+                class="vote-btn downvote" 
+                :class="{ active: threadVotes[t.id] === -1 }"
+                @click="voteThread(t.id, -1)"
+                :disabled="!session.token"
+                title="Downvote"
+              >▼</button>
+            </div>
+            <div class="content-section">
+            <div class="meta" @click.stop>
+              <strong>
+                {{ t.authorName || t.author }}
+              </strong>
+              <span
+                v-if="getThreadGroupName(t)"
+                class="group-badge"
+              >
+                #{{ getThreadGroupName(t) }}
+              </span>
+              <span v-if="t.isAnonymous" class="anonymous-badge">anonymous</span>
+              <span
+                v-if="t.createdAt"
+                class="timestamp"
+              >
+                • {{ formatTimestamp(t.createdAt) }}
+              </span>
+              <span class="count">{{ t.replies?.length ?? 0 }} replies</span>
+              <a href="#" class="reply-link" @click.prevent="toggleReply(t.id)">Reply</a>
+              <a
+                v-if="session.userId === t.author && !t.deleted"
+                href="#"
+                class="delete-link"
+                @click.prevent="deleteThread(t.id)"
+              >
+                Delete
+              </a>
+            </div>
+            <div class="body" :class="{ deleted: t.deleted }" @click.stop>
+              <div v-if="t.deleted" class="deleted-message">[deleted]</div>
+              <div v-else v-html="renderBody(t.body)" @click="handleBodyClick"></div>
+            </div>
+            <div v-if="replyThreadId === t.id" class="compose-thread-reply" @click.stop>
+              <div class="editor-toolbar">
+                <button class="icon-btn" type="button" @click="formatReply('bold')"><strong>B</strong></button>
+                <button class="icon-btn" type="button" @click="formatReply('italic')"><em>I</em></button>
+                <button class="icon-btn" type="button" @click="formatReply('code')">{ }</button>
+                <button class="icon-btn" type="button" @click="formatReply('blockquote')">""</button>
+                <button class="icon-btn" type="button" @click="formatReply('olist')">1.</button>
+                <button class="icon-btn" type="button" @click="formatReply('ulist')">•</button>
+                <button class="icon-btn" type="button" @click="formatReply('inlineMath')">\(x\)</button>
+                <button class="icon-btn" type="button" @click="formatReply('blockMath')">∑</button>
+              </div>
+              <div v-if="replyAttachments.length" class="attachments-preview">
+                <div v-for="(url, i) in replyAttachments" :key="url" class="attachment-thumb">
+                  <img :src="url" @click="openViewerFromAttachments(replyAttachments, i)" />
+                  <button class="remove-btn" @click="removeAttachment(i, replyAttachments)">×</button>
+                </div>
+              </div>
+              <textarea
+                v-model="replyBody"
+                rows="2"
+                placeholder="Reply to thread... (Paste images or click icon)"
+                @paste="handlePaste($event, replyAttachments)"
+              />
+              <div v-if="replyBody || replyAttachments.length" class="preview-container">
+                <div class="preview-label">Preview</div>
+                <div class="preview-body" v-html="renderReplyPreview" @click="handleBodyClick"></div>
+              </div>
+              <div class="actions-row">
+                <label class="icon-btn" title="Add attachment">
+                  📎
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    style="display: none"
+                    @change="handleFileSelect($event, replyAttachments)"
+                  />
+                </label>
+                <select v-model="replyVisibility" class="visibility-select-inline" :disabled="replyingToPrivateThread">
+                  <option value="public" :disabled="replyingToPrivateThread">{{ replyingToPrivateThread ? 'Private thread' : 'Public reply' }}</option>
+                  <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
+                    #{{ groupsStore.groups[groupId]?.name || 'Loading...' }}
+                  </option>
+                </select>
+                <label class="checkbox-label inline">
+                  <input type="checkbox" v-model="replyIsAnonymous" />
+                  <span class="checkbox-text">Anonymous</span>
+                  <HelpPopover label="?" title="Anonymous replies" align="left">
+                    <p>Anonymous replies also use your per-paper pseudonym instead of your account name.</p>
+                    <p>You can mix anonymous and non-anonymous replies within the same thread if you want.</p>
+                  </HelpPopover>
+                </label>
+                <button class="primary small" :disabled="(!replyBody && !replyAttachments.length) || !session.token || busyReply" @click="onReply">{{ !session.token ? 'Sign in' : (busyReply ? 'Sending…' : 'Reply') }}</button>
+                <button class="ghost small" @click="replyThreadId = ''">Cancel</button>
               </div>
             </div>
-            <textarea
-              v-model="replyBody"
-              rows="2"
-              placeholder="Reply to thread... (Paste images or click icon)"
-              @paste="handlePaste($event, replyAttachments)"
+            <p v-if="!t.replies || t.replies.length === 0" class="hint">No replies yet.</p>
+            <ReplyTree 
+              v-if="expanded[t.id] !== false" 
+              :nodes="t.replies" 
+              :threadId="t.id" 
+              :highlightedAnchorId="highlightedAnchorId"
+              :focusedReplyId="focusedReplyId"
+              :paperId="props.paperId"
+              :threadGroupId="t.groupId"
+              @refresh="loadThreads"
+              @replyClicked="onReplyClicked"
             />
-            <div v-if="replyBody || replyAttachments.length" class="preview-container">
-              <div class="preview-label">Preview</div>
-              <div class="preview-body" v-html="renderReplyPreview" @click="handleBodyClick"></div>
             </div>
-            <div class="actions-row">
-              <label class="icon-btn" title="Add attachment">
-                📎
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style="display: none"
-                  @change="handleFileSelect($event, replyAttachments)"
-                />
-              </label>
-              <select v-model="replyVisibility" class="visibility-select-inline" :disabled="replyingToPrivateThread">
-                <option value="public" :disabled="replyingToPrivateThread">{{ replyingToPrivateThread ? 'Private thread' : 'Public reply' }}</option>
-                <option v-for="groupId in groupsStore.myGroups" :key="groupId" :value="groupId">
-                  #{{ groupsStore.groups[groupId]?.name || 'Loading...' }}
-                </option>
-              </select>
-              <label class="checkbox-label inline">
-                <input type="checkbox" v-model="replyIsAnonymous" />
-                <span class="checkbox-text">Anonymous</span>
-              </label>
-              <button class="primary small" :disabled="(!replyBody && !replyAttachments.length) || !session.token || busyReply" @click="onReply">{{ !session.token ? 'Sign in' : (busyReply ? 'Sending…' : 'Reply') }}</button>
-              <button class="ghost small" @click="replyThreadId = ''">Cancel</button>
-            </div>
-          </div>
-          <p v-if="!t.replies || t.replies.length === 0" class="hint">No replies yet.</p>
-          <ReplyTree 
-            v-if="expanded[t.id] !== false" 
-            :nodes="t.replies" 
-            :threadId="t.id" 
-            :highlightedAnchorId="highlightedAnchorId"
-            :focusedReplyId="focusedReplyId"
-            :paperId="props.paperId"
-            :threadGroupId="t.groupId"
-            @refresh="loadThreads"
-            @replyClicked="onReplyClicked"
-          />
-          </div>
-        </li>
-      </ul>
-      <p v-else>No threads yet.</p>
+          </li>
+        </ul>
+        <p v-else>No threads yet.</p>
+      </div>
     </div>
     <ImageViewer
       v-if="viewerImages.length"
@@ -344,6 +381,7 @@ import ImageViewer from '@/components/ImageViewer.vue';
 import { renderMarkdown, buildBodyWithImages } from '@/utils/markdown';
 import { getUsernameById, prefetchUsernames } from '@/utils/usernameCache';
 import { markPaperAsDiscussed } from '@/utils/library';
+import HelpPopover from '@/components/HelpPopover.vue';
 
 const props = defineProps<{ paperId: string | null; anchorFilterProp?: string | null }>();
 
@@ -1518,7 +1556,36 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.panel { display: flex; flex-direction: column; gap: 12px; }
+.panel { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.threads-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.threads-section h3 {
+  flex-shrink: 0;
+}
+.threads-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 .row { display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center; }
 
 /* Visibility row styles */

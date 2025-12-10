@@ -149,22 +149,34 @@
               >
                 Remove PDF
               </button>
-            <div class="zoom">
-              <button class="ghost" @click="zoomOut">-</button>
-              <input
-                class="z-input"
-                type="number"
-                :value="Math.round(zoom * 100)"
-                min="30"
-                max="300"
-                @change="onZoomInput"
-              />
-              <button class="ghost" @click="zoomIn">+</button>
-            </div>
+              <div class="zoom">
+                <button class="ghost" @click="zoomOut">-</button>
+                <input
+                  class="z-input"
+                  type="number"
+                  :value="Math.round(zoom * 100)"
+                  min="30"
+                  max="300"
+                  @change="onZoomInput"
+                />
+                <button class="ghost" @click="zoomIn">+</button>
+              </div>
             </div>
             <div class="toolbar-hint">
               <span>Option/Alt + drag: create a box highlight.</span>
               <span>Cmd/Ctrl + click a box: open its discussion.</span>
+              <HelpPopover label="Highlight help" title="Working with highlights">
+                <p><strong>Create highlights</strong></p>
+                <ul>
+                  <li>Select text to open the popup, then choose <em>Highlight</em> or <em>Prompt</em> to start a discussion.</li>
+                  <li>Use Option/Alt + drag to draw a box highlight around figures or equations where text selection is hard.</li>
+                </ul>
+                <p><strong>Open discussions from the paper</strong></p>
+                <ul>
+                  <li>Press Cmd (Mac) or Ctrl (Win/Linux) and click a highlight box to jump to its thread in the sidebar.</li>
+                  <li>If several highlights overlap, Cmd/Ctrl + click shows a small picker so you can choose which thread to open.</li>
+                </ul>
+              </HelpPopover>
             </div>
           </div>
           <PdfAnnotator
@@ -209,6 +221,18 @@
             <div class="toolbar-hint">
               <span>Option/Alt + drag: create a box highlight.</span>
               <span>Cmd/Ctrl + click a box: open its discussion.</span>
+              <HelpPopover label="Highlight help" title="Working with highlights">
+                <p><strong>Create highlights</strong></p>
+                <ul>
+                  <li>Select text to open the popup, then choose <em>Highlight</em> or <em>Prompt</em> to start a discussion.</li>
+                  <li>Use Option/Alt + drag to draw a box highlight around figures or equations where text selection is hard.</li>
+                </ul>
+                <p><strong>Open discussions from the paper</strong></p>
+                <ul>
+                  <li>Press Cmd (Mac) or Ctrl (Win/Linux) and click a highlight box to jump to its thread in the sidebar.</li>
+                  <li>If several highlights overlap, Cmd/Ctrl + click shows a small picker so you can choose which thread to open.</li>
+                </ul>
+              </HelpPopover>
             </div>
           </div>
           <PdfAnnotator
@@ -230,6 +254,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, reactive, ref, computed } from "vue";
 import PdfAnnotator from "@/components/PdfAnnotator.vue";
+import HelpPopover from "@/components/HelpPopover.vue";
 import { paper, discussion } from "@/api/endpoints";
 import { BASE_URL } from "@/api/client";
 import { storePdf, getPdf, deletePdf } from "@/utils/pdfStorage";
@@ -1010,11 +1035,16 @@ async function removePdf() {
 .toolbar-hint {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   font-size: 11px;
   color: var(--muted);
   margin-left: auto;
   text-align: right;
   gap: 2px;
+}
+
+.toolbar-hint .help-popover-wrapper {
+  margin-top: 4px;
 }
 @media (max-width: 1100px) {
   .columns {

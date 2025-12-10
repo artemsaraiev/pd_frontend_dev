@@ -113,6 +113,8 @@ function stopDrag() {
   gap: 10px;
   padding: 20px;
   flex: 1;
+  /* Critical: allow children to control scrolling instead of growing the whole page */
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -199,6 +201,7 @@ function stopDrag() {
   /* Allow the grid column to shrink even if PDF pages are very wide */
   min-width: 0;
   /* Keep scrolling inside the paper area, not the whole column by default */
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
