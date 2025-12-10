@@ -290,6 +290,8 @@ watch(tab, () => {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .card::before {
   content: "";
@@ -338,7 +340,8 @@ watch(tab, () => {
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: auto;
+  padding-top: 16px;
 }
 .paper-id {
   font-size: 12px;
