@@ -40,7 +40,7 @@
       <div v-for="p in papers" :key="p.id" class="card">
         <h3 class="title">
           <a :href="`/paper/${encodeURIComponent(p.paperId)}`">{{
-            p.title || "Untitled Paper"
+            p.title || p.paperId
           }}</a>
         </h3>
         <div class="meta">

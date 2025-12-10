@@ -117,21 +117,29 @@
             <span class="sort-chevron">▼</span>
           </button>
           <div v-if="showSortDropdown" class="sort-dropdown-menu" @click.stop>
-            <div 
-              class="sort-option" 
+            <div
+              class="sort-option"
               :class="{ selected: threadSortBy === 'createdAt' }"
               @click="setSort('createdAt'); showSortDropdown = false"
             >
               <span class="sort-icon">🕐</span>
               <span>Recent</span>
             </div>
-            <div 
-              class="sort-option" 
+            <div
+              class="sort-option"
               :class="{ selected: threadSortBy === 'oldest' }"
               @click="setSort('oldest'); showSortDropdown = false"
             >
               <span class="sort-icon">📅</span>
               <span>Oldest</span>
+            </div>
+            <div
+              class="sort-option"
+              :class="{ selected: threadSortBy === 'upvotes' }"
+              @click="setSort('upvotes'); showSortDropdown = false"
+            >
+              <span class="sort-icon">⬆️</span>
+              <span>Most Upvoted</span>
             </div>
           </div>
         </div>
@@ -368,7 +376,7 @@ type ReplyNode = { _id: string; author: string; authorName?: string; body: strin
 type Thread = { id: string; author: string; authorName?: string; body: string; anchorId?: string; replies: ReplyNode[]; deleted?: boolean; upvotes?: number; downvotes?: number; isAnonymous?: boolean; createdAt: number };
 const threads = ref<Thread[]>([]);
 const anchorFilter = ref('');
-const threadSortBy = ref<string>('createdAt'); // Default to 'createdAt' for "New"
+const threadSortBy = ref<string>('upvotes'); // Default to 'upvotes' for "Most Upvoted"
 const showSortDropdown = ref(false);
 const expanded = ref<Record<string, boolean>>({});
 const threadVotes = ref<Record<string, 1 | -1 | null>>({});
@@ -433,6 +441,14 @@ const filteredThreads = computed(() => {
   if (threadSortBy.value === 'oldest') {
     // Oldest: oldest first (ascending createdAt)
     filtered = [...filtered].sort((a, b) => a.createdAt - b.createdAt);
+  } else if (threadSortBy.value === 'upvotes') {
+    // Most Upvoted: highest net score first (upvotes - downvotes), then by createdAt
+    filtered = [...filtered].sort((a, b) => {
+      const netA = (a.upvotes ?? 0) - (a.downvotes ?? 0);
+      const netB = (b.upvotes ?? 0) - (b.downvotes ?? 0);
+      if (netB !== netA) return netB - netA; // Higher net score first
+      return b.createdAt - a.createdAt; // If tied, more recent first
+    });
   } else {
     // Recent: most recent first (descending createdAt)
     filtered = [...filtered].sort((a, b) => b.createdAt - a.createdAt);
@@ -453,7 +469,8 @@ function getSortLabel(sortBy: string): string {
   switch (sortBy) {
     case 'oldest': return 'Oldest';
     case 'createdAt': return 'Recent';
-    default: return 'Recent';
+    case 'upvotes': return 'Most Upvoted';
+    default: return 'Most Upvoted';
   }
 }
 
@@ -598,7 +615,7 @@ async function loadThreads() {
     includeDeleted: true,
     session: session.token || '',
     groupFilter: visibilityFilter.value || 'all',
-    sortBy: threadSortBy.value || 'createdAt',
+    sortBy: threadSortBy.value || 'upvotes',
   });
   console.log('[DiscussionPanel] Loaded threads raw:', JSON.stringify(list, null, 2));
   console.log('[DiscussionPanel] Current user ID:', session.userId);
@@ -623,6 +640,11 @@ async function loadThreads() {
 
   // Build threads with usernames or pseudonyms
   for (const t of list) {
+    // Populate threadVotes from backend response
+    if (t.userVote !== undefined && t.userVote !== null) {
+      threadVotes.value[t._id] = t.userVote;
+    }
+
     // Prefer the tree API; fall back to flat list if tree is empty for any reason.
     const treeResponse = await (discussion as any).listRepliesTree({ threadId: t._id, includeDeleted: true });
     console.log('[DiscussionPanel] listRepliesTree response for thread', t._id, ':', JSON.stringify(treeResponse, null, 2));
